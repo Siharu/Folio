@@ -3,9 +3,15 @@ services:
     name: folio
     runtime: node
     plan: free
-    buildCommand: node reconstruct.mjs && npm --prefix folio-app install
+    buildCommand: npm --prefix folio-app install
     startCommand: npm --prefix folio-app start
     healthCheckPath: /api/health
     envVars:
       - key: NODE_ENV
         value: production
+      - key: MAL_CLIENT_ID
+        sync: false
+      - key: MAL_CLIENT_SECRET
+        sync: false
+      - key: FOLIO_SESSION_SECRET
+        generateValue: true
