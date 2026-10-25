@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="560" viewBox="0 0 1400 560" fill="none">
+  <defs>
+    <linearGradient id="sky" x1="700" y1="0" x2="700" y2="560" gradientUnits="userSpaceOnUse"><stop stop-color="#090C25"/><stop offset=".45" stop-color="#1D1747"/><stop offset=".73" stop-color="#632E70"/><stop offset="1" stop-color="#F05E91"/></linearGradient>
+    <radialGradient id="moon" cx="0" cy="0" r="1" gradientTransform="translate(1027 155) rotate(90) scale(151)" gradientUnits="userSpaceOnUse"><stop stop-color="#FFF4FD"/><stop offset=".46" stop-color="#F9B9EA"/><stop offset=".82" stop-color="#C18FEF"/><stop offset="1" stop-color="#A169D7" stop-opacity="0"/></radialGradient>
+    <linearGradient id="coat" x1="952" y1="245" x2="1070" y2="560" gradientUnits="userSpaceOnUse"><stop stop-color="#15122C"/><stop offset=".5" stop-color="#0B1029"/><stop offset="1" stop-color="#050816"/></linearGradient>
+    <linearGradient id="hair" x1="934" y1="135" x2="1051" y2="214" gradientUnits="userSpaceOnUse"><stop stop-color="#17182F"/><stop offset=".5" stop-color="#090D22"/><stop offset="1" stop-color="#342449"/></linearGradient>
+    <linearGradient id="neon" x1="1093" y1="330" x2="1370" y2="330" gradientUnits="userSpaceOnUse"><stop stop-color="#42DFF1"/><stop offset="1" stop-color="#FF60BD"/></linearGradient>
+    <filter id="glow" x="790" y="-70" width="480" height="480" filterUnits="userSpaceOnUse"><feGaussianBlur stdDeviation="28"/></filter>
+    <filter id="soft" x="0" y="0" width="1400" height="560" filterUnits="userSpaceOnUse"><feGaussianBlur stdDeviation="12"/></filter>
+    <pattern id="windows" width="24" height="28" patternUnits="userSpaceOnUse"><rect x="3" y="4" width="5" height="9" rx="1" fill="#6CE6F0" fill-opacity=".45"/><rect x="14" y="16" width="5" height="8" rx="1" fill="#F987C8" fill-opacity=".5"/></pattern>
+  </defs>
+  <rect width="1400" height="560" fill="url(#sky)"/>
+  <ellipse cx="1060" cy="170" rx="218" ry="188" fill="#EC80E9" fill-opacity=".16" filter="url(#glow)"/>
+  <circle cx="1027" cy="155" r="151" fill="url(#moon)"/>
+  <circle cx="1027" cy="155" r="118" stroke="#FFF0FF" stroke-opacity=".25"/>
+  <circle cx="1027" cy="155" r="133" stroke="#F6ABF1" stroke-opacity=".25" stroke-dasharray="2 8"/>
+  <g fill="#FFF1FF"><circle cx="776" cy="53" r="2"/><circle cx="838" cy="102" r="1.4"/><circle cx="1185" cy="48" r="2"/><circle cx="1250" cy="112" r="1.5"/><circle cx="910" cy="40" r="1.2"/><circle cx="1360" cy="95" r="1.5"/><circle cx="1109" cy="23" r="1.6"/><circle cx="722" cy="133" r="1.2"/><circle cx="856" cy="215" r="1.5"/><circle cx="1300" cy="225" r="2"/><circle cx="1215" cy="264" r="1.2"/><circle cx="882" cy="270" r="1.3"/></g>
+  <g stroke="#F6B2EF" stroke-opacity=".32" fill="none"><path d="M725 112h46m-23-23v46"/><path d="M1246 49h34m-17-17v34"/><path d="M1329 184h30m-15-15v30"/></g>
+  <!-- distant clouds -->
+  <path d="M680 179c68-28 112-24 166 0 36 16 70 16 112-1 52-20 91-11 135 8 41 18 90 13 133-7v93H680v-93Z" fill="#9B6AB6" fill-opacity=".14"/>
+  <path d="M780 239c62-23 99-13 145 3 42 15 84 11 126-6 45-18 91-11 140 10 44 19 93 11 150-8v101H780v-100Z" fill="#282650" fill-opacity=".78"/>
+  <!-- distant city skyline -->
+  <g fill="#11152F" stroke="#6D5BA1" stroke-opacity=".35">
+    <path d="M602 375V307h37v-25h23v93h36v-61h46v-35h16v96h44v-81h40v-26h15v107h42v-75h38v-55h20v130h37v-91h50v90H602Z"/>
+    <path d="M1090 375V300h34v-52h17v-31h11v31h19v52h30v-34h38v-57h17v57h20v-87h13v87h26v-41h29v100h26v-80h24v160h-304Z" fill="#13162F"/>
+  </g>
+  <path d="M600 375h800v185H600V375Z" fill="#0A0E22" fill-opacity=".8"/>
+  <path d="M620 391h780v169H620z" fill="url(#windows)" opacity=".54"/>
+  <!-- distant elevated rail -->
+  <path d="M600 406c185-27 394-27 800 4" stroke="#B3A0FF" stroke-opacity=".5" stroke-width="4"/>
+  <path d="M600 413c185-27 394-27 800 4" stroke="#3DE6F0" stroke-opacity=".35" stroke-width="1.5"/>
+  <!-- torii gate in silhouette -->
+  <g stroke="#070B1B" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"><path d="M1231 350V504M1337 350V504M1204 350H1365M1215 332Q1284 350 1353 332"/></g>
+  <g stroke="#FC68C5" stroke-opacity=".8" stroke-width="2"><path d="M1231 350V504M1337 350V504M1204 350H1365"/></g>
+  <!-- foreground street reflections -->
+  <path d="M600 458 880 428l-54 132H600v-102Z" fill="#5C2D76" fill-opacity=".45"/>
+  <path d="M930 560 1040 425l54 135H930Z" fill="#2B5D98" fill-opacity=".5"/>
+  <path d="M1132 560 1250 426l84 134h-202Z" fill="#C6409A" fill-opacity=".4"/>
+  <path d="M610 509h166M640 529h120M1110 494h180M1084 520h160" stroke="url(#neon)" stroke-opacity=".5" stroke-width="2"/>
+  <!-- foreground cherry blossom branches -->
+  <g stroke="#4D2D67" stroke-width="5" stroke-linecap="round"><path d="M1395 14q-72 63-107 147t-99 95M1361 57l-45-14M1333 83l26-28M1298 126l-46-7M1267 157l31-22M1218 207l-41-12"/></g>
+  <g fill="#FF89D0">
+    <circle cx="1345" cy="52" r="8"/><circle cx="1337" cy="42" r="6"/><circle cx="1354" cy="43" r="6"/><circle cx="1349" cy="60" r="6"/>
+    <circle cx="1305" cy="90" r="7"/><circle cx="1296" cy="80" r="5"/><circle cx="1315" cy="80" r="5"/><circle cx="1312" cy="98" r="5"/>
+    <circle cx="1255" cy="132" r="7"/><circle cx="1246" cy="121" r="5"/><circle cx="1266" cy="122" r="5"/><circle cx="1263" cy="140" r="5"/>
+    <circle cx="1210" cy="183" r="6"/><circle cx="1202" cy="174" r="4"/><circle cx="1219" cy="174" r="4"/>
+  </g>
+  <g fill="#FFB4E4" fill-opacity=".92"><path d="M1138 80q12-12 22-2-4 17-22 2Z"/><path d="M1177 301q12-13 20-2-4 16-20 2Z"/><path d="M803 332q12-12 22-2-4 16-22 2Z"/><path d="M1162 417q12-12 20-2-4 16-20 2Z"/><path d="M1341 276q11-13 20-2-4 16-20 2Z"/><path d="M784 112q10-11 19-2-4 14-19 2Z"/></g>
+  <!-- dark left vignette so UI copy remains readable -->
+  <rect width="1400" height="560" fill="url(#leftShade)"/>
+  <defs><linearGradient id="leftShade" x1="0" y1="0" x2="980" y2="0" gradientUnits="userSpaceOnUse"><stop stop-color="#080916" stop-opacity=".98"/><stop offset=".42" stop-color="#090A1B" stop-opacity=".7"/><stop offset=".72" stop-color="#090A1B" stop-opacity=".06"/><stop offset="1" stop-color="#090A1B" stop-opacity=".02"/></linearGradient></defs>
+</svg>
