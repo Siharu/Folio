@@ -30,7 +30,7 @@ jobs:
           node-version: '22'
       - name: Check backend syntax
         run: node --check folio-app/server.mjs
-      - name: Check browser JavaScript syntax
+      - name: Check browser JavaScript syntax and required UI hooks
         shell: bash
         run: |
           node --input-type=module <<'NODE'
@@ -39,26 +39,29 @@ jobs:
           const start = html.indexOf('<script>');
           const end = html.lastIndexOf('</script>');
           if (start < 0 || end <= start) throw new Error('No inline script found in Hekomi HTML.');
-          await fs.writeFile('/tmp/folio-inline-check.js', html.slice(start + 8, end));
-          if (!html.includes('MAL Client') || !html.includes('Manga Crawler') || !html.includes('animeCatalogGrid') || !html.includes('airingCatalogGrid') || !html.includes('showcaseAddButton') || !html.includes('og:image') || !html.includes('application/ld+json')) {
-            throw new Error('Both Hekomi workspaces, spotlight controls, airing shelf and public catalog SEO metadata must be present.');
+          await fs.writeFile('/tmp/hekomi-inline-check.js', html.slice(start + 8, end));
+          for (const required of ['MAL Client', 'Manga Crawler', 'animeCatalogGrid', 'mangaCatalogGrid', 'airingCatalogGrid', 'showcaseAddButton', 'og:image', 'application/ld+json']) {
+            if (!html.includes(required)) throw new Error('Required Hekomi UI/SEO hook is missing: ' + required);
           }
+          const lines = html.split('\n').map(line => line.trimStart());
+          const goodThemeListener = lines.some(line => line.startsWith("$$('#modalRoot [data-theme-choice]').forEach"));
+          const brokenThemeListener = lines.some(line => line.startsWith("$('#modalRoot [data-theme-choice]').forEach"));
+          if (!goodThemeListener || brokenThemeListener) throw new Error('Appearance choices must bind each theme option using the all-match selector.');
           NODE
-          if (html.split('\\n').some(line => line.trimStart().startsWith("$('#modalRoot [data-theme-choice]').forEach"))) throw new Error('Appearance settings must use the all-match selector for each theme option.');
-          if (!html.includes("$$('#modalRoot [data-theme-choice]').forEach")) throw new Error('Appearance theme bindings are missing.');
-          node --check /tmp/folio-inline-check.js
+          node --check /tmp/hekomi-inline-check.js
       - name: Smoke test server
         shell: bash
         run: |
-          PORT=4173 node folio-app/server.mjs > /tmp/folio-server.log 2>&1 &
+          PORT=4173 node folio-app/server.mjs > /tmp/hekomi-server.log 2>&1 &
           PID=$!
           trap 'kill "$PID" 2>/dev/null || true' EXIT
           for i in $(seq 1 30); do
-            if curl -fsS http://127.0.0.1:4173/api/health >/tmp/folio-health.json; then break; fi
+            if curl -fsS http://127.0.0.1:4173/api/health >/tmp/hekomi-health.json; then break; fi
             sleep 1
           done
-          grep -q '"ok":true' /tmp/folio-health.json
+          grep -q '"ok":true' /tmp/hekomi-health.json
           curl -fsS http://127.0.0.1:4173/api/mal/auth/status | grep -q '"configured":false'
           curl -fsS http://127.0.0.1:4173/ >/tmp/hekomi-home.html
           grep -q 'Hekomi' /tmp/hekomi-home.html
-          curl -fsS http://127.0.0.1:4173/robots.txt | grep -q 'Sitemap:'
+          curl -fsS http://127.0.0.1:4173/robots.txt >/tmp/hekomi-robots.txt
+          grep -q 'Sitemap:' /tmp/hekomi-robots.txt
