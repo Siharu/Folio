@@ -41,7 +41,7 @@ jobs:
           if (start < 0 || end <= start) throw new Error('No inline script found in Hekomi HTML.');
           await fs.writeFile('/tmp/folio-inline-check.js', html.slice(start + 8, end));
           if (!html.includes('MAL Client') || !html.includes('Manga Crawler')) {
-            throw new Error('Both Folio workspaces must be present.');
+            throw new Error('Both Hekomi workspaces must be present.');
           }
           NODE
           node --check /tmp/folio-inline-check.js
@@ -57,4 +57,5 @@ jobs:
           done
           grep -q '"ok":true' /tmp/folio-health.json
           curl -fsS http://127.0.0.1:4173/api/mal/auth/status | grep -q '"configured":false'
-          curl -fsS http://127.0.0.1:4173/ | grep -q 'Hekomi'
+          curl -fsS http://127.0.0.1:4173/ >/tmp/hekomi-home.html
+          grep -q 'Hekomi' /tmp/hekomi-home.html
