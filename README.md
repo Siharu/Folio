@@ -1,9 +1,9 @@
 # Folio
 
-**A personal anime and manga companion.** The opening screen asks which of two independent workspaces to enter:
+**Your personal anime and manga companion.** At launch, choose one of two separate workspaces:
 
 - **MAL Client** — local anime tracking and MyAnimeList API integration.
-- **Manga Crawler** — website inspection, manga discovery, metadata and cover extraction, chapter image extraction, and an in-app reader modal for accessible pages.
+- **Manga Crawler** — public website inspection, manga discovery, cover and metadata extraction, chapter image extraction, and an in-app reader modal for accessible pages.
 
 ## Run locally
 
@@ -19,13 +19,13 @@ Open http://localhost:4173.
 
 ## Deploy to Render
 
-This repository includes a Render Blueprint in `render.yaml`. In Render choose **New + → Blueprint**, connect `Siharu/Folio`, and deploy the detected `folio` web service. Render reconstructs the source, installs the app, and launches the Node backend. **Do not deploy as a Static Site**: crawler endpoints require a backend.
+This repository includes a Render Blueprint at `render.yaml`. In Render select **New + → Blueprint**, connect `Siharu/Folio`, and deploy the detected `folio` web service. Render reconstructs the complete app, installs it, and launches the Node backend. **Do not deploy it as a Static Site**: the crawler needs a backend.
 
-The complete source archive is stored as numbered base64 chunks in `source-bundle/` and expanded into `folio-app/` during build. This bundle contains the app source, artwork, PWA manifest, service worker, and server.
+The complete source archive is committed in `source-bundle/`. A GitHub Actions workflow reconstructs it and commits the readable application files into `folio-app/`; the Render build also reconstructs these files, so every deployment can be rebuilt from the source bundle.
 
 ## MyAnimeList integration status
 
-The current MAL workspace provides local tracking and API configuration hooks. A full OAuth login and callback flow still needs implementation before a live MAL redirect URL should be registered. Never commit client secrets or access tokens; keep confidential credentials on the server.
+The current MAL workspace provides local tracking and API configuration hooks. A complete OAuth login/callback flow still needs implementation before a live MAL redirect URL should be registered. Never commit client secrets or access tokens; confidential credentials must stay server-side.
 
 ## Crawler boundaries
 

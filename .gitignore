@@ -1,5 +1,4 @@
 node_modules/
-folio-app/
 .env
 .env.*
 !.env.example

@@ -1,0 +1,40 @@
+name: Materialize Folio source
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'source-bundle/**'
+      - 'reconstruct.mjs'
+      - '.github/workflows/materialize-source.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  materialize:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Reconstruct application files
+        run: node reconstruct.mjs
+      - name: Commit readable source
+        shell: bash
+        run: |
+          git add -f folio-app
+          if git diff --cached --quiet; then
+            echo "Folio source is already up to date."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Materialize Folio app source [skip ci]"
+          git push
