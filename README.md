@@ -1,31 +1,29 @@
 # Folio
 
-**Your personal anime and manga companion.** At launch, choose one of two separate workspaces:
+**Your personal anime and manga companion.** At launch, choose one of two independent workspaces:
 
-- **MAL Client** — local anime tracking and MyAnimeList API integration.
-- **Manga Crawler** — public website inspection, manga discovery, cover and metadata extraction, chapter image extraction, and an in-app reader modal for accessible pages.
+- **MAL Client** — search anime, view your list, update status/score/episodes, and sync with your own MyAnimeList account.
+- **Manga Crawler** — discover permitted public manga websites, extract covers and metadata, inspect chapters, and read detected chapter images inside Folio.
 
 ## Run locally
 
 Requires Node.js 20 or newer.
 
 ```sh
-node reconstruct.mjs
-npm --prefix folio-app install
 npm --prefix folio-app start
 ```
 
-Open http://localhost:4173.
+Open http://localhost:4173. Manga crawling works locally. MAL OAuth requires environment variables: `MAL_CLIENT_ID`, `MAL_CLIENT_SECRET`, and `FOLIO_SESSION_SECRET`. For local development, use an API app registration whose redirect URL is `http://localhost:4173/api/mal/auth/callback`.
 
 ## Deploy to Render
 
-This repository includes a Render Blueprint at `render.yaml`. In Render select **New + → Blueprint**, connect `Siharu/Folio`, and deploy the detected `folio` web service. Render reconstructs the complete app, installs it, and launches the Node backend. **Do not deploy it as a Static Site**: the crawler needs a backend.
+1. In Render choose **New + → Blueprint** and connect `Siharu/Folio`.
+2. Review the Web Service Blueprint; do **not** choose Static Site, because the manga crawler requires a Node.js backend.
+3. Enter the MAL application's **Client ID** and **Client Secret** into the Render environment prompts. Render generates `FOLIO_SESSION_SECRET` for encrypted sessions.
+4. After Render gives the service its HTTPS URL, update the app's **App Redirect URL** in [MAL API Configuration](https://myanimelist.net/apiconfig) to the exact URL `https://YOUR-SERVICE.onrender.com/api/mal/auth/callback`. Keep it exact, including the path.
+5. Open Folio, choose **MAL Client**, and tap **Sign in with MyAnimeList**.
 
-The complete source archive is committed in `source-bundle/`. A GitHub Actions workflow reconstructs it and commits the readable application files into `folio-app/`; the Render build also reconstructs these files, so every deployment can be rebuilt from the source bundle.
-
-## MyAnimeList integration status
-
-The current MAL workspace provides local tracking and API configuration hooks. A complete OAuth login/callback flow still needs implementation before a live MAL redirect URL should be registered. Never commit client secrets or access tokens; confidential credentials must stay server-side.
+The developer registers the MAL app once. Every user authorizes their own account; users do not create API registrations or paste tokens. Folio exchanges OAuth codes on the server, stores access/refresh tokens in an encrypted HttpOnly cookie, and refreshes tokens as needed. The Client Secret and session encryption key are server-only and must never be committed to GitHub or placed in HTML.
 
 ## Crawler boundaries
 
