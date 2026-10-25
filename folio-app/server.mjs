@@ -151,9 +151,9 @@ async function searchMangaWebsites(rawQuery) {
   } catch {
     const encoded=encodeURIComponent(q);
     return {query,results:[
-      {title:'Search the web with DuckDuckGo',url:`https://duckduckgo.com/?q=${encoded}`,origin:'https://duckduckgo.com',domain:'duckduckgo.com',snippet:'Open search results, then copy a public manga or chapter URL into Folio.',searchPage:true},
+      {title:'Search the web with DuckDuckGo',url:`https://duckduckgo.com/?q=${encoded}`,origin:'https://duckduckgo.com',domain:'duckduckgo.com',snippet:'Open search results, then copy a public manga or chapter URL into Hekomi.',searchPage:true},
       {title:'Search the web with Bing',url:`https://www.bing.com/search?q=${encoded}`,origin:'https://www.bing.com',domain:'bing.com',snippet:'Alternative search provider if direct result retrieval is unavailable.',searchPage:true},
-      {title:'Search the web with Google',url:`https://www.google.com/search?q=${encoded}`,origin:'https://www.google.com',domain:'google.com',snippet:'Alternative search provider. Paste a chosen public result URL into Folio to inspect it.',searchPage:true}
+      {title:'Search the web with Google',url:`https://www.google.com/search?q=${encoded}`,origin:'https://www.google.com',domain:'google.com',snippet:'Alternative search provider. Paste a chosen public result URL into Hekomi to inspect it.',searchPage:true}
     ],notice:'Direct search retrieval is unavailable from this server right now. Open a search provider, then paste a chosen public result URL into the crawler.'};
   }
   const results=[],seen=new Set();
@@ -216,7 +216,7 @@ function malAuthConfigured() {
   return Boolean(process.env.MAL_CLIENT_ID && process.env.MAL_CLIENT_SECRET && SESSION_SECRET);
 }
 function sessionKey() {
-  if (!SESSION_SECRET) throw new Error('Folio MAL sign-in has not been configured by the app maintainer.');
+  if (!SESSION_SECRET) throw new Error('Hekomi MAL sign-in has not been configured by the app maintainer.');
   return crypto.createHash('sha256').update(SESSION_SECRET).digest();
 }
 function sealJson(value) {
@@ -322,7 +322,7 @@ async function malAuthStatus(req, res) {
   });
 }
 async function startMalAuth(req, res) {
-  if (!malAuthConfigured()) return send(res, 503, { error: 'Folio MAL sign-in is not configured yet. The app maintainer must add MAL_CLIENT_ID, MAL_CLIENT_SECRET, and FOLIO_SESSION_SECRET to the server environment.' });
+  if (!malAuthConfigured()) return send(res, 503, { error: 'Hekomi MAL sign-in is not configured yet. The app maintainer must add MAL_CLIENT_ID, MAL_CLIENT_SECRET, and FOLIO_SESSION_SECRET to the server environment.' });
   const state = crypto.randomBytes(24).toString('hex');
   const verifier = crypto.randomBytes(32).toString('base64url');
   const redirectUri = getMalRedirectUri(req);
@@ -392,7 +392,7 @@ async function malLogout(req, res) {
 }
 async function malRequest(req, res, pathname, query) {
   const clientId = process.env.MAL_CLIENT_ID;
-  if (!clientId) return send(res, 503, { error: 'MAL catalog search is not configured by the Folio maintainer yet.' });
+  if (!clientId) return send(res, 503, { error: 'MAL catalog search is not configured by the Hekomi maintainer yet.' });
   if (!['/search','/me','/list','/update'].includes(pathname)) return send(res,404,{error:'Unknown MAL endpoint.'});
   let session = null;
   if (pathname !== '/search') {
@@ -431,7 +431,7 @@ const server=http.createServer(async(req,res)=>{
   const origin=req.headers.origin;
   if(origin && !origin.startsWith(`http://localhost:${PORT}`) && !origin.startsWith(`http://127.0.0.1:${PORT}`)) { /* no permissive cross-origin access */ }
   const url=new URL(req.url,`http://${req.headers.host||'localhost'}`);
-  if(req.method==='GET' && url.pathname==='/api/health') return send(res,200,{ok:true,app:'Folio Night Edition',crawler:'robots-aware chapter image extractor',malProxy:true});
+  if(req.method==='GET' && url.pathname==='/api/health') return send(res,200,{ok:true,app:'Hekomi Night Edition',crawler:'robots-aware chapter image extractor',malProxy:true});
   if(req.method==='POST' && url.pathname==='/api/search-manga-sites') {
     try { const data=await readBody(req); return send(res,200,await searchMangaWebsites(data.query)); } catch(e) { return send(res,400,{error:e.message||'Manga website search failed.'}); }
   }
@@ -453,4 +453,4 @@ const server=http.createServer(async(req,res)=>{
   try { const data=await fs.readFile(filePath); res.writeHead(200,{'Content-Type':MIME[path.extname(filePath)]||'application/octet-stream','X-Content-Type-Options':'nosniff','Referrer-Policy':'strict-origin-when-cross-origin','Cache-Control':'no-cache'}); return req.method==='HEAD'?res.end():res.end(data); }
   catch { return send(res,404,'Not found'); }
 });
-server.listen(PORT,'0.0.0.0',()=>console.log(`Folio Night Edition running at http://localhost:${PORT}`));
+server.listen(PORT,'0.0.0.0',()=>console.log(`Hekomi running at http://localhost:${PORT}`));
