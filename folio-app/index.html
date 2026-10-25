@@ -149,6 +149,39 @@ html[data-theme="dawn"] .catalog-cover{background:#eee5f6}html[data-theme="dawn"
 html[data-theme="dawn"] .catalog-genre{background:#f2eaf8}html[data-theme="dawn"] .catalog-cover:before{background:linear-gradient(145deg,#e9dff4,#d8eee7)}
 @media(max-width:760px){.catalog-discovery{margin-top:38px;padding-top:25px}.catalog-heading{align-items:stretch;flex-direction:column;gap:15px}.catalog-search{width:100%;flex-basis:auto}.catalog-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.catalog-card-body{padding:9px;gap:6px}.catalog-card h4{font-size:13px}.catalog-shelf-head h3{font-size:20px}.catalog-synopsis{-webkit-line-clamp:3;min-height:53px}.catalog-shelf-head .btn-secondary{padding:8px 9px;font-size:11px}}
 
+
+/* Hekomi's own live-catalog art direction, inspired by editorial media apps */
+.showcase-actions{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-top:18px}
+.showcase-primary,.showcase-add{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:38px;padding:9px 12px;border:1px solid #b9a6ff;border-radius:10px;font-size:12px;font-weight:800;text-decoration:none;transition:transform .18s,background .18s}
+.showcase-primary{background:#b9a6ff;color:#171222}.showcase-add{background:#10131bd9;color:#f5f1ff;border-color:#ffffff49;backdrop-filter:blur(8px)}
+.showcase-primary:hover,.showcase-add:hover{transform:translateY(-2px)}
+.anime-showcase.has-feature-banner{background-image:linear-gradient(90deg,rgba(8,9,22,.97) 0%,rgba(8,9,22,.88) 28%,rgba(8,9,22,.50) 60%,rgba(8,9,22,.24) 100%),linear-gradient(0deg,rgba(8,9,22,.68),transparent 60%),var(--featured-banner,url("assets/folio-night-scene.svg"));background-size:cover;background-position:center center;border-color:var(--featured-accent,#8f78d65a);box-shadow:0 28px 90px #03040d99,0 0 0 1px #ffffff07 inset}
+.anime-showcase.has-feature-banner:before{opacity:.08}
+.anime-showcase.has-feature-banner .showcase-art{display:none}
+.anime-showcase.has-feature-banner .showcase-copy{max-width:66%;padding-top:36px;padding-bottom:52px}
+.anime-showcase.has-feature-banner .showcase-copy h2{max-width:640px;font-size:clamp(31px,4.5vw,55px);text-wrap:balance}
+.anime-showcase.has-feature-banner .showcase-copy p{max-width:590px;font-size:14px;line-height:1.65}
+.anime-showcase.has-feature-banner .showcase-tags span{background:#11131dcb;border-color:#ffffff39}
+.anime-showcase.has-feature-banner .showcase-index{color:#d1cce4}
+.anime-showcase.has-feature-banner .showcase-dot.active{background:var(--featured-accent,#b9a6ff)}
+.catalog-shelf-tools{display:flex;gap:7px;align-items:center;flex:0 0 auto}
+.rail-arrow{width:34px;height:34px;display:grid;place-items:center;border:1px solid var(--line);background:var(--panel);color:var(--text);border-radius:50%;font-size:21px;line-height:1;transition:transform .15s,border-color .15s}
+.rail-arrow:hover{border-color:var(--violet);transform:translateY(-1px)}
+.rail-arrow:focus-visible,.showcase-add:focus-visible,.showcase-primary:focus-visible{outline:2px solid var(--violet);outline-offset:3px}
+.catalog-row.catalog-grid{display:flex!important;gap:14px;align-items:stretch;overflow-x:auto;overflow-y:hidden;padding:2px 2px 14px;scroll-snap-type:x proximity;scroll-behavior:smooth;overscroll-behavior-x:contain;scrollbar-width:thin;scrollbar-color:var(--line) transparent}
+.catalog-row .catalog-card{flex:0 0 178px;scroll-snap-align:start}
+.catalog-row .catalog-loading{flex:0 0 100%;min-width:100%}
+.catalog-skeleton-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:14px}
+.catalog-row .catalog-skeleton-grid{display:flex;gap:14px;width:100%}
+.catalog-skeleton-card{flex:0 0 178px;overflow:hidden;border:1px solid var(--line);background:var(--panel);border-radius:15px;padding-bottom:13px}
+.catalog-skeleton-cover,.catalog-skeleton-line{background:linear-gradient(100deg,var(--panel2) 20%,rgba(185,166,255,.16) 37%,var(--panel2) 56%);background-size:220% 100%;animation:catalogShimmer 1.65s ease-in-out infinite}
+.catalog-skeleton-cover{aspect-ratio:2/3;width:100%}
+.catalog-skeleton-line{height:9px;border-radius:7px;margin:12px 11px 0}
+.catalog-skeleton-line.short{width:56%}
+@keyframes catalogShimmer{0%{background-position:100% 0}100%{background-position:-120% 0}}
+@media(prefers-reduced-motion:reduce){.catalog-skeleton-cover,.catalog-skeleton-line{animation:none}.catalog-row.catalog-grid{scroll-behavior:auto}.catalog-card,.showcase-primary,.showcase-add,.rail-arrow{transition:none}}
+@media(max-width:760px){.anime-showcase.has-feature-banner{min-height:410px;background-position:center center}.anime-showcase.has-feature-banner .showcase-copy{max-width:100%;padding:24px 20px 0}.anime-showcase.has-feature-banner .showcase-copy h2{font-size:clamp(30px,8vw,42px);max-width:100%}.anime-showcase.has-feature-banner .showcase-copy p{max-width:100%;font-size:12px}.anime-showcase.has-feature-banner .showcase-tags{max-width:100%}.showcase-actions{margin-top:14px}.catalog-row.catalog-grid{gap:10px}.catalog-row .catalog-card,.catalog-skeleton-card{flex-basis:154px}.catalog-shelf-tools{gap:5px}.rail-arrow{width:30px;height:30px}.catalog-shelf-head{align-items:flex-end}}
+
 </style>
 </head>
 <body>
@@ -162,14 +195,14 @@ html[data-theme="dawn"] .catalog-genre{background:#f2eaf8}html[data-theme="dawn"
       <div class="hero"><div class="hero-kicker"><span class="hero-signal"></span> YOUR OWN LITTLE ANIME INTERNET <span class="hero-edition">VOL. 001 / OPEN EVERY NIGHT</span></div><div class="brandmark">H</div><div class="eyebrow">Two worlds. One app. Your rules.</div><h1>Stories worth<br><em>staying up for.</em></h1><p>Your watchlist, your manga rabbit holes, and the chapter you promised would be the last one. Pick a mode and disappear for a while.</p></div>
       <section class="anime-showcase" id="animeShowcase" data-slide="0" aria-label="Featured anime-inspired carousel">
         <div class="showcase-orbit orbit-one"></div><div class="showcase-orbit orbit-two"></div>
-        <div class="showcase-copy" aria-live="polite"><span class="showcase-kicker"><i></i> <span id="showcaseKicker">HEKOMI ANIME TRANSMISSION</span></span><h2 id="showcaseTitle">Find your <em>next obsession.</em></h2><p id="showcaseDescription">New worlds. Strange signals. One more chapter before sleep.</p><div class="showcase-tags" id="showcaseTags"><span>ANIME</span><span>MANGA</span><span>AFTER HOURS</span></div></div>
+        <div class="showcase-copy" aria-live="polite"><span class="showcase-kicker"><i></i> <span id="showcaseKicker">HEKOMI ANIME TRANSMISSION</span></span><h2 id="showcaseTitle">Find your <em>next obsession.</em></h2><p id="showcaseDescription">New worlds. Strange signals. One more chapter before sleep.</p><div class="showcase-tags" id="showcaseTags"><span>ANIME</span><span>MANGA</span><span>AFTER HOURS</span></div><div class="showcase-actions"><a id="showcaseDetailsLink" class="showcase-primary hidden" href="/" tabindex="-1">View series details ↗</a><button id="showcaseAddButton" class="showcase-add hidden" type="button">＋ Add to my shelf</button></div></div>
         <div class="showcase-art" aria-hidden="true">
           <div class="poster poster-back"><span class="poster-label">月の残響</span><div class="poster-moon"></div><div class="poster-person person-back"><i></i><b></b></div><span class="poster-caption">ECHOES OF THE MOON</span></div>
           <div class="poster poster-mid"><span class="poster-label">VOL. 07</span><div class="poster-sun"></div><div class="poster-person person-mid"><i></i><b></b></div><span class="poster-caption">AFTER THE RAIN</span></div>
           <div class="poster poster-front"><span class="poster-label">NEW SIGNAL</span><div class="poster-star">✦</div><div class="poster-person person-front"><i></i><b></b></div><span class="poster-caption">NO SIGNAL, NO SLEEP.</span></div>
           <div class="floating-sticker sticker-top" id="showcaseStickerTop">今夜も読もう <span>✦</span></div><div class="floating-sticker sticker-bottom" id="showcaseStickerBottom">ONE MORE CHAPTER ↗</div>
         </div>
-        <div class="showcase-scan"></div><div class="showcase-index" id="showcaseIndex">HEKOMI / 001 — YOUR PRIVATE ANIME SPACE</div><div class="showcase-controls" aria-label="Featured banners"><button class="showcase-arrow" id="showcasePrev" aria-label="Previous banner">‹</button><div class="showcase-dots"><button class="showcase-dot active" data-showcase-slide="0" aria-label="Banner 1"></button><button class="showcase-dot" data-showcase-slide="1" aria-label="Banner 2"></button><button class="showcase-dot" data-showcase-slide="2" aria-label="Banner 3"></button></div><button class="showcase-arrow" id="showcaseNext" aria-label="Next banner">›</button></div>
+        <div class="showcase-scan"></div><div class="showcase-index" id="showcaseIndex">HEKOMI / 001 — YOUR PRIVATE ANIME SPACE</div><div class="showcase-controls" aria-label="Featured banners"><button class="showcase-arrow" id="showcasePrev" aria-label="Previous banner">‹</button><div class="showcase-dots" id="showcaseDots"><button class="showcase-dot active" data-showcase-slide="0" aria-label="Banner 1"></button><button class="showcase-dot" data-showcase-slide="1" aria-label="Banner 2"></button><button class="showcase-dot" data-showcase-slide="2" aria-label="Banner 3"></button></div><button class="showcase-arrow" id="showcaseNext" aria-label="Next banner">›</button></div>
       </section>
       <div class="choice-grid">
         <article class="choice mal" data-card-number="01" data-enter="mal" tabindex="0" role="button" aria-label="Open MAL Client"><div class="choice-top"><div class="choice-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4.5h10.2A2.8 2.8 0 0 1 18 7.3v12.2H7.4A2.4 2.4 0 0 1 5 17.1V4.5Z"/><path d="M7.5 8h7M7.5 11.5h7M7.5 15h4.5M18 8.5h2v11h-2"/></svg></div><div class="arrow">↗</div></div><h2>MAL Client</h2><p>Your anime list, on your terms. Search shows, update watched episodes, score titles, and sync changes with your MyAnimeList account.</p><div class="choice-foot"><span class="dot"></span> Anime tracking & account sync</div></article>
@@ -184,8 +217,9 @@ html[data-theme="dawn"] .catalog-genre{background:#f2eaf8}html[data-theme="dawn"
   </div>
   <div id="catalogSearchStatus" class="small muted catalog-status" role="status" aria-live="polite"></div>
   <div id="catalogSearchResults" class="catalog-grid hidden" aria-label="Catalog search results"></div>
-  <section class="catalog-shelf" aria-labelledby="animeCatalogTitle"><div class="catalog-shelf-head"><div><span class="eyebrow">ANIMATION</span><h3 id="animeCatalogTitle">Trending anime</h3><p class="muted small">Series and films fans are watching right now.</p></div><button type="button" class="btn-secondary" id="refreshCatalog">↻ Refresh</button></div><div id="animeCatalogGrid" class="catalog-grid" aria-live="polite"><div class="catalog-loading">Loading anime covers and details…</div></div></section>
-  <section class="catalog-shelf" aria-labelledby="mangaCatalogTitle"><div class="catalog-shelf-head"><div><span class="eyebrow">PAGES &amp; PANELS</span><h3 id="mangaCatalogTitle">Trending manga</h3><p class="muted small">Discover manga, manhwa, manhua, and one-shots.</p></div></div><div id="mangaCatalogGrid" class="catalog-grid" aria-live="polite"><div class="catalog-loading">Loading manga covers and details…</div></div></section>
+  <section class="catalog-shelf" aria-labelledby="animeCatalogTitle"><div class="catalog-shelf-head"><div><span class="eyebrow">ANIMATION</span><h3 id="animeCatalogTitle">Trending anime</h3><p class="muted small">Series and films fans are watching right now.</p></div><div class="catalog-shelf-tools"><button type="button" class="rail-arrow" data-rail-scroll="animeCatalogGrid" data-direction="-1" aria-label="Scroll trending anime backward">‹</button><button type="button" class="rail-arrow" data-rail-scroll="animeCatalogGrid" data-direction="1" aria-label="Scroll trending anime forward">›</button><button type="button" class="btn-secondary" id="refreshCatalog">↻ Refresh</button></div></div><div id="animeCatalogGrid" class="catalog-grid catalog-row" aria-live="polite"><div class="catalog-loading">Loading anime covers and details…</div></div></section>
+  <section class="catalog-shelf" aria-labelledby="mangaCatalogTitle"><div class="catalog-shelf-head"><div><span class="eyebrow">PAGES &amp; PANELS</span><h3 id="mangaCatalogTitle">Trending manga</h3><p class="muted small">Discover manga, manhwa, manhua, and one-shots.</p></div><div class="catalog-shelf-tools"><button type="button" class="rail-arrow" data-rail-scroll="mangaCatalogGrid" data-direction="-1" aria-label="Scroll trending manga backward">‹</button><button type="button" class="rail-arrow" data-rail-scroll="mangaCatalogGrid" data-direction="1" aria-label="Scroll trending manga forward">›</button></div></div><div id="mangaCatalogGrid" class="catalog-grid catalog-row" aria-live="polite"><div class="catalog-loading">Loading manga covers and details…</div></div></section>
+  <section class="catalog-shelf" aria-labelledby="airingCatalogTitle"><div class="catalog-shelf-head"><div><span class="eyebrow">ON THE AIR</span><h3 id="airingCatalogTitle">Currently airing</h3><p class="muted small">Follow the shows with new episodes this season.</p></div><div class="catalog-shelf-tools"><button type="button" class="rail-arrow" data-rail-scroll="airingCatalogGrid" data-direction="-1" aria-label="Scroll currently airing anime backward">‹</button><button type="button" class="rail-arrow" data-rail-scroll="airingCatalogGrid" data-direction="1" aria-label="Scroll currently airing anime forward">›</button></div></div><div id="airingCatalogGrid" class="catalog-grid catalog-row" aria-live="polite"><div class="catalog-loading">Checking currently airing anime…</div></div></section>
   <p class="catalog-attribution">Catalog data supplied by <a href="https://anilist.co/" target="_blank" rel="noreferrer">AniList</a>. Cover artwork belongs to its respective creators and rights holders and is shown for title identification. Availability and details may change at the source.</p>
 </section>
     </section>
@@ -243,8 +277,9 @@ html[data-theme="dawn"] .catalog-genre{background:#f2eaf8}html[data-theme="dawn"
   const write = (k,v) => localStorage.setItem(k,JSON.stringify(v));
 
 
+  function safeImageUrl(raw){try{const u=new URL(String(raw||''));return u.protocol==='https:'?u.href:'';}catch{return '';}}
   function catalogTitle(m){return m&&(m.title||m.titleEnglish||m.titleRomaji)||'Untitled';}
-  function catalogCover(m){const raw=m&&(m.cover||m.image)||'';try{const u=new URL(raw);return u.protocol==='https:'?u.href:'';}catch{return '';}}
+  function catalogCover(m){return safeImageUrl(m&&(m.cover||m.image)||'');}
   function catalogStatus(value){return ({RELEASING:'Releasing',FINISHED:'Finished',NOT_YET_RELEASED:'Upcoming',HIATUS:'On hiatus',CANCELLED:'Cancelled'})[value]||'Details';}
   function catalogYear(m){return m.seasonYear||(m.startDate&&m.startDate.year)||'';}
   function catalogGenres(m){return Array.isArray(m.genres)?m.genres.slice(0,2):[];}
@@ -263,15 +298,21 @@ html[data-theme="dawn"] .catalog-genre{background:#f2eaf8}html[data-theme="dawn"
       '<div class="catalog-card-actions"><a class="mini-btn catalog-detail-link" href="'+detail+'">Details ↗</a><button type="button" class="mini-btn" data-catalog-add="1" data-catalog-kind="'+kind+'" data-id="'+Number(m.id)+'" data-title="'+esc(title)+'" data-cover="'+esc(cover)+'" data-description="'+esc(desc.slice(0,1200))+'" data-format="'+esc(m.format||'')+'" data-origin="'+esc(m.countryOfOrigin||'')+'" data-detail="'+detail+'">'+(kind==='ANIME'?'＋ Local list':'＋ Manga shelf')+'</button></div></div></article>';
   }
   function renderCatalogGrid(container,items,kind){const target=typeof container==='string'?$(container):container;if(!target)return;target.innerHTML=items&&items.length?items.map(m=>catalogCardMarkup(m,kind)).join(''):'<div class="catalog-loading">No matching titles were found. Try another search.</div>';}
+
+  function catalogLoadingMarkup(count=6){
+    return '<div class="catalog-skeleton-grid">'+Array.from({length:count},()=>'<div class="catalog-skeleton-card" aria-hidden="true"><div class="catalog-skeleton-cover"></div><div class="catalog-skeleton-line"></div><div class="catalog-skeleton-line short"></div></div>').join('')+'</div>';
+  }
+
   let loadedPublicCatalog=null,publicCatalogRequest=null;
   async function loadPublicCatalog(force=false){
     if(loadedPublicCatalog&&!force){renderCatalogGrid('#animeCatalogGrid',loadedPublicCatalog.anime,'ANIME');renderCatalogGrid('#mangaCatalogGrid',loadedPublicCatalog.manga,'MANGA');return;}
     if(publicCatalogRequest)return publicCatalogRequest;
-    $('#animeCatalogGrid').innerHTML='<div class="catalog-loading">Loading anime covers and details…</div>';
-    $('#mangaCatalogGrid').innerHTML='<div class="catalog-loading">Loading manga covers and details…</div>';
+    $('#animeCatalogGrid').innerHTML=catalogLoadingMarkup(7);
+    $('#mangaCatalogGrid').innerHTML=catalogLoadingMarkup(7);
+    $('#airingCatalogGrid').innerHTML=catalogLoadingMarkup(7);
     publicCatalogRequest=(async()=>{try{
       const data=await api('/api/catalog'+(force?'?refresh=1':''));
-      loadedPublicCatalog=data;renderCatalogGrid('#animeCatalogGrid',data.anime||[],'ANIME');renderCatalogGrid('#mangaCatalogGrid',data.manga||[],'MANGA');
+      loadedPublicCatalog=data;buildCatalogSpotlights(data);renderCatalogGrid('#animeCatalogGrid',data.anime||[],'ANIME');renderCatalogGrid('#mangaCatalogGrid',data.manga||[],'MANGA');renderCatalogGrid('#airingCatalogGrid',data.airing||[],'ANIME');
       $('#catalogSearchStatus').textContent=data.stale?'Showing recently cached catalog data while the source refreshes.':'Catalog updated from AniList'+(data.updatedAt?' · '+new Date(data.updatedAt).toLocaleDateString():'')+'.';
     }catch(e){$('#animeCatalogGrid').innerHTML='<div class="catalog-loading">The public catalog could not load right now. Your saved lists and the rest of Hekomi still work.</div>';$('#mangaCatalogGrid').innerHTML='<div class="catalog-loading">Catalog unavailable · try again later.</div>';$('#catalogSearchStatus').textContent=e.message;}finally{publicCatalogRequest=null;}})();
     return publicCatalogRequest;
@@ -280,7 +321,7 @@ html[data-theme="dawn"] .catalog-genre{background:#f2eaf8}html[data-theme="dawn"
     event.preventDefault();const query=$('#catalogSearchInput').value.trim();
     if(query.length<2){$('#catalogSearchStatus').textContent='Enter at least two characters to search the catalog.';return;}
     const button=$('#catalogSearchButton');button.disabled=true;button.textContent='Searching…';
-    $('#catalogSearchResults').classList.remove('hidden');$('#catalogSearchResults').innerHTML='<div class="catalog-loading">Searching anime and manga…</div>';
+    $('#catalogSearchResults').classList.remove('hidden');$('#catalogSearchResults').innerHTML=catalogLoadingMarkup(6);
     try{
       const data=await api('/api/catalog/search?q='+encodeURIComponent(query));
       const list=[...(data.anime||[]).map(m=>Object.assign({},m,{_catalogKind:'ANIME'})),...(data.manga||[]).map(m=>Object.assign({},m,{_catalogKind:'MANGA'}))];
@@ -291,6 +332,7 @@ html[data-theme="dawn"] .catalog-genre{background:#f2eaf8}html[data-theme="dawn"
   }
   $('#catalogSearchForm').addEventListener('submit',searchPublicCatalog);
   $('#refreshCatalog').addEventListener('click',()=>loadPublicCatalog(true));
+  $('#discoverCatalog').addEventListener('click',event=>{const button=event.target.closest('[data-rail-scroll]');if(!button)return;const target=document.getElementById(button.dataset.railScroll);if(!target)return;const reduce=window.matchMedia('(prefers-reduced-motion: reduce)').matches;target.scrollBy({left:Number(button.dataset.direction||1)*target.clientWidth*.82,behavior:reduce?'auto':'smooth'});});
   $('#discoverCatalog').addEventListener('click',event=>{
     const button=event.target.closest('[data-catalog-add]');if(!button)return;
     const id=Number(button.dataset.id),title=button.dataset.title||'Untitled',cover=button.dataset.cover||'',description=button.dataset.description||'',kind=button.dataset.catalogKind;
@@ -346,14 +388,110 @@ html[data-theme="dawn"] .catalog-genre{background:#f2eaf8}html[data-theme="dawn"
   async function api(path, options={}){const h={...(options.headers||{})};if(options.body && typeof options.body!=='string'){h['Content-Type']='application/json';options={...options,body:JSON.stringify(options.body)};}const r=await fetch(path,{...options,credentials:'same-origin',headers:h});let data;try{data=await r.json();}catch{data={error:'Unexpected server response.'};}if(!r.ok)throw new Error(data.error||data.message||`Request failed (${r.status})`);return data;}
   function setMode(mode){$('#landing').classList.toggle('hidden',!!mode);$('#malView').classList.toggle('hidden',mode!=='mal');$('#mangaView').classList.toggle('hidden',mode!=='manga');$('#app').classList.toggle('manga-mode',mode==='manga');window.scrollTo({top:0,behavior:'smooth'});if(mode==='mal'){renderLocalAnime();if(remoteReady)renderRemoteList();}if(mode==='manga'){renderMangaLibrary();renderSources();}}
   $$('[data-enter]').forEach(el=>{el.addEventListener('click',()=>setMode(el.dataset.enter));el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();setMode(el.dataset.enter);}})});$('#headerHome').addEventListener('click',()=>setMode(null));$('#themeSettingsBtn').addEventListener('click',openThemeSettings);
-  const showcaseSlides=[
+  
+  const defaultShowcaseSlides=[
     {kicker:'HEKOMI ANIME TRANSMISSION',title:'Somewhere between <em>page one and sunrise.</em>',description:'A private corner for the shows you love, the chapters you chase, and all the worlds in between.',tags:['ANIME','MANGA','AFTER HOURS'],top:'今夜も読もう ✦',bottom:'ONE MORE CHAPTER ↗',index:'HEKOMI / 001 — YOUR PRIVATE ANIME SPACE'},
     {kicker:'AFTER THE RAIN · SIDE A',title:'Keep the stories <em>close to you.</em>',description:'Your anime life, without the clutter. Track the episodes, scores, and series that matter to you.',tags:['WATCHLIST','SCORES','MEMORIES'],top:'お気に入りを集めよう ✦',bottom:'YOUR NEXT EPISODE ↗',index:'HEKOMI / 002 — THE ANIME ARCHIVE'},
     {kicker:'MIDNIGHT MANGA SIGNAL',title:'One more chapter. <em>Just one.</em>',description:'Find manga across your sources, pull the chapters into one place, and read when the rest of the world goes quiet.',tags:['MANGA','MANHWA','DISCOVERY'],top:'ページをめくろう ✦',bottom:'SIGNAL FOUND ↗',index:'HEKOMI / 003 — THE NIGHT SHELF'}
-  ];let showcaseIndex=0;let showcaseTimer=null;const showcase=$('#animeShowcase');
-  function setShowcaseSlide(n){showcaseIndex=(n+showcaseSlides.length)%showcaseSlides.length;const d=showcaseSlides[showcaseIndex];showcase.dataset.slide=String(showcaseIndex);$('#showcaseKicker').textContent=d.kicker;$('#showcaseTitle').innerHTML=d.title;$('#showcaseDescription').textContent=d.description;$('#showcaseTags').innerHTML=d.tags.map(t=>`<span>${esc(t)}</span>`).join('');$('#showcaseStickerTop').innerHTML=esc(d.top);$('#showcaseStickerBottom').textContent=d.bottom;$('#showcaseIndex').textContent=d.index;$$('[data-showcase-slide]').forEach(b=>{const active=Number(b.dataset.showcaseSlide)===showcaseIndex;b.classList.toggle('active',active);b.setAttribute('aria-pressed',String(active));});}
-  function pauseShowcase(){if(showcaseTimer){clearInterval(showcaseTimer);showcaseTimer=null;}}function resumeShowcase(){pauseShowcase();if(!window.matchMedia('(prefers-reduced-motion: reduce)').matches)showcaseTimer=setInterval(()=>{if(!document.hidden&&$('#landing')&&!$('#landing').classList.contains('hidden'))setShowcaseSlide(showcaseIndex+1);},8500);}
-  $('#showcasePrev').onclick=()=>{setShowcaseSlide(showcaseIndex-1);resumeShowcase();};$('#showcaseNext').onclick=()=>{setShowcaseSlide(showcaseIndex+1);resumeShowcase();};$$('[data-showcase-slide]').forEach(b=>b.onclick=()=>{setShowcaseSlide(Number(b.dataset.showcaseSlide));resumeShowcase();});showcase.addEventListener('mouseenter',pauseShowcase);showcase.addEventListener('mouseleave',resumeShowcase);showcase.addEventListener('focusin',pauseShowcase);showcase.addEventListener('focusout',resumeShowcase);document.addEventListener('visibilitychange',()=>document.hidden?pauseShowcase():resumeShowcase());setShowcaseSlide(0);resumeShowcase();
+  ];
+  let showcaseSlides=defaultShowcaseSlides;let showcaseIndex=0;let showcaseTimer=null;const showcase=$('#animeShowcase');
+  function renderShowcaseDots(){
+    $('#showcaseDots').innerHTML=showcaseSlides.map((d,i)=>'<button class="showcase-dot'+(i===showcaseIndex?' active':'')+'" data-showcase-slide="'+i+'" aria-label="Spotlight '+(i+1)+' of '+showcaseSlides.length+'" aria-pressed="'+String(i===showcaseIndex)+'"></button>').join('');
+  }
+  function setShowcaseSlide(n){
+    if(!showcaseSlides.length)return;
+    showcaseIndex=(n+showcaseSlides.length)%showcaseSlides.length;
+    const d=showcaseSlides[showcaseIndex];
+    showcase.dataset.slide=String(showcaseIndex);
+    $('#showcaseKicker').textContent=d.kicker;
+    $('#showcaseDescription').textContent=d.description;
+    $('#showcaseTags').innerHTML=d.tags.map(t=>'<span>'+esc(t)+'</span>').join('');
+    $('#showcaseStickerTop').textContent=d.top;
+    $('#showcaseStickerBottom').textContent=d.bottom;
+    $('#showcaseIndex').textContent=d.index;
+    const details=$('#showcaseDetailsLink'), addButton=$('#showcaseAddButton');
+    if(d.media){
+      $('#showcaseTitle').textContent=d.title;
+      showcase.classList.add('has-feature-banner');
+      const banner=safeImageUrl(d.media.bannerImage)||catalogCover(d.media);
+      if(banner)showcase.style.setProperty('--featured-banner','url("'+banner.replace(/["\\\r\n]/g,'')+'")');
+      else showcase.style.removeProperty('--featured-banner');
+      if(/^#[0-9a-f]{6}$/i.test(d.media.accentColor||''))showcase.style.setProperty('--featured-accent',d.media.accentColor);
+      else showcase.style.removeProperty('--featured-accent');
+      details.href=d.href;details.classList.remove('hidden');details.removeAttribute('tabindex');
+      addButton.classList.remove('hidden');addButton.textContent=d.kind==='ANIME'?'＋ Add to anime list':'＋ Add to manga shelf';
+      const activeUrl=d.href;
+      details.setAttribute('aria-label','View details for '+d.title);
+      addButton.setAttribute('aria-label','Add '+d.title+' to your '+(d.kind==='ANIME'?'anime list':'manga shelf'));
+      showcase.dataset.featuredKind=d.kind;
+      showcase.dataset.featuredId=String(d.media.id);
+      showcase.dataset.featuredUrl=activeUrl;
+    }else{
+      showcase.classList.remove('has-feature-banner');
+      showcase.style.removeProperty('--featured-banner');showcase.style.removeProperty('--featured-accent');
+      $('#showcaseTitle').innerHTML=d.title;
+      details.classList.add('hidden');details.setAttribute('tabindex','-1');
+      addButton.classList.add('hidden');
+      showcase.dataset.featuredKind='';showcase.dataset.featuredId='';showcase.dataset.featuredUrl='';
+    }
+    $$('#showcaseDots [data-showcase-slide]').forEach(button=>{
+      const active=Number(button.dataset.showcaseSlide)===showcaseIndex;
+      button.classList.toggle('active',active);button.setAttribute('aria-pressed',String(active));
+    });
+  }
+  function buildCatalogSpotlights(data){
+    const candidates=[
+      ...(data.anime||[]).slice(0,2).map(media=>({media,kind:'ANIME'})),
+      ...(data.manga||[]).slice(0,2).map(media=>({media,kind:'MANGA'})),
+      ...(data.airing||[]).slice(0,2).map(media=>({media,kind:'ANIME'}))
+    ];
+    const seen=new Set();
+    const chosen=candidates.filter(item=>{
+      const key=item.kind+':'+item.media.id;
+      if(seen.has(key)||!(safeImageUrl(item.media.bannerImage)||catalogCover(item.media)))return false;
+      seen.add(key);return true;
+    }).slice(0,5);
+    if(!chosen.length)return;
+    showcaseSlides=chosen.map((item,index)=>{
+      const media=item.media,kind=item.kind;
+      const label=kind==='ANIME'?'Anime':catalogKindLabel(media,kind);
+      const title=catalogTitle(media);
+      const score=Number(media.averageScore)>0?(Number(media.averageScore)/10).toFixed(1):'Not rated';
+      const meta=[media.format||label,catalogYear(media),catalogStatus(media.status)].filter(Boolean);
+      const genres=(media.genres||[]).slice(0,2);
+      const tags=[label,...genres];
+      if(media.seasonYear&&tags.length<3)tags.push(String(media.seasonYear));
+      return {media,kind,title,href:catalogDetailUrl(media,kind==='ANIME'?'anime':'manga'),
+        kicker:'HEKOMI SPOTLIGHT / '+label.toUpperCase(),
+        description:String(media.description||'').replace(/\s+/g,' ').trim().slice(0,245)||'Discover the synopsis, score, and details for this title.',
+        tags,top:'FEATURED FROM THE CATALOG ✦',
+        bottom:'★ '+score+' / '+meta.slice(0,2).join(' · '),
+        index:'SPOTLIGHT / '+label.toUpperCase()+' / '+media.id+' / '+(index+1)};
+    });
+    showcaseIndex=0;renderShowcaseDots();setShowcaseSlide(0);
+  }
+  function addShowcaseToShelf(){
+    const slide=showcaseSlides[showcaseIndex];
+    if(!slide||!slide.media)return;
+    const media=slide.media;
+    if(slide.kind==='ANIME'){
+      addLocalAnime({id:'anilist-'+media.id,title:catalogTitle(media),picture:catalogCover(media),cover:catalogCover(media),description:media.description||'',source:'AniList',status:'plan_to_watch',score:0,episodes:0,anilistId:media.id});
+    }else{
+      const type=media.countryOfOrigin==='KR'?'Manhwa':media.countryOfOrigin==='CN'?'Manhua':media.format==='ONE_SHOT'?'One-shot':'Manga';
+      addMangaEntry({title:catalogTitle(media),url:window.location.origin+catalogDetailUrl(media,'manga'),cover:catalogCover(media),description:media.description||'',type,source:'https://anilist.co/manga/'+Number(media.id)+'/',chapters:[]});
+    }
+  }
+  function pauseShowcase(){if(showcaseTimer){clearInterval(showcaseTimer);showcaseTimer=null;}}
+  function resumeShowcase(){pauseShowcase();if(!window.matchMedia('(prefers-reduced-motion: reduce)').matches)showcaseTimer=setInterval(()=>{if(!document.hidden&&$('#landing')&&!$('#landing').classList.contains('hidden'))setShowcaseSlide(showcaseIndex+1);},8500);}
+  $('#showcasePrev').onclick=()=>{setShowcaseSlide(showcaseIndex-1);resumeShowcase();};
+  $('#showcaseNext').onclick=()=>{setShowcaseSlide(showcaseIndex+1);resumeShowcase();};
+  $('#showcaseDots').addEventListener('click',event=>{const button=event.target.closest('[data-showcase-slide]');if(!button)return;setShowcaseSlide(Number(button.dataset.showcaseSlide));resumeShowcase();});
+  $('#showcaseAddButton').onclick=addShowcaseToShelf;
+  showcase.addEventListener('mouseenter',pauseShowcase);showcase.addEventListener('mouseleave',resumeShowcase);
+  showcase.addEventListener('focusin',pauseShowcase);showcase.addEventListener('focusout',resumeShowcase);
+  document.addEventListener('visibilitychange',()=>document.hidden?pauseShowcase():resumeShowcase());
+  renderShowcaseDots();setShowcaseSlide(0);resumeShowcase();
+
   async function health(){try{const h=await fetch('/api/health');if(h.ok){$('#healthLabel').textContent='Local backend connected';return;}}catch{}$('#healthLabel').textContent='Open via the local server to enable crawling & MAL sync';}health();
   function showMalTab(tab){$$('#malTabs button').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));const ids={mylist:'malMyListTab',search:'malSearchTab',local:'malLocalTab',about:'malAboutTab'};Object.entries(ids).forEach(([t,id])=>$('#'+id).classList.toggle('hidden',t!==tab));}
   function showMangaTab(tab){$$('#mangaTabs button').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));['library','discover','sources'].forEach(t=>$('#manga'+t[0].toUpperCase()+t.slice(1)+'Tab').classList.toggle('hidden',t!==tab));if(tab==='sources')renderSources();if(tab==='library')renderMangaLibrary();}

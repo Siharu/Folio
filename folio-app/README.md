@@ -39,3 +39,8 @@ Use the root `render.yaml` Blueprint on Render. This is a **Node web service**, 
 The landing page includes a cover-led catalog sourced from AniList: trending anime, trending manga, title search, genre tags, scores, release/status metadata and synopses. Each title has a server-rendered page with a unique HTML title, meta description, canonical URL, social share metadata and JSON-LD. The sitemap is generated dynamically from the featured catalog.
 
 AniList is the catalog data source. Cover art belongs to its respective rights holders. Public page indexing and search rankings are controlled by external search engines and are not guaranteed.
+
+
+## Catalog presentation
+
+The public discovery area uses live AniList banner and cover artwork, a rotating spotlight with direct actions, horizontally scrolling title shelves, a currently-airing section, and skeleton loading placeholders. Spotlight additions are saved to the same local lists as results added from search.
