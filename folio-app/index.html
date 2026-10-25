@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#080916"><meta name="description" content="Discover anime and manga with cover art, synopses, genres, and scores. Track your MyAnimeList anime list and build a personal manga library with Hekomi."><meta name="robots" content="index,follow,max-image-preview:large"><meta property="og:type" content="website"><meta property="og:site_name" content="Hekomi"><meta property="og:title" content="Hekomi — Anime &amp; Manga Discovery"><meta property="og:description" content="Discover anime and manga with cover art, synopses, genres, and scores. Keep your watchlist and reading library together."><meta property="og:url" content="__HEKOMI_CANONICAL_URL__"><meta property="og:image" content="__HEKOMI_PUBLIC_URL__/assets/hekomi-social.svg"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="Hekomi — Anime &amp; Manga Discovery"><meta name="twitter:description" content="Discover anime and manga with cover art, synopses, genres, and scores."><meta name="twitter:image" content="__HEKOMI_PUBLIC_URL__/assets/hekomi-social.svg"><link rel="canonical" href="__HEKOMI_CANONICAL_URL__"><link rel="sitemap" type="application/xml" href="/sitemap.xml"><link rel="preconnect" href="https://s4.anilist.co" crossorigin><link rel="manifest" href="/manifest.webmanifest"><link rel="icon" href="/icon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#080916"><meta name="description" content="Discover anime and manga with cover art, synopses, genres, and scores. Track your MyAnimeList anime list and build a personal manga library with Hekomi."><meta name="robots" content="index,follow,max-image-preview:large"><meta property="og:type" content="website"><meta property="og:site_name" content="Hekomi"><meta property="og:title" content="Hekomi — Anime &amp; Manga Discovery"><meta property="og:description" content="Discover anime and manga with cover art, synopses, genres, and scores. Keep your watchlist and reading library together."><meta property="og:url" content="__HEKOMI_CANONICAL_URL__"><meta property="og:image" content="__HEKOMI_PUBLIC_URL__/assets/hekomi-social.svg"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="Hekomi — Anime &amp; Manga Discovery"><meta name="twitter:description" content="Discover anime and manga with cover art, synopses, genres, and scores."><meta name="twitter:image" content="__HEKOMI_PUBLIC_URL__/assets/hekomi-social.svg"><link rel="canonical" href="__HEKOMI_CANONICAL_URL__"><link rel="sitemap" type="application/xml" href="/sitemap.xml"><link rel="preconnect" href="https://s4.anilist.co" crossorigin><link rel="manifest" href="/manifest.webmanifest"><link rel="icon" href="/icon.svg" type="image/svg+xml"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=Unbounded:wght@400;500;600;700&display=swap" rel="stylesheet">
 <title>Hekomi — Anime &amp; Manga Discovery, Tracking &amp; Reading</title>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"Hekomi","url":"__HEKOMI_CANONICAL_URL__","description":"Discover anime and manga with cover art, synopses, genres, scores, watchlist tracking and a personal reading library.","inLanguage":"en"}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Hekomi","applicationCategory":"EntertainmentApplication","operatingSystem":"Web","url":"__HEKOMI_CANONICAL_URL__","description":"A personal anime and manga discovery, tracking and reading workspace."}</script>
@@ -368,6 +368,37 @@ input[type="range"]:disabled{opacity:.45;cursor:not-allowed}
 @media(min-width:761px){.catalog-heading{gap:32px}.catalog-shelf-head{padding-bottom:3px}.catalog-row>.catalog-card{flex-basis:clamp(175px,16vw,215px)}.seasonal-shelf{padding:25px}.catalog-shelf{margin-top:38px}}
 @media(max-width:760px){.catalog-row{gap:11px;scroll-padding:2px}.catalog-row>.catalog-card{flex-basis:clamp(148px,43vw,190px)}.catalog-card:hover{transform:translateY(-3px)}.anime-showcase:after{animation-duration:13s}.showcase-orbit{animation-duration:48s}.showcase-copy{animation-duration:.6s}.catalog-discovery:before{top:180px;height:360px}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;transition-delay:0ms!important}.catalog-card,.showcase-copy{animation:none!important}.showcase-orbit{animation:none!important}.anime-showcase:after{display:none}}
+
+
+/* Hekomi signature typography: art-zine headlines, precise terminal labels, soft humanist UI. */
+:root{--font-ui:"Space Grotesk",ui-sans-serif,system-ui,sans-serif;--font-display:"Unbounded","Space Grotesk",sans-serif;--font-mono:"IBM Plex Mono",ui-monospace,monospace;--acid:#d7ff72;--lilac:#c9b7ff;--ink:#090a10}
+html,body{font-family:var(--font-ui);font-feature-settings:"ss01" on,"cv11" on;font-optical-sizing:auto;letter-spacing:-.012em}
+button,input,select,textarea{font-family:var(--font-ui)}
+h1,h2,h3,.workspace-head h1,.catalog-heading h2,.showcase-copy h2{font-family:var(--font-display);font-weight:650;letter-spacing:-.065em}
+.workspace-head h1{font-size:clamp(26px,3.4vw,39px);line-height:1.12}
+.catalog-heading h2{font-size:clamp(29px,4.5vw,48px);line-height:1.06;max-width:720px}
+.catalog-shelf-head h3{font-size:clamp(17px,2vw,23px);letter-spacing:-.055em}
+.eyebrow,.showcase-kicker,.showcase-tags span,.mode-label,.small-label,.catalog-attribution,.catalog-shelf-head .eyebrow{font-family:var(--font-mono);letter-spacing:.13em;text-transform:uppercase}
+.eyebrow{font-size:10px;color:var(--acid)}
+.showcase-copy h2{font-size:clamp(31px,4.7vw,55px);line-height:1.02;letter-spacing:-.075em}
+.showcase-copy h2 em{font-family:Georgia,"Times New Roman",serif;font-style:italic;letter-spacing:-.07em}
+.showcase-kicker{font-size:9px;letter-spacing:.16em}
+.showcase-index{font-family:var(--font-mono);letter-spacing:.12em;font-size:9px}
+.btn-primary,.btn-secondary,.catalog-search button,.showcase-primary,.showcase-add{font-weight:700;letter-spacing:-.025em}
+.btn-primary{background:var(--acid);color:#15170c;border-color:var(--acid);box-shadow:0 0 0 0 #d7ff7230;transition:transform .18s ease,box-shadow .18s ease,filter .18s ease}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 28px #d7ff7222;filter:saturate(1.12)}
+.catalog-discovery{position:relative}
+.catalog-discovery:before{content:"";position:absolute;z-index:-1;left:50%;top:90px;transform:translateX(-50%);width:min(1100px,100vw);height:480px;pointer-events:none;background:radial-gradient(ellipse at 18% 20%,#c9b7ff0c,transparent 45%),radial-gradient(ellipse at 82% 15%,#d7ff7208,transparent 42%)}
+.catalog-shelf-head .eyebrow{color:#a9a1c6;font-size:9px}
+.catalog-card .card-title{font-family:var(--font-ui);font-weight:700;letter-spacing:-.035em}
+.catalog-card:hover .card-title{color:var(--acid)}
+.catalog-card{transition:transform .22s cubic-bezier(.2,.8,.2,1),border-color .22s ease,box-shadow .22s ease}
+.catalog-card:hover{border-color:#d7ff7252;box-shadow:0 14px 36px #0005,0 0 0 1px #d7ff7210}
+.advanced-toggle-title strong,.choice h2{font-family:var(--font-display);letter-spacing:-.05em}
+.choice h2{font-size:clamp(18px,2.4vw,25px)}
+.input:focus,select.input:focus{outline:1px solid var(--acid);border-color:var(--acid);box-shadow:0 0 0 3px #d7ff7210}
+::selection{background:var(--acid);color:#15170c}
+@media(max-width:760px){.showcase-copy h2{font-size:clamp(29px,8.5vw,42px)}.catalog-heading h2{font-size:clamp(27px,8vw,37px)}}
 
 </style>
 
