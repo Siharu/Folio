@@ -5,12 +5,22 @@ on:
     branches: [main]
     paths:
       - 'folio-app/**'
+      - 'index.html'
+      - 'icon.svg'
+      - 'manifest.webmanifest'
+      - 'sw.js'
+      - 'assets/**'
       - 'render.yaml'
       - '.github/workflows/validate-app.yml'
   pull_request:
     branches: [main]
     paths:
       - 'folio-app/**'
+      - 'index.html'
+      - 'icon.svg'
+      - 'manifest.webmanifest'
+      - 'sw.js'
+      - 'assets/**'
       - 'render.yaml'
       - '.github/workflows/validate-app.yml'
   workflow_dispatch:
