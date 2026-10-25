@@ -297,6 +297,78 @@ input[type="range"]:disabled{opacity:.45;cursor:not-allowed}
 .genre-quick-chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:13px}.genre-chip{border:1px solid var(--line);border-radius:999px;background:var(--panel2);color:var(--muted);font:inherit;font-size:11px;padding:6px 10px;cursor:pointer;transition:background .18s,border-color .18s,color .18s}.genre-chip[aria-pressed="true"]{background:#6d4bc433;border-color:var(--violet);color:var(--text)}.genre-chip:focus-visible{outline:2px solid var(--violet);outline-offset:3px}.catalog-load-more{display:flex;justify-content:center;padding:18px 0 28px}.catalog-load-more button{min-width:180px}@keyframes advancedFiltersIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
 @media(max-width:760px){.advanced-filter-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.advanced-score-field{grid-column:span 2}.advanced-toggle{padding:13px}.advanced-filter-body{padding:0 13px 13px}.advanced-filter-actions{align-items:flex-start}.advanced-filter-actions #filterResultCount{padding-top:7px}}
 @media(prefers-reduced-motion:reduce){.advanced-filter-body{animation:none}}
+
+/* Hekomi motion system — cinematic depth, intentional motion, reduced-motion safe. */
+:root{--hk-ease:cubic-bezier(.22,.75,.2,1);--hk-glow:rgba(174,151,255,.16)}
+.catalog-discovery{position:relative;isolation:isolate;scroll-margin-top:24px}
+.catalog-discovery:before{content:"";position:absolute;z-index:-1;left:50%;top:140px;width:min(1100px,115vw);height:520px;transform:translateX(-50%);pointer-events:none;background:radial-gradient(ellipse at 18% 25%,rgba(151,119,255,.085),transparent 42%),radial-gradient(ellipse at 82% 45%,rgba(89,219,190,.065),transparent 38%);filter:blur(18px)}
+.catalog-heading{position:relative}
+.catalog-heading>div:first-child{position:relative}
+.catalog-heading .eyebrow{display:inline-flex;align-items:center;gap:9px}
+.catalog-heading .eyebrow:before{content:"";width:18px;height:1px;background:currentColor;box-shadow:0 0 12px currentColor}
+.catalog-heading h2{letter-spacing:-.065em;text-wrap:balance}
+.catalog-search{position:relative;isolation:isolate}
+.catalog-search:before{content:"";position:absolute;inset:-1px;z-index:-1;border-radius:14px;background:linear-gradient(115deg,#a997ff75,#74e2c45c,#a997ff75);opacity:0;transition:opacity .28s var(--hk-ease)}
+.catalog-search:focus-within:before{opacity:1}
+.catalog-search input{transition:border-color .25s,box-shadow .25s,background .25s}
+.catalog-search input:focus{background:var(--panel);box-shadow:0 0 0 4px var(--hk-glow)}
+.anime-showcase{transform:translateZ(0);transition:border-color .45s var(--hk-ease),box-shadow .45s var(--hk-ease),background .65s var(--hk-ease)}
+.anime-showcase:after{content:"";position:absolute;inset:0;z-index:2;pointer-events:none;background:linear-gradient(110deg,transparent 15%,rgba(255,255,255,.055) 46%,transparent 67%);transform:translateX(-120%);animation:hkSheen 9s var(--hk-ease) infinite}
+.anime-showcase:hover{border-color:#8e7bbd9c;box-shadow:0 28px 85px #0008,0 0 36px #9b83e414}
+.showcase-copy{animation:hkCopyIn .75s var(--hk-ease) both}
+.showcase-kicker i{animation:signalPulse 2s ease-in-out infinite}
+.poster{will-change:transform;transition:filter .5s var(--hk-ease),box-shadow .5s var(--hk-ease)}
+.anime-showcase:hover .poster-front{box-shadow:0 28px 60px #000b,0 0 28px #9cebd42b}
+.showcase-orbit{animation:hkOrbit 32s linear infinite}
+.orbit-two{animation-direction:reverse;animation-duration:44s}
+.showcase-scan{background-size:200% 100%;animation:hkScan 5s ease-in-out infinite}
+.showcase-dot{cursor:pointer}
+.showcase-arrow,.showcase-dot,.rail-arrow{transition:transform .2s var(--hk-ease),background .2s,border-color .2s,color .2s}
+.showcase-arrow:hover,.rail-arrow:hover{transform:translateY(-2px);border-color:#a997ff;color:#d8ceff}
+.showcase-arrow:active,.rail-arrow:active{transform:scale(.94)}
+.catalog-shelf{position:relative}
+.catalog-shelf-head{position:relative}
+.catalog-shelf-head h3{transition:color .25s}
+.catalog-shelf:hover .catalog-shelf-head h3{color:var(--text)}
+.catalog-row{display:flex!important;overflow-x:auto;overflow-y:hidden;gap:14px;padding:3px 2px 18px;scroll-snap-type:x mandatory;scroll-padding:4px;overscroll-behavior-x:contain;scrollbar-width:thin;scrollbar-color:#5a4e78 transparent}
+.catalog-row::-webkit-scrollbar{height:5px}
+.catalog-row::-webkit-scrollbar-track{background:transparent}
+.catalog-row::-webkit-scrollbar-thumb{background:linear-gradient(90deg,#7866a7,#5a9b8d);border-radius:99px}
+.catalog-row>.catalog-card{flex:0 0 clamp(155px,17vw,205px);scroll-snap-align:start}
+.catalog-card{position:relative;isolation:isolate;border-color:color-mix(in srgb,var(--line) 86%,#a997ff 14%);box-shadow:0 6px 20px #0000000a;transition:transform .38s var(--hk-ease),border-color .3s,box-shadow .38s var(--hk-ease);animation:hkCardEnter .55s var(--hk-ease) both}
+.catalog-card:after{content:"";position:absolute;inset:0;z-index:4;pointer-events:none;border-radius:inherit;opacity:0;background:linear-gradient(135deg,#c5b4ff1b,transparent 45%,#8fe8d315);transition:opacity .35s}
+.catalog-card:hover{transform:translateY(-7px) scale(1.012);border-color:#9d8ad6a6;box-shadow:0 18px 38px #0005,0 0 0 1px #b8a6ff12}
+.catalog-card:hover:after{opacity:1}
+.catalog-cover{background-color:#171520}
+.catalog-cover:after{transition:opacity .35s}
+.catalog-cover img{transition:transform .75s var(--hk-ease),filter .45s}
+.catalog-card:hover .catalog-cover img{transform:scale(1.075);filter:saturate(1.08)}
+.catalog-card-body{position:relative;z-index:1}
+.catalog-card h4{transition:color .2s}
+.catalog-card:hover h4 a{color:var(--violet)}
+.catalog-badge{box-shadow:0 3px 14px #0002}
+.catalog-genre{transition:color .2s,border-color .2s,background .2s}
+.catalog-card:hover .catalog-genre{border-color:#9e8bd444}
+.catalog-loading{background-image:linear-gradient(110deg,transparent 20%,#ffffff07 45%,transparent 70%);background-size:220% 100%;animation:hkSkeleton 2.1s ease-in-out infinite}
+.catalog-load-more .btn-secondary{transition:transform .2s var(--hk-ease),border-color .2s,box-shadow .2s}
+.catalog-load-more .btn-secondary:hover{transform:translateY(-2px);border-color:#9e8bd4;box-shadow:0 8px 24px #0003}
+.advanced-search{transition:border-color .3s,box-shadow .3s}
+.advanced-search:focus-within{border-color:#8874ba80;box-shadow:0 0 0 3px #a997ff0b}
+.genre-chip{transition:transform .2s var(--hk-ease),background .2s,border-color .2s}
+.genre-chip:hover{transform:translateY(-2px)}
+.catalog-attribution{opacity:.82;transition:opacity .25s}
+.catalog-attribution:hover{opacity:1}
+:where(button,a,input,select,[tabindex]):focus-visible{outline:2px solid #b9a6ff!important;outline-offset:3px}
+@keyframes hkSheen{0%,66%,100%{transform:translateX(-120%)}78%{transform:translateX(120%)}}
+@keyframes hkCopyIn{from{opacity:0;translate:0 12px;filter:blur(5px)}to{opacity:1;translate:0 0;filter:blur(0)}}
+@keyframes hkOrbit{to{rotate:360deg}}
+@keyframes hkScan{0%,100%{background-position:0% 50%;opacity:.5}50%{background-position:100% 50%;opacity:1}}
+@keyframes hkCardEnter{from{opacity:0;translate:0 12px}to{opacity:1;translate:0 0}}
+@keyframes hkSkeleton{0%,100%{background-position:100% 0}50%{background-position:-100% 0}}
+@media(min-width:761px){.catalog-heading{gap:32px}.catalog-shelf-head{padding-bottom:3px}.catalog-row>.catalog-card{flex-basis:clamp(175px,16vw,215px)}.seasonal-shelf{padding:25px}.catalog-shelf{margin-top:38px}}
+@media(max-width:760px){.catalog-row{gap:11px;scroll-padding:2px}.catalog-row>.catalog-card{flex-basis:clamp(148px,43vw,190px)}.catalog-card:hover{transform:translateY(-3px)}.anime-showcase:after{animation-duration:13s}.showcase-orbit{animation-duration:48s}.showcase-copy{animation-duration:.6s}.catalog-discovery:before{top:180px;height:360px}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;transition-delay:0ms!important}.catalog-card,.showcase-copy{animation:none!important}.showcase-orbit{animation:none!important}.anime-showcase:after{display:none}}
+
 </style>
 </head>
 <body>
