@@ -432,6 +432,8 @@ const ANILIST_ENDPOINT = 'https://graphql.anilist.co';
 const MEDIA_CATALOG_FIELDS = 'id idMal type title { romaji english native } coverImage { color extraLarge large medium } bannerImage description(asHtml:false) genres averageScore popularity status episodes chapters volumes seasonYear format countryOfOrigin startDate { year month day } isAdult';
 const HOME_CATALOG_QUERY = 'query HekomiHomeCatalog($season:MediaSeason!,$seasonYear:Int!) { anime: Page(page:1,perPage:10) { media(type:ANIME,sort:[TRENDING_DESC,POPULARITY_DESC],isAdult:false) { ' + MEDIA_CATALOG_FIELDS + ' } } manga: Page(page:1,perPage:10) { media(type:MANGA,sort:[TRENDING_DESC,POPULARITY_DESC],isAdult:false) { ' + MEDIA_CATALOG_FIELDS + ' } } airing: Page(page:1,perPage:10) { media(type:ANIME,status:RELEASING,sort:[POPULARITY_DESC],isAdult:false) { ' + MEDIA_CATALOG_FIELDS + ' } } seasonal: Page(page:1,perPage:10) { media(type:ANIME,season:$season,seasonYear:$seasonYear,sort:[POPULARITY_DESC],isAdult:false) { ' + MEDIA_CATALOG_FIELDS + ' } } }';
 function currentAnimeSeason(date=new Date()) { const month=date.getUTCMonth()+1; return month<=3?'WINTER':month<=6?'SPRING':month<=9?'SUMMER':'FALL'; }
+const SEASON_CATALOG_QUERY = 'query HekomiSeasonCatalog($season:MediaSeason!,$seasonYear:Int!) { seasonal: Page(page:1,perPage:18) { media(type:ANIME,season:$season,seasonYear:$seasonYear,sort:[POPULARITY_DESC],isAdult:false) { ' + MEDIA_CATALOG_FIELDS + ' } } }';
+const seasonCatalogCache = new Map();
 const CATALOG_SEARCH_QUERY = 'query HekomiCatalogSearch($search:String!,$page:Int!) { anime: Page(page:$page,perPage:24) { pageInfo { currentPage hasNextPage } media(search:$search,type:ANIME,sort:[SEARCH_MATCH],isAdult:false) { ' + MEDIA_CATALOG_FIELDS + ' } } manga: Page(page:$page,perPage:24) { pageInfo { currentPage hasNextPage } media(search:$search,type:MANGA,sort:[SEARCH_MATCH],isAdult:false) { ' + MEDIA_CATALOG_FIELDS + ' } } }';
 const MEDIA_DETAIL_QUERY = 'query HekomiMediaDetail($id:Int!) { Media(id:$id) { ' + MEDIA_CATALOG_FIELDS + ' } }';
 const publicCatalogCache = { data:null, expiresAt:0 };
@@ -515,6 +517,20 @@ async function getPublicCatalog(force=false) {
   })();
   return publicCatalogInFlight;
 }
+async function getSeasonCatalog(rawSeason,rawYear) {
+  const season=String(rawSeason||'').toUpperCase();
+  const year=Math.floor(Number(rawYear)||new Date().getUTCFullYear());
+  if(!['WINTER','SPRING','SUMMER','FALL'].includes(season)) throw new Error('Choose a valid anime season.');
+  if(year<1940||year>new Date().getUTCFullYear()+2) throw new Error('Choose a valid season year.');
+  const key=season+':'+year, cached=seasonCatalogCache.get(key);
+  if(cached&&Date.now()<cached.expiresAt)return cached.data;
+  const payload=await requestAniList(SEASON_CATALOG_QUERY,{season,seasonYear:year});
+  const data={season,seasonYear:year,anime:(payload.seasonal&&payload.seasonal.media||[]).map(packMedia).filter(Boolean),source:'AniList',updatedAt:new Date().toISOString()};
+  seasonCatalogCache.set(key,{data,expiresAt:Date.now()+30*60*1000});
+  if(seasonCatalogCache.size>24)seasonCatalogCache.delete(seasonCatalogCache.keys().next().value);
+  return data;
+}
+
 async function searchPublicCatalog(rawQuery, rawPage=1) {
   const query = String(rawQuery || '').trim().replace(/\s+/g,' ').slice(0,100);
   if (query.length < 2) throw new Error('Enter at least two characters to search.');
@@ -625,6 +641,10 @@ const server=http.createServer(async(req,res)=>{
   if(req.method==='GET' && url.pathname==='/api/catalog') {
     try { return send(res,200,await getPublicCatalog(url.searchParams.get('refresh')==='1'),{'Cache-Control':'public, max-age=300'}); }
     catch(e) { return send(res,502,{error:'The public catalog is temporarily unavailable. '+(e.message||'')}); }
+  }
+  if(req.method==='GET' && url.pathname==='/api/catalog/season') {
+    try { return send(res,200,await getSeasonCatalog(url.searchParams.get('season'),url.searchParams.get('year')) ,{'Cache-Control':'public, max-age=1800'}); }
+    catch(e) { return send(res,400,{error:e.message||'Seasonal catalog could not be loaded.'}); }
   }
   if(req.method==='GET' && url.pathname==='/api/catalog/search') {
     try { return send(res,200,await searchPublicCatalog(url.searchParams.get('q'),url.searchParams.get('page')),{'Cache-Control':'public, max-age=300'}); }
