@@ -444,6 +444,39 @@ input[type="range"]:disabled{opacity:.45;cursor:not-allowed}
     }catch(e){$('#animeCatalogGrid').innerHTML='<div class="catalog-loading">The public catalog could not load right now. Your saved lists and the rest of Hekomi still work.</div>';$('#mangaCatalogGrid').innerHTML='<div class="catalog-loading">Catalog unavailable · try again later.</div>';$('#airingCatalogGrid').innerHTML='<div class="catalog-loading">Catalog unavailable · try again later.</div>';$('#catalogSearchStatus').textContent=e.message;}finally{publicCatalogRequest=null;}})();
     return publicCatalogRequest;
   }
+  let lastCatalogSearchItems=[],lastCatalogSearchQuery='';
+  const catalogFilterIds=['filterMediaType','filterGenre','filterFormat','filterStatus','filterYear','filterMinScore','filterSort'];
+  function catalogFilterValues(){
+    return {type:$('#filterMediaType').value,genre:$('#filterGenre').value,format:$('#filterFormat').value,status:$('#filterStatus').value,year:$('#filterYear').value,score:Number($('#filterMinScore').value||0),sort:$('#filterSort').value};
+  }
+  function updateCatalogFilterChrome(){
+    const f=catalogFilterValues();
+    $('#filterScoreValue').textContent=f.score+'/10';
+    const active=[f.type!=='all',!!f.genre,!!f.format,!!f.status,!!f.year,f.score>0,f.sort!=='match'].filter(Boolean).length;
+    $('#activeFilterCount').textContent=active+' active';
+    $('#filterMinScore').style.setProperty('--range-progress',(f.score/10*100)+'%');
+  }
+  function renderFilteredCatalogResults(){
+    updateCatalogFilterChrome();
+    if(!lastCatalogSearchItems.length){$('#filterResultCount').textContent='Search a title to use filters.';return;}
+    const f=catalogFilterValues();
+    let list=lastCatalogSearchItems.filter(m=>{
+      if(f.type!=='all'&&m._catalogKind!==f.type)return false;
+      if(f.genre&&!(m.genres||[]).includes(f.genre))return false;
+      if(f.format&&m.format!==f.format)return false;
+      if(f.status&&m.status!==f.status)return false;
+      if(f.year&&Number(m.seasonYear)!==Number(f.year))return false;
+      if(Number(m.averageScore||0)<f.score*10)return false;
+      return true;
+    });
+    if(f.sort==='score')list.sort((a,b)=>(b.averageScore||0)-(a.averageScore||0));
+    else if(f.sort==='popular')list.sort((a,b)=>(b.popularity||0)-(a.popularity||0));
+    else if(f.sort==='title')list.sort((a,b)=>(a.title||'').localeCompare(b.title||''));
+    else if(f.sort==='newest')list.sort((a,b)=>(b.seasonYear||0)-(a.seasonYear||0));
+    $('#filterResultCount').textContent=list.length+' of '+lastCatalogSearchItems.length+' results';
+    $('#catalogSearchResults').innerHTML=list.length?list.map(m=>catalogCardMarkup(m,m._catalogKind)).join(''):'<div class="catalog-loading">No titles match these filters. Try lowering the score or clearing a filter.</div>';
+    $('#catalogSearchStatus').textContent=list.length+' filtered result'+(list.length===1?'':'s')+' for “'+lastCatalogSearchQuery+'”.';
+  }
   async function searchPublicCatalog(event){
     event.preventDefault();const query=$('#catalogSearchInput').value.trim();
     if(query.length<2){$('#catalogSearchStatus').textContent='Enter at least two characters to search the catalog.';return;}
@@ -451,12 +484,27 @@ input[type="range"]:disabled{opacity:.45;cursor:not-allowed}
     $('#catalogSearchResults').classList.remove('hidden');$('#catalogSearchResults').innerHTML=catalogLoadingMarkup(6);
     try{
       const data=await api('/api/catalog/search?q='+encodeURIComponent(query));
-      const list=[...(data.anime||[]).map(m=>Object.assign({},m,{_catalogKind:'ANIME'})),...(data.manga||[]).map(m=>Object.assign({},m,{_catalogKind:'MANGA'}))];
-      $('#catalogSearchResults').innerHTML=list.length?list.map(m=>catalogCardMarkup(m,m._catalogKind)).join(''):'<div class="catalog-loading">No matching titles. Try the original title or an alternate spelling.</div>';
-      $('#catalogSearchStatus').textContent=list.length+' catalog result'+(list.length===1?'':'s')+' for “'+query+'”.';
+      lastCatalogSearchItems=[...(data.anime||[]).map(m=>Object.assign({},m,{_catalogKind:'ANIME'})),...(data.manga||[]).map(m=>Object.assign({},m,{_catalogKind:'MANGA'}))];
+      lastCatalogSearchQuery=query;
+      const genres=[...new Set(lastCatalogSearchItems.flatMap(m=>m.genres||[]))].sort((a,b)=>a.localeCompare(b));
+      const genreSelect=$('#filterGenre'),selectedGenre=genreSelect.value;
+      genreSelect.innerHTML='<option value="">All genres</option>'+genres.map(g=>'<option value="'+esc(g)+'">'+esc(g)+'</option>').join('');
+      if(genres.includes(selectedGenre))genreSelect.value=selectedGenre;
+      renderFilteredCatalogResults();
+      if(!lastCatalogSearchItems.length){$('#catalogSearchResults').innerHTML='<div class="catalog-loading">No matching titles. Try the original title or an alternate spelling.</div>';$('#filterResultCount').textContent='0 results';}
     }catch(e){$('#catalogSearchResults').innerHTML='<div class="catalog-loading">Search failed. '+esc(e.message)+'</div>';$('#catalogSearchStatus').textContent='The catalog search is temporarily unavailable.';}
     finally{button.disabled=false;button.textContent='Search';}
   }
+  catalogFilterIds.forEach(id=>$('#'+id).addEventListener('input',()=>{if(lastCatalogSearchItems.length)renderFilteredCatalogResults();else updateCatalogFilterChrome();}));
+  $('#clearCatalogFilters').addEventListener('click',()=>{
+    $('#filterMediaType').value='all';$('#filterGenre').value='';$('#filterFormat').value='';$('#filterStatus').value='';$('#filterYear').value='';$('#filterMinScore').value='0';$('#filterSort').value='match';
+    if(lastCatalogSearchItems.length)renderFilteredCatalogResults();else updateCatalogFilterChrome();
+  });
+  $('#advancedFiltersToggle').addEventListener('click',()=>{
+    const toggle=$('#advancedFiltersToggle'),body=$('#advancedFilterBody'),expanded=toggle.getAttribute('aria-expanded')==='true';
+    toggle.setAttribute('aria-expanded',String(!expanded));body.classList.toggle('is-collapsed',expanded);$('#advancedChevron').textContent=expanded?'›':'⌄';
+  });
+  updateCatalogFilterChrome();
   $('#catalogSearchForm').addEventListener('submit',searchPublicCatalog);
   $('#refreshCatalog').addEventListener('click',()=>loadPublicCatalog(true));
   $('#discoverCatalog').addEventListener('click',event=>{const button=event.target.closest('[data-rail-scroll]');if(!button)return;const target=document.getElementById(button.dataset.railScroll);if(!target)return;const reduce=window.matchMedia('(prefers-reduced-motion: reduce)').matches;target.scrollBy({left:Number(button.dataset.direction||1)*target.clientWidth*.82,behavior:reduce?'auto':'smooth'});});
