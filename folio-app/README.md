@@ -1,6 +1,6 @@
-# Folio Night Edition
+# Hekomi Night Edition
 
-Folio is a two-mode personal anime and manga app: **MAL Client** and **Manga Crawler**.
+Hekomi is a two-mode personal anime and manga app: **MAL Client** and **Manga Crawler**.
 
 ## Run locally
 
@@ -23,7 +23,11 @@ Register **one** MAL application at https://myanimelist.net/apiconfig. Configure
 
 For local development, add `http://localhost:4173/api/mal/auth/callback` as the app's redirect URL. For production, register the exact HTTPS callback URL: `https://YOUR-SERVICE.onrender.com/api/mal/auth/callback`.
 
-Users click **Sign in with MyAnimeList**, authorize their own account on MAL, and return to Folio. OAuth code exchange and refresh happen server-side. Each user's access/refresh tokens are isolated inside an encrypted HttpOnly cookie; tokens aren't put in browser storage or requested manually. No Client ID or Client Secret should be hardcoded into this repository.
+Users click **Sign in with MyAnimeList**, authorize their own account on MAL, and return to Hekomi. OAuth code exchange and refresh happen server-side. Each user's access/refresh tokens are isolated inside an encrypted HttpOnly cookie; tokens aren't put in browser storage or requested manually. No Client ID or Client Secret should be hardcoded into this repository.
+
+## Appearance
+
+Choose **Midnight**, **Late Night**, **Dawn**, or **Device Settings** from the appearance button in the app header. Device Settings follows the operating system's current light/dark preference and switches when the system setting changes. The chosen mode is saved in this browser.
 
 ## Deploy
 
