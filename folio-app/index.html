@@ -377,7 +377,7 @@ html[data-theme="dawn"] .catalog-genre{background:#f2eaf8}html[data-theme="dawn"
         '<span class="theme-check" aria-hidden="true">✓</span></button>'
     ).join('');
     openModal('<div class="modal-top"><div><h2>Appearance</h2><p class="theme-settings-copy">Set the atmosphere for Hekomi. Your choice is saved on this device.</p></div><button class="close" data-close aria-label="Close appearance settings">×</button></div><div class="theme-options">'+buttons+'</div><p class="small muted" style="margin:14px 0 0">Device Settings updates automatically when your operating system switches between light and dark appearance.</p>');
-    $('#modalRoot [data-theme-choice]').forEach(button=>button.addEventListener('click',()=>applyTheme(button.dataset.themeChoice,true)));
+    $$('#modalRoot [data-theme-choice]').forEach(button=>button.addEventListener('click',()=>applyTheme(button.dataset.themeChoice,true)));
   }
   applyTheme(themePreference);
   const syncDeviceTheme=()=>{if(themePreference==='device')applyTheme('device');};

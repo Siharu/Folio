@@ -45,7 +45,7 @@ jobs:
           }
           NODE
           if (html.includes("$('#modalRoot [data-theme-choice]').forEach")) throw new Error('Appearance settings must use the all-match selector for each theme option.');
-          if (!html.includes("$('#modalRoot [data-theme-choice]').forEach")) throw new Error('Appearance theme bindings are missing.');
+          if (!html.includes("$$('#modalRoot [data-theme-choice]').forEach")) throw new Error('Appearance theme bindings are missing.');
           node --check /tmp/folio-inline-check.js
       - name: Smoke test server
         shell: bash
