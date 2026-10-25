@@ -46,7 +46,7 @@ for (let i = 0; i < count; i++) {
   const raw = archive.subarray(start, start + compressedSize);
   let data;
   if (method === 0) data = Buffer.from(raw);
-  else if (method === 8) data = inflateRawSync(raw);
+  else if (method === 8) { try { data = inflateRawSync(raw); } catch (error) { throw new Error(`Failed to inflate ${name} (compressed=${compressedSize}, offset=${start}): ${error.message}`); } }
   else throw new Error(`Unsupported ZIP compression method ${method} for ${name}`);
   if (data.length !== uncompressedSize) throw new Error(`Size mismatch for ${name}`);
   files.push({ relative, data });
