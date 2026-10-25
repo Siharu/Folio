@@ -32,3 +32,10 @@ Choose **Midnight**, **Late Night**, **Dawn**, or **Device Settings** from the a
 ## Deploy
 
 Use the root `render.yaml` Blueprint on Render. This is a **Node web service**, not a Static Site, because the crawler and OAuth callback run in the Node backend. The source files are in `folio-app/`; source-bundle chunks are just an archive copy and aren't used during the Render build.
+
+
+## Public discovery catalog
+
+The landing page includes a cover-led catalog sourced from AniList: trending anime, trending manga, title search, genre tags, scores, release/status metadata and synopses. Each title has a server-rendered page with a unique HTML title, meta description, canonical URL, social share metadata and JSON-LD. The sitemap is generated dynamically from the featured catalog.
+
+AniList is the catalog data source. Cover art belongs to its respective rights holders. Public page indexing and search rankings are controlled by external search engines and are not guaranteed.

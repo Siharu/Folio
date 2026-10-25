@@ -427,11 +427,220 @@ async function malRequest(req, res, pathname, query) {
   }
 }
 
+
+const ANILIST_ENDPOINT = 'https://graphql.anilist.co';
+const MEDIA_CATALOG_FIELDS = 'id idMal type title { romaji english native } coverImage { extraLarge large medium } bannerImage description(asHtml:false) genres averageScore popularity status episodes chapters volumes seasonYear format countryOfOrigin startDate { year month day } isAdult';
+const HOME_CATALOG_QUERY = 'query HekomiHomeCatalog { anime: Page(page:1,perPage:10) { media(type:ANIME,sort:[TRENDING_DESC,POPULARITY_DESC],isAdult:false) { ' + MEDIA_CATALOG_FIELDS + ' } } manga: Page(page:1,perPage:10) { media(type:MANGA,sort:[TRENDING_DESC,POPULARITY_DESC],isAdult:false) { ' + MEDIA_CATALOG_FIELDS + ' } } }';
+const CATALOG_SEARCH_QUERY = 'query HekomiCatalogSearch($search:String!) { anime: Page(page:1,perPage:12) { media(search:$search,type:ANIME,sort:[SEARCH_MATCH],isAdult:false) { ' + MEDIA_CATALOG_FIELDS + ' } } manga: Page(page:1,perPage:12) { media(search:$search,type:MANGA,sort:[SEARCH_MATCH],isAdult:false) { ' + MEDIA_CATALOG_FIELDS + ' } } }';
+const MEDIA_DETAIL_QUERY = 'query HekomiMediaDetail($id:Int!) { Media(id:$id) { ' + MEDIA_CATALOG_FIELDS + ' } }';
+const publicCatalogCache = { data:null, expiresAt:0 };
+const publicCatalogSearchCache = new Map();
+const mediaDetailCache = new Map();
+let publicCatalogInFlight = null;
+
+function htmlEscape(value) {
+  return String(value == null ? '' : value).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+}
+function mediaSlug(value) {
+  return String(value || '').toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,90) || 'series';
+}
+function publicOrigin(req) {
+  const configured = String(process.env.HEKOMI_PUBLIC_URL || process.env.RENDER_EXTERNAL_URL || '').trim();
+  if (configured) {
+    try { const parsed = new URL(configured); if (parsed.protocol === 'https:' || parsed.protocol === 'http:') return parsed.origin; } catch {}
+  }
+  const host = String(req.headers['x-forwarded-host'] || req.headers.host || ('localhost:' + PORT)).split(',')[0].trim();
+  const proto = String(req.headers['x-forwarded-proto'] || 'http').split(',')[0].trim().toLowerCase();
+  try { return new URL((proto === 'https' ? 'https://' : 'http://') + host).origin; }
+  catch { return 'http://localhost:' + PORT; }
+}
+async function requestAniList(query, variables={}) {
+  const response = await fetch(ANILIST_ENDPOINT, {
+    method:'POST',
+    headers:{'Content-Type':'application/json','Accept':'application/json'},
+    body:JSON.stringify({query,variables}),
+    signal:AbortSignal.timeout(12000)
+  });
+  let payload;
+  try { payload = await response.json(); } catch { throw new Error('The catalog source returned an unreadable response.'); }
+  if (!response.ok || payload.errors || !payload.data) {
+    const message = payload.errors && payload.errors[0] && payload.errors[0].message;
+    throw new Error(message || ('The catalog source returned HTTP ' + response.status + '.'));
+  }
+  return payload.data;
+}
+function packMedia(item) {
+  if (!item || item.isAdult) return null;
+  const title = item.title && (item.title.english || item.title.romaji || item.title.native) || 'Untitled';
+  const cover = item.coverImage && (item.coverImage.extraLarge || item.coverImage.large || item.coverImage.medium) || '';
+  return {
+    id:Number(item.id), idMal:item.idMal || null, type:item.type || '',
+    title,titleEnglish:item.title && item.title.english || '',
+    titleRomaji:item.title && item.title.romaji || '',
+    titleNative:item.title && item.title.native || '',
+    cover:cover, bannerImage:item.bannerImage || '',
+    description:cleanText(item.description || '').slice(0,3500),
+    genres:Array.isArray(item.genres)?item.genres.slice(0,8):[],
+    averageScore:Number(item.averageScore)||0,popularity:Number(item.popularity)||0,
+    status:item.status||'',episodes:item.episodes||null,chapters:item.chapters||null,
+    volumes:item.volumes||null,seasonYear:item.seasonYear||(item.startDate&&item.startDate.year)||null,
+    format:item.format||'',countryOfOrigin:item.countryOfOrigin||'',
+    siteUrl:item.siteUrl||'',isAdult:false,startDate:item.startDate||null
+  };
+}
+async function getPublicCatalog(force=false) {
+  if (!force && publicCatalogCache.data && Date.now() < publicCatalogCache.expiresAt) return publicCatalogCache.data;
+  if (publicCatalogInFlight) return publicCatalogInFlight;
+  publicCatalogInFlight = (async()=>{
+    try {
+      const data = await requestAniList(HOME_CATALOG_QUERY);
+      const result = {
+        anime:(data.anime && data.anime.media || []).map(packMedia).filter(Boolean),
+        manga:(data.manga && data.manga.media || []).map(packMedia).filter(Boolean),
+        source:'AniList',updatedAt:new Date().toISOString(),stale:false
+      };
+      publicCatalogCache.data = result;
+      publicCatalogCache.expiresAt = Date.now() + 20*60*1000;
+      return result;
+    } catch (error) {
+      if (publicCatalogCache.data) return {...publicCatalogCache.data,stale:true};
+      throw error;
+    } finally { publicCatalogInFlight = null; }
+  })();
+  return publicCatalogInFlight;
+}
+async function searchPublicCatalog(rawQuery) {
+  const query = String(rawQuery || '').trim().replace(/\s+/g,' ').slice(0,100);
+  if (query.length < 2) throw new Error('Enter at least two characters to search.');
+  const key = query.toLowerCase();
+  const cached = publicCatalogSearchCache.get(key);
+  if (cached && Date.now() - cached.at < 10*60*1000) return cached.value;
+  const data = await requestAniList(CATALOG_SEARCH_QUERY,{search:query});
+  const result = {
+    anime:(data.anime && data.anime.media || []).map(packMedia).filter(Boolean),
+    manga:(data.manga && data.manga.media || []).map(packMedia).filter(Boolean),
+    source:'AniList',updatedAt:new Date().toISOString()
+  };
+  publicCatalogSearchCache.set(key,{at:Date.now(),value:result});
+  if (publicCatalogSearchCache.size > 80) publicCatalogSearchCache.delete(publicCatalogSearchCache.keys().next().value);
+  return result;
+}
+async function getMediaDetail(id, expectedKind) {
+  const key = String(id);
+  const cached = mediaDetailCache.get(key);
+  if (cached && Date.now() < cached.expiresAt) {
+    if (!expectedKind || String(cached.value.type).toLowerCase() === expectedKind) return cached.value;
+    return null;
+  }
+  const data = await requestAniList(MEDIA_DETAIL_QUERY,{id:Number(id)});
+  const raw = data.Media;
+  if (!raw || raw.isAdult || (expectedKind && String(raw.type).toLowerCase() !== expectedKind)) return null;
+  const media = packMedia(raw);
+  if (media) {
+    mediaDetailCache.set(key,{value:media,expiresAt:Date.now()+60*60*1000});
+    if (mediaDetailCache.size > 300) mediaDetailCache.delete(mediaDetailCache.keys().next().value);
+  }
+  return media;
+}
+function sendHtml(res,status,body,headers={}) {
+  res.writeHead(status,{'Content-Type':'text/html; charset=utf-8','X-Content-Type-Options':'nosniff','Referrer-Policy':'strict-origin-when-cross-origin','Cache-Control':'public, max-age=300, stale-while-revalidate=1800',...headers});
+  res.end(body);
+}
+function renderMediaPage(req,kind,media) {
+  const origin = publicOrigin(req);
+  const canonical = origin + '/series/' + kind + '/' + media.id + '-' + mediaSlug(media.title);
+  const label = kind === 'anime' ? 'Anime' : (media.countryOfOrigin==='KR'?'Manhwa':media.countryOfOrigin==='CN'?'Manhua':'Manga');
+  const pageTitle = media.title + ' — ' + label + ' Details, Synopsis & Genres | Hekomi';
+  const synopsis = String(media.description || '').replace(/\s+/g,' ').trim();
+  const description = (synopsis ? synopsis.slice(0,190).replace(/\s+\S*$/,'') + ' ' : '') + 'Explore the synopsis, genres, score and details for ' + media.title + ' on Hekomi.';
+  const cover = media.cover && /^https:\/\//i.test(media.cover) ? media.cover : '';
+  const score = media.averageScore ? (media.averageScore/10).toFixed(1) + '/10' : 'Not rated';
+  const details = [
+    ['Format',media.format],['Status',media.status],['Year',media.seasonYear],
+    ['Episodes',kind==='anime'?media.episodes:null],['Chapters',kind==='manga'?media.chapters:null],
+    ['Volumes',kind==='manga'?media.volumes:null]
+  ].filter(pair=>pair[1] !== null && pair[1] !== undefined && pair[1] !== '');
+  const infoRows = details.map(pair=>'<div class="info-cell"><dt>'+htmlEscape(pair[0])+'</dt><dd>'+htmlEscape(String(pair[1]).replace(/_/g,' '))+'</dd></div>').join('');
+  const schema = {
+    '@context':'https://schema.org',
+    '@type':kind==='anime'?'TVSeries':'ComicSeries',
+    name:media.title,description:synopsis || description,url:canonical,
+    image:cover || undefined,genre:media.genres && media.genres.length ? media.genres : undefined
+  };
+  const jsonLd = JSON.stringify(schema).replace(/</g,'\\u003c');
+  const coverHtml = cover ? '<img class="detail-cover" src="'+htmlEscape(cover)+'" alt="Cover artwork for '+htmlEscape(media.title)+' ('+label+')" title="Cover artwork for '+htmlEscape(media.title)+'" width="280" height="420" fetchpriority="high" decoding="async" referrerpolicy="no-referrer">' : '<div class="detail-cover detail-cover-missing" role="img" aria-label="No cover artwork available">H</div>';
+  const metaImage = cover || (origin + '/assets/hekomi-social.svg');
+  const malLink = kind==='anime' && media.idMal ? '<a class="detail-secondary" href="https://myanimelist.net/anime/'+Number(media.idMal)+'" rel="noreferrer" target="_blank">Open on MyAnimeList ↗</a>' : '';
+  const genreTags = (media.genres||[]).map(g=>'<span class="genre-pill">'+htmlEscape(g)+'</span>').join('');
+  const descriptionHtml = synopsis ? '<p class="detail-synopsis">'+htmlEscape(synopsis).replace(/\n/g,'<br>')+'</p>' : '<p class="detail-synopsis">No synopsis is available from the catalog source yet.</p>';
+  return [
+    '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">',
+    '<title>'+htmlEscape(pageTitle)+'</title><meta name="description" content="'+htmlEscape(description)+'">',
+    '<meta name="robots" content="index,follow,max-image-preview:large"><meta name="theme-color" content="#080916">',
+    '<link rel="canonical" href="'+htmlEscape(canonical)+'"><link rel="icon" href="/icon.svg" type="image/svg+xml">',
+    '<meta property="og:type" content="article"><meta property="og:site_name" content="Hekomi"><meta property="og:title" content="'+htmlEscape(pageTitle)+'"><meta property="og:description" content="'+htmlEscape(description)+'"><meta property="og:url" content="'+htmlEscape(canonical)+'"><meta property="og:image" content="'+htmlEscape(metaImage)+'"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="'+htmlEscape(pageTitle)+'"><meta name="twitter:description" content="'+htmlEscape(description)+'"><meta name="twitter:image" content="'+htmlEscape(metaImage)+'">',
+    '<script type="application/ld+json">'+jsonLd+'</script>',
+    '<style>*{box-sizing:border-box}body{margin:0;min-height:100vh;color:#f2f4f8;background:radial-gradient(ellipse at 75% 0,rgba(116,75,160,.2),transparent 45%),#080916;font:16px/1.65 Inter,ui-sans-serif,system-ui,-apple-system,sans-serif}.detail-wrap{width:min(1120px,calc(100% - 36px));margin:auto}.detail-header{height:76px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #292d4b}.detail-brand{color:#c6b7ff;font-weight:850;font-size:21px;text-decoration:none;letter-spacing:.03em}.detail-back{color:#c6b7ff;text-decoration:none;font-size:13px}.breadcrumbs{margin:25px 0;color:#9ca4c4;font-size:12px}.breadcrumbs a{color:#b9a6ff;text-decoration:none}.detail-hero{display:grid;grid-template-columns:minmax(180px,280px) minmax(0,1fr);gap:clamp(25px,5vw,65px);align-items:start;padding:20px 0 45px}.detail-cover{display:block;width:100%;height:auto;aspect-ratio:2/3;object-fit:cover;border-radius:15px;border:1px solid #ffffff1c;background:#151327;box-shadow:0 25px 55px #0008}.detail-cover-missing{display:grid;place-items:center;color:#b9a6ff;font-size:70px}.detail-type{color:#8be1cf;font-size:11px;letter-spacing:.17em;font-weight:850;text-transform:uppercase}.detail-title{font-size:clamp(32px,5vw,55px);line-height:1.05;letter-spacing:-.05em;margin:9px 0 13px}.detail-score{display:inline-flex;gap:8px;align-items:center;padding:7px 11px;border-radius:9px;background:#19172a;border:1px solid #41385b;color:#e3d7ff;font-weight:750;font-size:13px}.detail-genres{display:flex;gap:7px;flex-wrap:wrap;margin:16px 0}.genre-pill{font-size:12px;color:#c4bdd9;border:1px solid #39334a;border-radius:99px;padding:5px 9px}.detail-synopsis{margin:18px 0 23px;color:#c3c5d1;white-space:normal}.detail-actions{display:flex;flex-wrap:wrap;gap:10px}.detail-primary,.detail-secondary{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;padding:10px 15px;border-radius:11px;font-weight:750;font-size:13px}.detail-primary{background:#b9a6ff;color:#171222}.detail-secondary{border:1px solid #39334a;color:#e8e3f3}.detail-info{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin:0 0 28px}.info-cell{border:1px solid #292d4b;background:#101327;border-radius:12px;padding:12px}.info-cell dt{font-size:11px;color:#9ca4c4;text-transform:uppercase;letter-spacing:.08em}.info-cell dd{margin:5px 0 0;font-size:14px;font-weight:750}.detail-credit{border-top:1px solid #292d4b;padding:19px 0 35px;color:#8f96ad;font-size:11px}.detail-credit a{color:#b9a6ff}@media(max-width:650px){.detail-hero{grid-template-columns:110px minmax(0,1fr);gap:17px;padding-top:8px}.detail-title{font-size:28px}.detail-cover{border-radius:9px}.detail-synopsis{grid-column:1/-1;margin-top:10px}.detail-info{grid-template-columns:repeat(2,minmax(0,1fr))}.detail-header{height:64px}.detail-wrap{width:calc(100% - 26px)}}@media(prefers-color-scheme:light){body{background:#f6f1f9;color:#282333}.detail-header,.detail-credit{border-color:#ded2e5}.detail-brand,.breadcrumbs a,.detail-back,.detail-credit a{color:#7050a4}.detail-type{color:#287a6b}.detail-score{background:#eee6f6;border-color:#d9cae8;color:#4c3670}.genre-pill,.detail-secondary{color:#554563;border-color:#ded2e5}.detail-synopsis{color:#61576a}.info-cell{background:#fffaff;border-color:#ded2e5}.info-cell dt{color:#756b7b}.detail-primary{background:#7050a4;color:#fff}}</style>',
+    '</head><body><div class="detail-wrap"><header class="detail-header"><a class="detail-brand" href="/">Hekomi</a><a class="detail-back" href="/">← Back to discovery</a></header>',
+    '<nav class="breadcrumbs" aria-label="Breadcrumb"><a href="/">Home</a> / <span>'+label+'</span> / <span aria-current="page">'+htmlEscape(media.title)+'</span></nav>',
+    '<main><article class="detail-article"><section class="detail-hero"><div>'+coverHtml+'</div><div><div class="detail-type">'+label+' / '+htmlEscape(media.format||'SERIES')+'</div><h1 class="detail-title">'+htmlEscape(media.title)+'</h1><div class="detail-score">★ '+score+'</div><div class="detail-genres">'+genreTags+'</div>'+descriptionHtml+'<div class="detail-actions"><a class="detail-primary" href="/">Explore Hekomi ↗</a><a class="detail-secondary" href="https://anilist.co/'+kind+'/'+Number(media.id)+'/" target="_blank" rel="noreferrer">Source details ↗</a>'+malLink+'</div></div></section>',
+    '<dl class="detail-info">'+infoRows+'</dl></article></main>',
+    '<footer class="detail-credit">Catalog metadata supplied by <a href="https://anilist.co/" target="_blank" rel="noreferrer">AniList</a>. Cover artwork belongs to its respective rights holders. Hekomi is an independent project and is not affiliated with AniList, MyAnimeList, studios, or publishers.</footer></div></body></html>'
+  ].join('');
+}
+async function serveSitemap(req,res) {
+  const origin=publicOrigin(req);
+  let urls=[origin+'/'];
+  try {
+    const catalog=await getPublicCatalog();
+    for (const media of [...(catalog.anime||[]),...(catalog.manga||[])]) {
+      const kind=media.type==='ANIME'?'anime':'manga';
+      urls.push(origin+'/series/'+kind+'/'+Number(media.id)+'-'+mediaSlug(media.title));
+    }
+  } catch {}
+  const body='<?xml version="1.0" encoding="UTF-8"?>' +
+    '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' +
+    [...new Set(urls)].map(u=>'<url><loc>'+u.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</loc></url>').join('') +
+    '</urlset>';
+  res.writeHead(200,{'Content-Type':'application/xml; charset=utf-8','X-Content-Type-Options':'nosniff','Cache-Control':'public, max-age=900'});
+  res.end(body);
+}
+
 const server=http.createServer(async(req,res)=>{
   const origin=req.headers.origin;
   if(origin && !origin.startsWith(`http://localhost:${PORT}`) && !origin.startsWith(`http://127.0.0.1:${PORT}`)) { /* no permissive cross-origin access */ }
   const url=new URL(req.url,`http://${req.headers.host||'localhost'}`);
-  if(req.method==='GET' && url.pathname==='/api/health') return send(res,200,{ok:true,app:'Hekomi Night Edition',crawler:'robots-aware chapter image extractor',malProxy:true});
+  if(req.method==='GET' && url.pathname==='/api/health') return send(res,200,{ok:true,app:'Hekomi',crawler:'robots-aware chapter image extractor',malProxy:true});
+
+  if(req.method==='GET' && url.pathname==='/robots.txt') {
+    const base=publicOrigin(req);
+    res.writeHead(200,{'Content-Type':'text/plain; charset=utf-8','X-Content-Type-Options':'nosniff','Cache-Control':'public, max-age=3600'});
+    return res.end('User-agent: *\nAllow: /\nDisallow: /api/\nSitemap: '+base+'/sitemap.xml\n');
+  }
+  if(req.method==='GET' && url.pathname==='/sitemap.xml') return serveSitemap(req,res);
+  if(req.method==='GET' && url.pathname==='/api/catalog') {
+    try { return send(res,200,await getPublicCatalog(url.searchParams.get('refresh')==='1'),{'Cache-Control':'public, max-age=300'}); }
+    catch(e) { return send(res,502,{error:'The public catalog is temporarily unavailable. '+(e.message||'')}); }
+  }
+  if(req.method==='GET' && url.pathname==='/api/catalog/search') {
+    try { return send(res,200,await searchPublicCatalog(url.searchParams.get('q')),{'Cache-Control':'public, max-age=300'}); }
+    catch(e) { return send(res,400,{error:e.message||'Catalog search failed.'}); }
+  }
+  const seriesRoute=url.pathname.match(/^\/series\/(anime|manga)\/(\d+)(?:-[a-z0-9-]*)?\/?$/i);
+  if((req.method==='GET'||req.method==='HEAD') && seriesRoute) {
+    const kind=seriesRoute[1].toLowerCase(), id=Number(seriesRoute[2]);
+    if(!Number.isSafeInteger(id)||id<1) return sendHtml(res,404,'<!doctype html><title>Not found | Hekomi</title><h1>Series not found</h1><a href="/">Back to Hekomi</a>',{'X-Robots-Tag':'noindex'});
+    try {
+      const media=await getMediaDetail(id,kind);
+      if(!media) return sendHtml(res,404,'<!doctype html><title>Series not found | Hekomi</title><h1>Series not found</h1><p>This title may be unavailable in the public catalog.</p><a href="/">Back to Hekomi</a>',{'X-Robots-Tag':'noindex'});
+      const page=renderMediaPage(req,kind,media);
+      res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','X-Content-Type-Options':'nosniff','Referrer-Policy':'strict-origin-when-cross-origin','Cache-Control':'public, max-age=600, stale-while-revalidate=3600'});
+      return req.method==='HEAD'?res.end():res.end(page);
+    } catch(e) {
+      return sendHtml(res,503,'<!doctype html><title>Catalog temporarily unavailable | Hekomi</title><meta name="robots" content="noindex"><h1>The catalog is temporarily unavailable</h1><p>Please try again shortly.</p><a href="/">Back to Hekomi</a>',{'Retry-After':'60','Cache-Control':'no-store'});
+    }
+  }
+
   if(req.method==='POST' && url.pathname==='/api/search-manga-sites') {
     try { const data=await readBody(req); return send(res,200,await searchMangaWebsites(data.query)); } catch(e) { return send(res,400,{error:e.message||'Manga website search failed.'}); }
   }
@@ -450,7 +659,7 @@ const server=http.createServer(async(req,res)=>{
   if(req.method!=='GET' && req.method!=='HEAD') return send(res,405,{error:'Method not allowed.'});
   let filePath=path.resolve(__dirname, '.'+decodeURIComponent(url.pathname==='/'?'/index.html':url.pathname));
   if(!filePath.startsWith(__dirname+path.sep) && filePath!==path.join(__dirname,'index.html')) return send(res,403,'Forbidden');
-  try { const data=await fs.readFile(filePath); res.writeHead(200,{'Content-Type':MIME[path.extname(filePath)]||'application/octet-stream','X-Content-Type-Options':'nosniff','Referrer-Policy':'strict-origin-when-cross-origin','Cache-Control':'no-cache'}); return req.method==='HEAD'?res.end():res.end(data); }
+  try { const data=await fs.readFile(filePath); let body=data; if(filePath===path.join(__dirname,'index.html')) { const origin=publicOrigin(req); body=Buffer.from(data.toString('utf8').replaceAll('__HEKOMI_PUBLIC_URL__',origin).replaceAll('__HEKOMI_CANONICAL_URL__',origin+'/'),'utf8'); } res.writeHead(200,{'Content-Type':MIME[path.extname(filePath)]||'application/octet-stream','X-Content-Type-Options':'nosniff','Referrer-Policy':'strict-origin-when-cross-origin','Cache-Control':'no-cache'}); return req.method==='HEAD'?res.end():res.end(body); }
   catch { return send(res,404,'Not found'); }
 });
 server.listen(PORT,'0.0.0.0',()=>console.log(`Hekomi running at http://localhost:${PORT}`));

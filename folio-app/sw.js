@@ -1,5 +1,5 @@
-const CACHE = 'hekomi-shell-v3';
-const SHELL = ['/', '/index.html', '/manifest.webmanifest', '/icon.svg', '/assets/folio-night-scene.svg'];
+const CACHE = 'hekomi-shell-v4';
+const SHELL = ['/', '/index.html', '/manifest.webmanifest', '/icon.svg', '/assets/folio-night-scene.svg', '/assets/hekomi-social.svg'];
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(SHELL)).then(() => self.skipWaiting()));
 });
