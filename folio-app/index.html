@@ -208,6 +208,51 @@ a{text-underline-offset:3px}
 @media(hover:none){.card:hover,.source-card:hover{transform:none;box-shadow:none}.card:hover img{transform:none}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
 
+
+/* Hekomi mood themes: one app, three distinct atmospheres */
+html[data-theme="midnight"] .panel,
+html[data-theme="midnight"] .card,
+html[data-theme="midnight"] .source-card,
+html[data-theme="midnight"] .resultitem,
+html[data-theme="midnight"] .searchbox,
+html[data-theme="midnight"] .modal {
+  background-color: color-mix(in srgb, var(--panel) 88%, transparent);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: 0 10px 32px rgba(81, 53, 160, .09), inset 0 1px rgba(255,255,255,.025);
+}
+html[data-theme="midnight"] .btn-primary,
+html[data-theme="midnight"] .filter.active,
+html[data-theme="midnight"] .theme-option[aria-pressed="true"] {
+  box-shadow: 0 0 0 1px rgba(181,154,255,.15), 0 0 22px rgba(132,91,255,.12);
+}
+html[data-theme="dawn"] .panel,
+html[data-theme="dawn"] .card,
+html[data-theme="dawn"] .source-card,
+html[data-theme="dawn"] .resultitem,
+html[data-theme="dawn"] .searchbox,
+html[data-theme="dawn"] .modal {
+  box-shadow: 0 4px 18px rgba(73,49,95,.045);
+}
+html[data-theme="dawn"] .btn-primary,
+html[data-theme="dawn"] .filter.active {
+  box-shadow: 0 3px 10px rgba(112,80,164,.12);
+}
+html[data-theme="late-night"] .panel,
+html[data-theme="late-night"] .card,
+html[data-theme="late-night"] .source-card,
+html[data-theme="late-night"] .resultitem,
+html[data-theme="late-night"] .searchbox,
+html[data-theme="late-night"] .modal {
+  box-shadow: 0 14px 38px rgba(0,0,0,.2), inset 0 1px rgba(255,220,245,.025);
+}
+.theme-swatch.midnight { background: radial-gradient(circle at 75% 20%,#66eee1 0 8%,transparent 9%),linear-gradient(135deg,#080916,#573a9a 60%,#b59aff); }
+.theme-swatch.dawn { background: linear-gradient(135deg,#fffaff,#ded0ee 55%,#8be1cf); }
+.theme-swatch.late-night { background: radial-gradient(circle at 72% 25%,#e5c48d 0 5%,transparent 6%),linear-gradient(135deg,#100d13,#56334f 65%,#e3b4d9); }
+.theme-option { transition: transform .2s ease, border-color .2s ease, background .2s ease, box-shadow .2s ease; }
+.theme-option:hover { transform: translateY(-1px); }
+@media(prefers-reduced-motion:reduce){.theme-option{transition:none!important}}
+
 </style>
 </head>
 <body>
@@ -371,7 +416,7 @@ a{text-underline-offset:3px}
 
   const themePreferenceKey = 'hekomi_theme_preference_v1';
   const themeModes = new Set(['midnight','late-night','dawn','device']);
-  const themeModeNames = {midnight:'Midnight', 'late-night':'Late Night', dawn:'Dawn', device:'Device Settings'};
+  const themeModeNames = {midnight:'Neon Glass', 'late-night':'Cinematic Anime', dawn:'Minimal Elegance', device:'Device Settings'};
   const themeSystemQuery = window.matchMedia('(prefers-color-scheme: light)');
   let themePreference = (() => { try { const saved=localStorage.getItem(themePreferenceKey); return themeModes.has(saved)?saved:'midnight'; } catch { return 'midnight'; } })();
   function applyTheme(mode, announce=false) {
@@ -391,9 +436,9 @@ a{text-underline-offset:3px}
   }
   function openThemeSettings() {
     const options=[
-      {value:'midnight',title:'Midnight',description:'Deep ink, violet glow, and mint accents.'},
-      {value:'late-night',title:'Late Night',description:'Warm plum shadows and soft amber details.'},
-      {value:'dawn',title:'Dawn',description:'A light, calm palette for daytime reading.'},
+      {value:'midnight',title:'A · Neon Glass',description:'Purple glow, glassy surfaces, and futuristic energy.'},
+      {value:'late-night',title:'C · Cinematic Anime',description:'Deep indigo, dramatic depth, and a dreamy after-hours mood.'},
+      {value:'dawn',title:'B · Minimal Elegance',description:'Clean surfaces, quiet colors, and distraction-free reading.'},
       {value:'device',title:'Device Settings',description:'Follow your device’s light or dark setting.'}
     ];
     const buttons=options.map(option=>
@@ -402,7 +447,7 @@ a{text-underline-offset:3px}
         '<span class="theme-option-text"><strong>'+option.title+'</strong><small>'+option.description+'</small></span>'+
         '<span class="theme-check" aria-hidden="true">✓</span></button>'
     ).join('');
-    openModal('<div class="modal-top"><div><h2>Appearance</h2><p class="theme-settings-copy">Set the atmosphere for Hekomi. Your choice is saved on this device.</p></div><button class="close" data-close aria-label="Close appearance settings">×</button></div><div class="theme-options">'+buttons+'</div><p class="small muted" style="margin:14px 0 0">Device Settings updates automatically when your operating system switches between light and dark appearance.</p>');
+    openModal('<div class="modal-top"><div><h2>Appearance</h2><p class="theme-settings-copy">Choose your vibe. Switch moods any time — your choice is saved on this device.</p></div><button class="close" data-close aria-label="Close appearance settings">×</button></div><div class="theme-options">'+buttons+'</div><p class="small muted" style="margin:14px 0 0">Device Settings updates automatically when your operating system switches between light and dark appearance.</p>');
     $$('#modalRoot [data-theme-choice]').forEach(button=>button.addEventListener('click',()=>applyTheme(button.dataset.themeChoice,true)));
   }
   applyTheme(themePreference);
