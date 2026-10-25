@@ -445,6 +445,8 @@ input[type="range"]:disabled{opacity:.45;cursor:not-allowed}
     return publicCatalogRequest;
   }
   let lastCatalogSearchItems=[],lastCatalogSearchQuery='';
+  const recentCatalogQueries=[];
+  function rememberCatalogQuery(query){const q=String(query||'').trim();if(q.length<2)return;const next=[q,...recentCatalogQueries.filter(item=>item.toLowerCase()!==q.toLowerCase())].slice(0,8);recentCatalogQueries.splice(0,recentCatalogQueries.length,...next);$('#catalogSearchSuggestions').innerHTML=recentCatalogQueries.map(item=>'<option value="'+esc(item)+'"></option>').join('');}
   const catalogFilterIds=['filterMediaType','filterGenre','filterFormat','filterStatus','filterYear','filterSeason','filterMinScore','filterSort'];const catalogPageSize=12;let catalogVisibleCount=12,catalogFilteredItems=[];
   function catalogFilterValues(){
     return {type:$('#filterMediaType').value,genre:$('#filterGenre').value,format:$('#filterFormat').value,status:$('#filterStatus').value,year:$('#filterYear').value,season:$('#filterSeason').value,score:Number($('#filterMinScore').value||0),sort:$('#filterSort').value};
@@ -493,7 +495,7 @@ input[type="range"]:disabled{opacity:.45;cursor:not-allowed}
     try{
       const data=await api('/api/catalog/search?q='+encodeURIComponent(query));
       lastCatalogSearchItems=[...(data.anime||[]).map(m=>Object.assign({},m,{_catalogKind:'ANIME'})),...(data.manga||[]).map(m=>Object.assign({},m,{_catalogKind:'MANGA'}))];
-      lastCatalogSearchQuery=query;catalogVisibleCount=catalogPageSize;
+      lastCatalogSearchQuery=query;catalogVisibleCount=catalogPageSize;rememberCatalogQuery(query);
       const genres=[...new Set(lastCatalogSearchItems.flatMap(m=>m.genres||[]))].sort((a,b)=>a.localeCompare(b));
       const genreSelect=$('#filterGenre'),selectedGenre=genreSelect.value;
       genreSelect.innerHTML='<option value="">All genres</option>'+genres.map(g=>'<option value="'+esc(g)+'">'+esc(g)+'</option>').join('');

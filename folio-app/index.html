@@ -325,7 +325,7 @@ input[type="range"]:disabled{opacity:.45;cursor:not-allowed}
 
 <section class="catalog-discovery" id="discoverCatalog" aria-labelledby="catalogTitle">
   <div class="catalog-heading"><div><span class="eyebrow">THE HEKOMI CATALOG</span><h2 id="catalogTitle">Find your next world.</h2><p>Explore real anime and manga titles with cover art, synopses, genres, scores, and dedicated details pages.</p></div>
-    <form id="catalogSearchForm" class="catalog-search" role="search" aria-label="Search anime and manga catalog"><label class="sr-only" for="catalogSearchInput">Search anime and manga</label><input id="catalogSearchInput" class="input" type="search" minlength="2" maxlength="100" placeholder="Search a title…" autocomplete="off"><button class="btn-primary" type="submit" id="catalogSearchButton">Search</button></form>
+    <form id="catalogSearchForm" class="catalog-search" role="search" aria-label="Search anime and manga catalog"><label class="sr-only" for="catalogSearchInput">Search anime and manga</label><input id="catalogSearchInput" class="input" type="search" minlength="2" maxlength="100" placeholder="Search a title…" autocomplete="off" list="catalogSearchSuggestions"><datalist id="catalogSearchSuggestions"></datalist><button class="btn-primary" type="submit" id="catalogSearchButton">Search</button></form>
   </div>
   <div id="catalogSearchStatus" class="small muted catalog-status" role="status" aria-live="polite"></div>
   <section class="advanced-search" id="advancedCatalogFilters" aria-label="Advanced catalog filters">
@@ -445,6 +445,8 @@ input[type="range"]:disabled{opacity:.45;cursor:not-allowed}
     return publicCatalogRequest;
   }
   let lastCatalogSearchItems=[],lastCatalogSearchQuery='';
+  const recentCatalogQueries=[];
+  function rememberCatalogQuery(query){const q=String(query||'').trim();if(q.length<2)return;const next=[q,...recentCatalogQueries.filter(item=>item.toLowerCase()!==q.toLowerCase())].slice(0,8);recentCatalogQueries.splice(0,recentCatalogQueries.length,...next);$('#catalogSearchSuggestions').innerHTML=recentCatalogQueries.map(item=>'<option value="'+esc(item)+'"></option>').join('');}
   const catalogFilterIds=['filterMediaType','filterGenre','filterFormat','filterStatus','filterYear','filterSeason','filterMinScore','filterSort'];const catalogPageSize=12;let catalogVisibleCount=12,catalogFilteredItems=[];
   function catalogFilterValues(){
     return {type:$('#filterMediaType').value,genre:$('#filterGenre').value,format:$('#filterFormat').value,status:$('#filterStatus').value,year:$('#filterYear').value,season:$('#filterSeason').value,score:Number($('#filterMinScore').value||0),sort:$('#filterSort').value};
@@ -493,7 +495,7 @@ input[type="range"]:disabled{opacity:.45;cursor:not-allowed}
     try{
       const data=await api('/api/catalog/search?q='+encodeURIComponent(query));
       lastCatalogSearchItems=[...(data.anime||[]).map(m=>Object.assign({},m,{_catalogKind:'ANIME'})),...(data.manga||[]).map(m=>Object.assign({},m,{_catalogKind:'MANGA'}))];
-      lastCatalogSearchQuery=query;catalogVisibleCount=catalogPageSize;
+      lastCatalogSearchQuery=query;catalogVisibleCount=catalogPageSize;rememberCatalogQuery(query);
       const genres=[...new Set(lastCatalogSearchItems.flatMap(m=>m.genres||[]))].sort((a,b)=>a.localeCompare(b));
       const genreSelect=$('#filterGenre'),selectedGenre=genreSelect.value;
       genreSelect.innerHTML='<option value="">All genres</option>'+genres.map(g=>'<option value="'+esc(g)+'">'+esc(g)+'</option>').join('');
