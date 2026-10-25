@@ -182,6 +182,9 @@ html[data-theme="dawn"] .catalog-genre{background:#f2eaf8}html[data-theme="dawn"
 @media(prefers-reduced-motion:reduce){.catalog-skeleton-cover,.catalog-skeleton-line{animation:none}.catalog-row.catalog-grid{scroll-behavior:auto}.catalog-card,.showcase-primary,.showcase-add,.rail-arrow{transition:none}}
 @media(max-width:760px){.anime-showcase.has-feature-banner{min-height:410px;background-position:center center}.anime-showcase.has-feature-banner .showcase-copy{max-width:100%;padding:24px 20px 0}.anime-showcase.has-feature-banner .showcase-copy h2{font-size:clamp(30px,8vw,42px);max-width:100%}.anime-showcase.has-feature-banner .showcase-copy p{max-width:100%;font-size:12px}.anime-showcase.has-feature-banner .showcase-tags{max-width:100%}.showcase-actions{margin-top:14px}.catalog-row.catalog-grid{gap:10px}.catalog-row .catalog-card,.catalog-skeleton-card{flex-basis:154px}.catalog-shelf-tools{gap:5px}.rail-arrow{width:30px;height:30px}.catalog-shelf-head{align-items:flex-end}}
 
+
+.catalog-grid>.catalog-skeleton-grid{grid-column:1/-1;width:100%}
+
 </style>
 </head>
 <body>
@@ -305,7 +308,7 @@ html[data-theme="dawn"] .catalog-genre{background:#f2eaf8}html[data-theme="dawn"
 
   let loadedPublicCatalog=null,publicCatalogRequest=null;
   async function loadPublicCatalog(force=false){
-    if(loadedPublicCatalog&&!force){renderCatalogGrid('#animeCatalogGrid',loadedPublicCatalog.anime,'ANIME');renderCatalogGrid('#mangaCatalogGrid',loadedPublicCatalog.manga,'MANGA');return;}
+    if(loadedPublicCatalog&&!force){renderCatalogGrid('#animeCatalogGrid',loadedPublicCatalog.anime,'ANIME');renderCatalogGrid('#mangaCatalogGrid',loadedPublicCatalog.manga,'MANGA');renderCatalogGrid('#airingCatalogGrid',loadedPublicCatalog.airing,'ANIME');return;}
     if(publicCatalogRequest)return publicCatalogRequest;
     $('#animeCatalogGrid').innerHTML=catalogLoadingMarkup(7);
     $('#mangaCatalogGrid').innerHTML=catalogLoadingMarkup(7);
@@ -314,7 +317,7 @@ html[data-theme="dawn"] .catalog-genre{background:#f2eaf8}html[data-theme="dawn"
       const data=await api('/api/catalog'+(force?'?refresh=1':''));
       loadedPublicCatalog=data;buildCatalogSpotlights(data);renderCatalogGrid('#animeCatalogGrid',data.anime||[],'ANIME');renderCatalogGrid('#mangaCatalogGrid',data.manga||[],'MANGA');renderCatalogGrid('#airingCatalogGrid',data.airing||[],'ANIME');
       $('#catalogSearchStatus').textContent=data.stale?'Showing recently cached catalog data while the source refreshes.':'Catalog updated from AniList'+(data.updatedAt?' · '+new Date(data.updatedAt).toLocaleDateString():'')+'.';
-    }catch(e){$('#animeCatalogGrid').innerHTML='<div class="catalog-loading">The public catalog could not load right now. Your saved lists and the rest of Hekomi still work.</div>';$('#mangaCatalogGrid').innerHTML='<div class="catalog-loading">Catalog unavailable · try again later.</div>';$('#catalogSearchStatus').textContent=e.message;}finally{publicCatalogRequest=null;}})();
+    }catch(e){$('#animeCatalogGrid').innerHTML='<div class="catalog-loading">The public catalog could not load right now. Your saved lists and the rest of Hekomi still work.</div>';$('#mangaCatalogGrid').innerHTML='<div class="catalog-loading">Catalog unavailable · try again later.</div>';$('#airingCatalogGrid').innerHTML='<div class="catalog-loading">Catalog unavailable · try again later.</div>';$('#catalogSearchStatus').textContent=e.message;}finally{publicCatalogRequest=null;}})();
     return publicCatalogRequest;
   }
   async function searchPublicCatalog(event){
