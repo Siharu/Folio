@@ -36,9 +36,10 @@ jobs:
           node --input-type=module <<'NODE'
           import fs from 'node:fs/promises';
           const html = await fs.readFile('folio-app/index.html', 'utf8');
-          const scripts = [...html.matchAll(/<script\\b[^>]*>([\\s\\S]*?)<\\/script>/gi)];
-          if (!scripts.length) throw new Error('No inline script found in Folio HTML.');
-          await fs.writeFile('/tmp/folio-inline-check.js', scripts.map(s => s[1]).join('\n'));
+          const start = html.indexOf('<script>');
+          const end = html.lastIndexOf('</script>');
+          if (start < 0 || end <= start) throw new Error('No inline script found in Folio HTML.');
+          await fs.writeFile('/tmp/folio-inline-check.js', html.slice(start + 8, end));
           if (!html.includes('MAL Client') || !html.includes('Manga Crawler')) {
             throw new Error('Both Folio workspaces must be present.');
           }
