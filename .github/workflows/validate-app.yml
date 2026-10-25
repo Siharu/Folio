@@ -1,0 +1,59 @@
+name: Validate Folio
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'folio-app/**'
+      - 'render.yaml'
+      - '.github/workflows/validate-app.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'folio-app/**'
+      - 'render.yaml'
+      - '.github/workflows/validate-app.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check backend syntax
+        run: node --check folio-app/server.mjs
+      - name: Check browser JavaScript syntax
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs/promises';
+          const html = await fs.readFile('folio-app/index.html', 'utf8');
+          const scripts = [...html.matchAll(/<script\\b[^>]*>([\\s\\S]*?)<\\/script>/gi)];
+          if (!scripts.length) throw new Error('No inline script found in Folio HTML.');
+          await fs.writeFile('/tmp/folio-inline-check.js', scripts.map(s => s[1]).join('\n'));
+          if (!html.includes('MAL Client') || !html.includes('Manga Crawler')) {
+            throw new Error('Both Folio workspaces must be present.');
+          }
+          NODE
+          node --check /tmp/folio-inline-check.js
+      - name: Smoke test server
+        shell: bash
+        run: |
+          PORT=4173 node folio-app/server.mjs > /tmp/folio-server.log 2>&1 &
+          PID=$!
+          trap 'kill "$PID" 2>/dev/null || true' EXIT
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:4173/api/health >/tmp/folio-health.json; then break; fi
+            sleep 1
+          done
+          grep -q '"ok":true' /tmp/folio-health.json
+          curl -fsS http://127.0.0.1:4173/api/mal/auth/status | grep -q '"configured":false'
+          curl -fsS http://127.0.0.1:4173/ | grep -q 'Folio'
