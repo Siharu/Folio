@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = Number(process.env.PORT || 4173);
-const USER_AGENT = 'PersonalMangaDiscovery/0.1 (respecting robots.txt)';
+const USER_AGENT = 'Hekomi/1.0 (personal manga discovery; respects robots.txt)';
 const MIME = { '.html':'text/html; charset=utf-8', '.css':'text/css; charset=utf-8', '.js':'text/javascript; charset=utf-8', '.json':'application/json; charset=utf-8', '.svg':'image/svg+xml', '.webmanifest':'application/manifest+json; charset=utf-8' };
 const rate = new Map();
 

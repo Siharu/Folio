@@ -13,17 +13,17 @@ Requires Node.js 20 or newer.
 npm --prefix folio-app start
 ```
 
-Open http://localhost:4173. Manga crawling works locally. MAL OAuth requires environment variables: `MAL_CLIENT_ID`, `MAL_CLIENT_SECRET`, and `FOLIO_SESSION_SECRET`. For local development, use an API app registration whose redirect URL is `http://localhost:4173/api/mal/auth/callback`.
+Open http://localhost:4173. Manga crawling works locally. MAL OAuth requires environment variables: `MAL_CLIENT_ID`, `MAL_CLIENT_SECRET`, and `FOLIO_SESSION_SECRET` (legacy environment-variable name retained for compatibility). For local development, use an API app registration whose redirect URL is `http://localhost:4173/api/mal/auth/callback`.
 
 ## Deploy to Render
 
-1. In Render choose **New + → Blueprint** and connect `Siharu/Folio`.
+1. In Render choose **New + → Blueprint** and connect `Siharu/Hekomi`.
 2. Review the Web Service Blueprint; do **not** choose Static Site, because the manga crawler requires a Node.js backend.
 3. Enter the MAL application's **Client ID** and **Client Secret** into the Render environment prompts. Render generates `FOLIO_SESSION_SECRET` for encrypted sessions.
 4. After Render gives the service its HTTPS URL, update the app's **App Redirect URL** in [MAL API Configuration](https://myanimelist.net/apiconfig) to the exact URL `https://YOUR-SERVICE.onrender.com/api/mal/auth/callback`. Keep it exact, including the path.
 5. Open Hekomi, choose **MAL Client**, and tap **Sign in with MyAnimeList**.
 
-The developer registers the MAL app once. Every user authorizes their own account; users do not create API registrations or paste tokens. Hekomi exchanges OAuth codes on the server, stores access/refresh tokens in an encrypted HttpOnly cookie, and refreshes tokens as needed. The Client Secret and session encryption key are server-only and must never be committed to GitHub or placed in HTML.
+The Hekomi maintainer registers the MAL app once. Every user authorizes their own account; users do not create API registrations or paste tokens. Hekomi exchanges OAuth codes on the server, stores access/refresh tokens in an encrypted HttpOnly cookie, and refreshes tokens as needed. The Client Secret and session encryption key are server-only and must never be committed to GitHub or placed in HTML.
 
 ## Appearance themes
 
@@ -44,3 +44,16 @@ Catalog requests are cached in the server for a short period to limit external A
 ## Catalog presentation
 
 The home catalog uses a live title spotlight with banner artwork, ratings and metadata, horizontal shelves with keyboard/touch-friendly controls, loading skeletons, and a separate currently-airing row. Spotlight actions can add a title to a device-local anime list or manga shelf. Hekomi keeps its own branding and layout; the ideas are adapted for this project rather than reusing AnymeX assets or source code.
+
+
+## Personal library and privacy
+
+- The generic crawler is a page inspector, not a hosted content mirror: it reads accessible HTML and detects links/images; it does not download chapters into a server-side archive.
+- Search terms sent through the built-in web search are processed by the search provider. Choosing a result may contact that website, and images are loaded from their original hosts. Private browsing in Hekomi does not make those network requests invisible to those providers or your network.
+- Keep your library personal and use sources whose terms permit your intended use. Hekomi checks robots.txt and blocks private-network URLs, but robots.txt is not a copyright licence and generic extraction cannot determine every site's legal terms.
+- Do not submit private URLs, credentials, or account-only pages to the crawler. Hekomi intentionally does not bypass sign-in restrictions, paywalls, DRM, or anti-bot challenges.
+- For a stronger private archive workflow, prefer files you own or are authorized to access and store them on a device or server you control. A future source-adapter system should be opt-in, rate-limited, transparent about each source, and easy to disable.
+
+## Source identity
+
+The crawler identifies its requests as `Hekomi/1.0 (personal manga discovery; respects robots.txt)`. This makes its purpose clearer to source operators than a generic crawler name. It remains polite, public-page inspection only; source-specific terms and access restrictions still apply.
