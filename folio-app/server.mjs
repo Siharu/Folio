@@ -431,7 +431,7 @@ async function malRequest(req, res, pathname, query) {
 const ANILIST_ENDPOINT = 'https://graphql.anilist.co';
 const MEDIA_CATALOG_FIELDS = 'id idMal type title { romaji english native } coverImage { color extraLarge large medium } bannerImage description(asHtml:false) genres averageScore popularity status episodes chapters volumes seasonYear format countryOfOrigin startDate { year month day } isAdult';
 const HOME_CATALOG_QUERY = 'query HekomiHomeCatalog { anime: Page(page:1,perPage:10) { media(type:ANIME,sort:[TRENDING_DESC,POPULARITY_DESC],isAdult:false) { ' + MEDIA_CATALOG_FIELDS + ' } } manga: Page(page:1,perPage:10) { media(type:MANGA,sort:[TRENDING_DESC,POPULARITY_DESC],isAdult:false) { ' + MEDIA_CATALOG_FIELDS + ' } } airing: Page(page:1,perPage:10) { media(type:ANIME,status:RELEASING,sort:[POPULARITY_DESC],isAdult:false) { ' + MEDIA_CATALOG_FIELDS + ' } } }';
-const CATALOG_SEARCH_QUERY = 'query HekomiCatalogSearch($search:String!) { anime: Page(page:1,perPage:24) { media(search:$search,type:ANIME,sort:[SEARCH_MATCH],isAdult:false) { ' + MEDIA_CATALOG_FIELDS + ' } } manga: Page(page:1,perPage:24) { media(search:$search,type:MANGA,sort:[SEARCH_MATCH],isAdult:false) { ' + MEDIA_CATALOG_FIELDS + ' } } }';
+const CATALOG_SEARCH_QUERY = 'query HekomiCatalogSearch($search:String!,$page:Int!) { anime: Page(page:$page,perPage:24) { pageInfo { currentPage hasNextPage } media(search:$search,type:ANIME,sort:[SEARCH_MATCH],isAdult:false) { ' + MEDIA_CATALOG_FIELDS + ' } } manga: Page(page:$page,perPage:24) { pageInfo { currentPage hasNextPage } media(search:$search,type:MANGA,sort:[SEARCH_MATCH],isAdult:false) { ' + MEDIA_CATALOG_FIELDS + ' } } }';
 const MEDIA_DETAIL_QUERY = 'query HekomiMediaDetail($id:Int!) { Media(id:$id) { ' + MEDIA_CATALOG_FIELDS + ' } }';
 const publicCatalogCache = { data:null, expiresAt:0 };
 const publicCatalogSearchCache = new Map();
@@ -511,20 +511,18 @@ async function getPublicCatalog(force=false) {
   })();
   return publicCatalogInFlight;
 }
-async function searchPublicCatalog(rawQuery) {
+async function searchPublicCatalog(rawQuery, rawPage=1) {
   const query = String(rawQuery || '').trim().replace(/\s+/g,' ').slice(0,100);
   if (query.length < 2) throw new Error('Enter at least two characters to search.');
-  const key = query.toLowerCase();
+  const page = Math.max(1,Math.min(50,Math.floor(Number(rawPage)||1)));
+  const key = query.toLowerCase() + ':' + page;
   const cached = publicCatalogSearchCache.get(key);
   if (cached && Date.now() - cached.at < 10*60*1000) return cached.value;
-  const data = await requestAniList(CATALOG_SEARCH_QUERY,{search:query});
-  const result = {
-    anime:(data.anime && data.anime.media || []).map(packMedia).filter(Boolean),
-    manga:(data.manga && data.manga.media || []).map(packMedia).filter(Boolean),
-    source:'AniList',updatedAt:new Date().toISOString()
-  };
+  const data = await requestAniList(CATALOG_SEARCH_QUERY,{search:query,page});
+  const animePage=data.anime||{},mangaPage=data.manga||{};
+  const result = { anime:(animePage.media||[]).map(packMedia).filter(Boolean), manga:(mangaPage.media||[]).map(packMedia).filter(Boolean), page, hasNextPage:!!((animePage.pageInfo&&animePage.pageInfo.hasNextPage)||(mangaPage.pageInfo&&mangaPage.pageInfo.hasNextPage)), source:'AniList',updatedAt:new Date().toISOString() };
   publicCatalogSearchCache.set(key,{at:Date.now(),value:result});
-  if (publicCatalogSearchCache.size > 80) publicCatalogSearchCache.delete(publicCatalogSearchCache.keys().next().value);
+  if (publicCatalogSearchCache.size > 160) publicCatalogSearchCache.delete(publicCatalogSearchCache.keys().next().value);
   return result;
 }
 async function getMediaDetail(id, expectedKind) {
@@ -625,7 +623,7 @@ const server=http.createServer(async(req,res)=>{
     catch(e) { return send(res,502,{error:'The public catalog is temporarily unavailable. '+(e.message||'')}); }
   }
   if(req.method==='GET' && url.pathname==='/api/catalog/search') {
-    try { return send(res,200,await searchPublicCatalog(url.searchParams.get('q')),{'Cache-Control':'public, max-age=300'}); }
+    try { return send(res,200,await searchPublicCatalog(url.searchParams.get('q'),url.searchParams.get('page')),{'Cache-Control':'public, max-age=300'}); }
     catch(e) { return send(res,400,{error:e.message||'Catalog search failed.'}); }
   }
   const seriesRoute=url.pathname.match(/^\/series\/(anime|manga)\/(\d+)(?:-[a-z0-9-]*)?\/?$/i);
