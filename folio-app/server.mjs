@@ -430,7 +430,8 @@ async function malRequest(req, res, pathname, query) {
 
 const ANILIST_ENDPOINT = 'https://graphql.anilist.co';
 const MEDIA_CATALOG_FIELDS = 'id idMal type title { romaji english native } coverImage { color extraLarge large medium } bannerImage description(asHtml:false) genres averageScore popularity status episodes chapters volumes seasonYear format countryOfOrigin startDate { year month day } isAdult';
-const HOME_CATALOG_QUERY = 'query HekomiHomeCatalog { anime: Page(page:1,perPage:10) { media(type:ANIME,sort:[TRENDING_DESC,POPULARITY_DESC],isAdult:false) { ' + MEDIA_CATALOG_FIELDS + ' } } manga: Page(page:1,perPage:10) { media(type:MANGA,sort:[TRENDING_DESC,POPULARITY_DESC],isAdult:false) { ' + MEDIA_CATALOG_FIELDS + ' } } airing: Page(page:1,perPage:10) { media(type:ANIME,status:RELEASING,sort:[POPULARITY_DESC],isAdult:false) { ' + MEDIA_CATALOG_FIELDS + ' } } }';
+const HOME_CATALOG_QUERY = 'query HekomiHomeCatalog($season:MediaSeason!,$seasonYear:Int!) { anime: Page(page:1,perPage:10) { media(type:ANIME,sort:[TRENDING_DESC,POPULARITY_DESC],isAdult:false) { ' + MEDIA_CATALOG_FIELDS + ' } } manga: Page(page:1,perPage:10) { media(type:MANGA,sort:[TRENDING_DESC,POPULARITY_DESC],isAdult:false) { ' + MEDIA_CATALOG_FIELDS + ' } } airing: Page(page:1,perPage:10) { media(type:ANIME,status:RELEASING,sort:[POPULARITY_DESC],isAdult:false) { ' + MEDIA_CATALOG_FIELDS + ' } } seasonal: Page(page:1,perPage:10) { media(type:ANIME,season:$season,seasonYear:$seasonYear,sort:[POPULARITY_DESC],isAdult:false) { ' + MEDIA_CATALOG_FIELDS + ' } } }';
+function currentAnimeSeason(date=new Date()) { const month=date.getUTCMonth()+1; return month<=3?'WINTER':month<=6?'SPRING':month<=9?'SUMMER':'FALL'; }
 const CATALOG_SEARCH_QUERY = 'query HekomiCatalogSearch($search:String!,$page:Int!) { anime: Page(page:$page,perPage:24) { pageInfo { currentPage hasNextPage } media(search:$search,type:ANIME,sort:[SEARCH_MATCH],isAdult:false) { ' + MEDIA_CATALOG_FIELDS + ' } } manga: Page(page:$page,perPage:24) { pageInfo { currentPage hasNextPage } media(search:$search,type:MANGA,sort:[SEARCH_MATCH],isAdult:false) { ' + MEDIA_CATALOG_FIELDS + ' } } }';
 const MEDIA_DETAIL_QUERY = 'query HekomiMediaDetail($id:Int!) { Media(id:$id) { ' + MEDIA_CATALOG_FIELDS + ' } }';
 const publicCatalogCache = { data:null, expiresAt:0 };
@@ -494,11 +495,14 @@ async function getPublicCatalog(force=false) {
   if (publicCatalogInFlight) return publicCatalogInFlight;
   publicCatalogInFlight = (async()=>{
     try {
-      const data = await requestAniList(HOME_CATALOG_QUERY);
+      const now = new Date();
+      const data = await requestAniList(HOME_CATALOG_QUERY,{season:currentAnimeSeason(now),seasonYear:now.getUTCFullYear()});
       const result = {
         anime:(data.anime && data.anime.media || []).map(packMedia).filter(Boolean),
         manga:(data.manga && data.manga.media || []).map(packMedia).filter(Boolean),
         airing:(data.airing && data.airing.media || []).map(packMedia).filter(Boolean),
+        seasonal:(data.seasonal && data.seasonal.media || []).map(packMedia).filter(Boolean),
+        season:currentAnimeSeason(now),seasonYear:now.getUTCFullYear(),
         source:'AniList',updatedAt:new Date().toISOString(),stale:false
       };
       publicCatalogCache.data = result;
