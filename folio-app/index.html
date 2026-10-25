@@ -288,7 +288,7 @@ input[type="range"]:disabled{opacity:.45;cursor:not-allowed}
 .advanced-filter-body{padding:0 17px 16px;border-top:1px solid #ffffff0c;animation:advancedFiltersIn .22s ease both}.advanced-filter-body.is-collapsed{display:none}
 .advanced-filter-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;padding-top:15px}.advanced-field{display:grid;gap:6px;min-width:0}.advanced-field>span{font-size:11px;font-weight:750;color:#b7bdca;display:flex;justify-content:space-between;gap:8px}.advanced-field .input{padding:9px 10px;font-size:12px}.advanced-score-field{grid-column:span 2;align-content:center}.advanced-score-field>span strong{color:var(--violet);font-variant-numeric:tabular-nums}.advanced-score-field small{font-size:10px;color:var(--muted)}.advanced-score-field input[type=range]{width:100%;margin:8px 0 0;accent-color:var(--violet);cursor:pointer}
 .advanced-filter-actions{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:15px;padding-top:12px;border-top:1px solid #ffffff0c}.advanced-filter-actions button{font-size:11px;padding:7px 10px}
-@keyframes advancedFiltersIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+.genre-quick-chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:13px}.genre-chip{border:1px solid var(--line);border-radius:999px;background:var(--panel2);color:var(--muted);font:inherit;font-size:11px;padding:6px 10px;cursor:pointer;transition:background .18s,border-color .18s,color .18s}.genre-chip[aria-pressed="true"]{background:#6d4bc433;border-color:var(--violet);color:var(--text)}.genre-chip:focus-visible{outline:2px solid var(--violet);outline-offset:3px}.catalog-load-more{display:flex;justify-content:center;padding:18px 0 28px}.catalog-load-more button{min-width:180px}@keyframes advancedFiltersIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
 @media(max-width:760px){.advanced-filter-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.advanced-score-field{grid-column:span 2}.advanced-toggle{padding:13px}.advanced-filter-body{padding:0 13px 13px}.advanced-filter-actions{align-items:flex-start}.advanced-filter-actions #filterResultCount{padding-top:7px}}
 @media(prefers-reduced-motion:reduce){.advanced-filter-body{animation:none}}
 </style>
@@ -333,17 +333,17 @@ input[type="range"]:disabled{opacity:.45;cursor:not-allowed}
     <div id="advancedFilterBody" class="advanced-filter-body">
       <div class="advanced-filter-grid">
         <label class="advanced-field"><span>Media type</span><select id="filterMediaType" class="input"><option value="all">Anime + manga</option><option value="ANIME">Anime only</option><option value="MANGA">Manga only</option></select></label>
-        <label class="advanced-field"><span>Genre</span><select id="filterGenre" class="input"><option value="">All genres</option></select></label>
+        <label class="advanced-field"><span>Genre</span><select id="filterGenre" class="input"><option value="">All genres</option></select></label><label class="advanced-field"><span>Season</span><select id="filterSeason" class="input"><option value="">Any season</option><option value="WINTER">Winter · Jan–Mar</option><option value="SPRING">Spring · Apr–Jun</option><option value="SUMMER">Summer · Jul–Sep</option><option value="FALL">Fall · Oct–Dec</option></select></label>
         <label class="advanced-field"><span>Format</span><select id="filterFormat" class="input"><option value="">All formats</option><option value="TV">TV</option><option value="TV_SHORT">TV short</option><option value="MOVIE">Movie</option><option value="SPECIAL">Special</option><option value="OVA">OVA</option><option value="ONA">ONA</option><option value="MANGA">Manga</option><option value="NOVEL">Novel</option><option value="ONE_SHOT">One-shot</option></select></label>
         <label class="advanced-field"><span>Status</span><select id="filterStatus" class="input"><option value="">Any status</option><option value="RELEASING">Releasing</option><option value="FINISHED">Finished</option><option value="NOT_YET_RELEASED">Not yet released</option><option value="CANCELLED">Cancelled</option><option value="HIATUS">Hiatus</option></select></label>
         <label class="advanced-field"><span>Year</span><input id="filterYear" class="input" type="number" min="1940" max="2100" placeholder="Any year"></label>
         <label class="advanced-field"><span>Sort results</span><select id="filterSort" class="input"><option value="match">Best match</option><option value="score">Highest score</option><option value="popular">Most popular</option><option value="title">Title A–Z</option><option value="newest">Newest first</option></select></label>
         <label class="advanced-field advanced-score-field"><span>Minimum score <strong id="filterScoreValue">0/10</strong></span><input id="filterMinScore" type="range" min="0" max="10" step="0.5" value="0" aria-label="Minimum score out of ten"><small>Hide titles rated below your threshold</small></label>
       </div>
-      <div class="advanced-filter-actions"><span id="filterResultCount" class="small muted">Search a title to use filters.</span><button type="button" class="btn-secondary" id="clearCatalogFilters">Clear filters</button></div>
+      <div id="genreQuickChips" class="genre-quick-chips" aria-label="Quick genre filters"></div><div class="advanced-filter-actions"><span id="filterResultCount" class="small muted">Search a title to use filters.</span><button type="button" class="btn-secondary" id="clearCatalogFilters">Clear filters</button></div>
     </div>
   </section>
-  <div id="catalogSearchResults" class="catalog-grid hidden" aria-label="Catalog search results"></div>
+  <div id="catalogSearchResults" class="catalog-grid hidden" aria-label="Catalog search results"></div><div id="catalogLoadMoreWrap" class="catalog-load-more hidden"><button type="button" class="btn-secondary" id="catalogLoadMore">Load more results</button></div>
   <section class="catalog-shelf" aria-labelledby="animeCatalogTitle"><div class="catalog-shelf-head"><div><span class="eyebrow">ANIMATION</span><h3 id="animeCatalogTitle">Trending anime</h3><p class="muted small">Series and films fans are watching right now.</p></div><div class="catalog-shelf-tools"><button type="button" class="rail-arrow" data-rail-scroll="animeCatalogGrid" data-direction="-1" aria-label="Scroll trending anime backward">‹</button><button type="button" class="rail-arrow" data-rail-scroll="animeCatalogGrid" data-direction="1" aria-label="Scroll trending anime forward">›</button><button type="button" class="btn-secondary" id="refreshCatalog">↻ Refresh</button></div></div><div id="animeCatalogGrid" class="catalog-grid catalog-row" aria-live="polite"><div class="catalog-loading">Loading anime covers and details…</div></div></section>
   <section class="catalog-shelf" aria-labelledby="mangaCatalogTitle"><div class="catalog-shelf-head"><div><span class="eyebrow">PAGES &amp; PANELS</span><h3 id="mangaCatalogTitle">Trending manga</h3><p class="muted small">Discover manga, manhwa, manhua, and one-shots.</p></div><div class="catalog-shelf-tools"><button type="button" class="rail-arrow" data-rail-scroll="mangaCatalogGrid" data-direction="-1" aria-label="Scroll trending manga backward">‹</button><button type="button" class="rail-arrow" data-rail-scroll="mangaCatalogGrid" data-direction="1" aria-label="Scroll trending manga forward">›</button></div></div><div id="mangaCatalogGrid" class="catalog-grid catalog-row" aria-live="polite"><div class="catalog-loading">Loading manga covers and details…</div></div></section>
   <section class="catalog-shelf" aria-labelledby="airingCatalogTitle"><div class="catalog-shelf-head"><div><span class="eyebrow">ON THE AIR</span><h3 id="airingCatalogTitle">Currently airing</h3><p class="muted small">Follow the shows with new episodes this season.</p></div><div class="catalog-shelf-tools"><button type="button" class="rail-arrow" data-rail-scroll="airingCatalogGrid" data-direction="-1" aria-label="Scroll currently airing anime backward">‹</button><button type="button" class="rail-arrow" data-rail-scroll="airingCatalogGrid" data-direction="1" aria-label="Scroll currently airing anime forward">›</button></div></div><div id="airingCatalogGrid" class="catalog-grid catalog-row" aria-live="polite"><div class="catalog-loading">Checking currently airing anime…</div></div></section>
@@ -445,14 +445,14 @@ input[type="range"]:disabled{opacity:.45;cursor:not-allowed}
     return publicCatalogRequest;
   }
   let lastCatalogSearchItems=[],lastCatalogSearchQuery='';
-  const catalogFilterIds=['filterMediaType','filterGenre','filterFormat','filterStatus','filterYear','filterMinScore','filterSort'];
+  const catalogFilterIds=['filterMediaType','filterGenre','filterFormat','filterStatus','filterYear','filterSeason','filterMinScore','filterSort'];const catalogPageSize=12;let catalogVisibleCount=12,catalogFilteredItems=[];
   function catalogFilterValues(){
-    return {type:$('#filterMediaType').value,genre:$('#filterGenre').value,format:$('#filterFormat').value,status:$('#filterStatus').value,year:$('#filterYear').value,score:Number($('#filterMinScore').value||0),sort:$('#filterSort').value};
+    return {type:$('#filterMediaType').value,genre:$('#filterGenre').value,format:$('#filterFormat').value,status:$('#filterStatus').value,year:$('#filterYear').value,season:$('#filterSeason').value,score:Number($('#filterMinScore').value||0),sort:$('#filterSort').value};
   }
   function updateCatalogFilterChrome(){
     const f=catalogFilterValues();
     $('#filterScoreValue').textContent=f.score+'/10';
-    const active=[f.type!=='all',!!f.genre,!!f.format,!!f.status,!!f.year,f.score>0,f.sort!=='match'].filter(Boolean).length;
+    const active=[f.type!=='all',!!f.genre,!!f.format,!!f.status,!!f.year,!!f.season,f.score>0,f.sort!=='match'].filter(Boolean).length;
     $('#activeFilterCount').textContent=active+' active';
     $('#filterMinScore').style.setProperty('--range-progress',(f.score/10*100)+'%');
   }
@@ -466,6 +466,9 @@ input[type="range"]:disabled{opacity:.45;cursor:not-allowed}
       if(f.format&&m.format!==f.format)return false;
       if(f.status&&m.status!==f.status)return false;
       if(f.year&&Number(m.seasonYear)!==Number(f.year))return false;
+      const month=Number(m.startDate&&m.startDate.month||0);
+      const season=month>=1&&month<=3?'WINTER':month>=4&&month<=6?'SPRING':month>=7&&month<=9?'SUMMER':month>=10&&month<=12?'FALL':'';
+      if(f.season&&season!==f.season)return false;
       if(Number(m.averageScore||0)<f.score*10)return false;
       return true;
     });
@@ -473,9 +476,14 @@ input[type="range"]:disabled{opacity:.45;cursor:not-allowed}
     else if(f.sort==='popular')list.sort((a,b)=>(b.popularity||0)-(a.popularity||0));
     else if(f.sort==='title')list.sort((a,b)=>(a.title||'').localeCompare(b.title||''));
     else if(f.sort==='newest')list.sort((a,b)=>(b.seasonYear||0)-(a.seasonYear||0));
+    catalogFilteredItems=list;catalogVisibleCount=Math.min(catalogVisibleCount,list.length);
     $('#filterResultCount').textContent=list.length+' of '+lastCatalogSearchItems.length+' results';
-    $('#catalogSearchResults').innerHTML=list.length?list.map(m=>catalogCardMarkup(m,m._catalogKind)).join(''):'<div class="catalog-loading">No titles match these filters. Try lowering the score or clearing a filter.</div>';
+    $('#catalogSearchResults').innerHTML=list.length?list.slice(0,catalogVisibleCount).map(m=>catalogCardMarkup(m,m._catalogKind)).join(''):'<div class="catalog-loading">No titles match these filters. Try lowering the score or clearing a filter.</div>';
+    $('#catalogLoadMoreWrap').classList.toggle('hidden',catalogVisibleCount>=list.length||!list.length);
+    $('#catalogLoadMore').textContent='Load more results ('+Math.max(0,list.length-catalogVisibleCount)+' left)';
     $('#catalogSearchStatus').textContent=list.length+' filtered result'+(list.length===1?'':'s')+' for “'+lastCatalogSearchQuery+'”.';
+    const genres=[...new Set(lastCatalogSearchItems.flatMap(m=>m.genres||[]))].sort((a,b)=>a.localeCompare(b));
+    $('#genreQuickChips').innerHTML=genres.slice(0,10).map(g=>'<button type="button" class="genre-chip" data-genre-chip="'+esc(g)+'" aria-pressed="'+String(g===f.genre)+'">'+esc(g)+'</button>').join('');
   }
   async function searchPublicCatalog(event){
     event.preventDefault();const query=$('#catalogSearchInput').value.trim();
@@ -485,7 +493,7 @@ input[type="range"]:disabled{opacity:.45;cursor:not-allowed}
     try{
       const data=await api('/api/catalog/search?q='+encodeURIComponent(query));
       lastCatalogSearchItems=[...(data.anime||[]).map(m=>Object.assign({},m,{_catalogKind:'ANIME'})),...(data.manga||[]).map(m=>Object.assign({},m,{_catalogKind:'MANGA'}))];
-      lastCatalogSearchQuery=query;
+      lastCatalogSearchQuery=query;catalogVisibleCount=catalogPageSize;
       const genres=[...new Set(lastCatalogSearchItems.flatMap(m=>m.genres||[]))].sort((a,b)=>a.localeCompare(b));
       const genreSelect=$('#filterGenre'),selectedGenre=genreSelect.value;
       genreSelect.innerHTML='<option value="">All genres</option>'+genres.map(g=>'<option value="'+esc(g)+'">'+esc(g)+'</option>').join('');
@@ -495,11 +503,13 @@ input[type="range"]:disabled{opacity:.45;cursor:not-allowed}
     }catch(e){$('#catalogSearchResults').innerHTML='<div class="catalog-loading">Search failed. '+esc(e.message)+'</div>';$('#catalogSearchStatus').textContent='The catalog search is temporarily unavailable.';}
     finally{button.disabled=false;button.textContent='Search';}
   }
-  catalogFilterIds.forEach(id=>$('#'+id).addEventListener('input',()=>{if(lastCatalogSearchItems.length)renderFilteredCatalogResults();else updateCatalogFilterChrome();}));
+  catalogFilterIds.forEach(id=>$('#'+id).addEventListener('input',()=>{catalogVisibleCount=catalogPageSize;if(lastCatalogSearchItems.length)renderFilteredCatalogResults();else updateCatalogFilterChrome();}));
   $('#clearCatalogFilters').addEventListener('click',()=>{
-    $('#filterMediaType').value='all';$('#filterGenre').value='';$('#filterFormat').value='';$('#filterStatus').value='';$('#filterYear').value='';$('#filterMinScore').value='0';$('#filterSort').value='match';
+    $('#filterMediaType').value='all';$('#filterGenre').value='';$('#filterFormat').value='';$('#filterStatus').value='';$('#filterYear').value='';$('#filterSeason').value='';$('#filterMinScore').value='0';$('#filterSort').value='match';catalogVisibleCount=catalogPageSize;
     if(lastCatalogSearchItems.length)renderFilteredCatalogResults();else updateCatalogFilterChrome();
   });
+  $('#genreQuickChips').addEventListener('click',event=>{const chip=event.target.closest('[data-genre-chip]');if(!chip)return;const g=chip.getAttribute('data-genre-chip');$('#filterGenre').value=$('#filterGenre').value===g?'':g;catalogVisibleCount=catalogPageSize;if(lastCatalogSearchItems.length)renderFilteredCatalogResults();});
+  $('#catalogLoadMore').addEventListener('click',()=>{catalogVisibleCount=Math.min(catalogVisibleCount+catalogPageSize,catalogFilteredItems.length);$('#catalogSearchResults').innerHTML=catalogFilteredItems.slice(0,catalogVisibleCount).map(m=>catalogCardMarkup(m,m._catalogKind)).join('');$('#catalogLoadMoreWrap').classList.toggle('hidden',catalogVisibleCount>=catalogFilteredItems.length);$('#catalogLoadMore').textContent='Load more results ('+Math.max(0,catalogFilteredItems.length-catalogVisibleCount)+' left)';});
   $('#advancedFiltersToggle').addEventListener('click',()=>{
     const toggle=$('#advancedFiltersToggle'),body=$('#advancedFilterBody'),expanded=toggle.getAttribute('aria-expanded')==='true';
     toggle.setAttribute('aria-expanded',String(!expanded));body.classList.toggle('is-collapsed',expanded);$('#advancedChevron').textContent=expanded?'›':'⌄';
