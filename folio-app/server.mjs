@@ -1,3 +1,4 @@
+import crypto from 'node:crypto';
 import http from 'node:http';
 import fs from 'node:fs/promises';
 import path from 'node:path';
@@ -206,30 +207,226 @@ async function extractChapterImages(rawUrl) {
   return {url:finalUrl,title:cleanText((html.match(/<title\b[^>]*>([\s\S]*?)<\/title>/i)||[])[1]||'Chapter'),images:filtered.slice(0,250),notice:'Images are extracted from the publicly accessible chapter HTML. Site restrictions are respected; protected or script-only images may not be available.'};
 }
 
-async function malRequest(req, res, pathname, query) {
-  const clientId = req.headers['x-mal-client-id'];
-  const bearer = req.headers.authorization;
-  if(!clientId) return send(res,400,{error:'Add your MyAnimeList API Client ID in the MAL settings.'});
-  if(!['/search','/me','/list','/update'].includes(pathname)) return send(res,404,{error:'Unknown MAL endpoint.'});
-  let apiPath=''; let method='GET'; let body;
-  if(pathname==='/search') apiPath='/anime?q='+encodeURIComponent(query.get('q')||'')+'&limit=10&fields=alternative_titles,synopsis,mean,genres,num_episodes,media_type,main_picture';
-  if(pathname==='/me') apiPath='/users/@me';
-  if(pathname==='/list') apiPath='/users/@me/animelist?limit=100&fields=list_status,num_episodes,mean,media_type,main_picture';
-  if(pathname==='/update') {
-    if(!bearer) return send(res,401,{error:'Add a MyAnimeList access token to update your list.'});
-    const data=await readBody(req); if(!Number.isInteger(Number(data.id))) return send(res,400,{error:'A valid anime ID is required.'});
-    apiPath='/anime/'+Number(data.id)+'/my_list_status'; method='PATCH';
-    const form=new URLSearchParams(); for(const k of ['status','score','num_watched_episodes']) if(data[k]!==undefined && data[k]!==null && data[k]!=='') form.set(k,String(data[k])); body=form;
-  }
-  const headers={'X-MAL-CLIENT-ID':String(clientId),'Accept':'application/json'};
-  if(bearer) headers.Authorization=bearer;
-  if(body) headers['Content-Type']='application/x-www-form-urlencoded';
-  try {
-    const r=await fetch('https://api.myanimelist.net/v2'+apiPath,{method,headers,body,signal:AbortSignal.timeout(12000)});
-    const txt=await r.text(); let data; try{data=JSON.parse(txt);}catch{data={message:txt.slice(0,500)};}
-    send(res,r.status,data);
-  } catch(e) { send(res,502,{error:'Could not reach the MyAnimeList API: '+e.message}); }
+
+const MAL_SESSION_COOKIE = 'folio_mal_session';
+const MAL_FLOW_COOKIE = 'folio_mal_oauth';
+const SESSION_SECRET = process.env.FOLIO_SESSION_SECRET || (process.env.NODE_ENV === 'production' ? '' : crypto.randomBytes(32).toString('base64url'));
+
+function malAuthConfigured() {
+  return Boolean(process.env.MAL_CLIENT_ID && process.env.MAL_CLIENT_SECRET && SESSION_SECRET);
 }
+function sessionKey() {
+  if (!SESSION_SECRET) throw new Error('Folio MAL sign-in has not been configured by the app maintainer.');
+  return crypto.createHash('sha256').update(SESSION_SECRET).digest();
+}
+function sealJson(value) {
+  const iv = crypto.randomBytes(12);
+  const cipher = crypto.createCipheriv('aes-256-gcm', sessionKey(), iv);
+  const encrypted = Buffer.concat([cipher.update(JSON.stringify(value), 'utf8'), cipher.final()]);
+  return Buffer.concat([iv, cipher.getAuthTag(), encrypted]).toString('base64url');
+}
+function unsealJson(value) {
+  try {
+    const raw = Buffer.from(String(value || ''), 'base64url');
+    if (raw.length < 29) return null;
+    const iv = raw.subarray(0, 12);
+    const tag = raw.subarray(12, 28);
+    const encrypted = raw.subarray(28);
+    const decipher = crypto.createDecipheriv('aes-256-gcm', sessionKey(), iv);
+    decipher.setAuthTag(tag);
+    return JSON.parse(Buffer.concat([decipher.update(encrypted), decipher.final()]).toString('utf8'));
+  } catch { return null; }
+}
+function readCookie(req, name) {
+  const header = req.headers.cookie || '';
+  for (const part of header.split(';')) {
+    const at = part.indexOf('=');
+    if (at > 0 && part.slice(0, at).trim() === name) return part.slice(at + 1).trim();
+  }
+  return '';
+}
+function isSecureRequest(req) {
+  return process.env.NODE_ENV === 'production' || String(req.headers['x-forwarded-proto'] || '').split(',')[0].trim() === 'https';
+}
+function cookieHeader(req, name, value, maxAge) {
+  return name + '=' + value + '; Path=/; HttpOnly; SameSite=Lax; Max-Age=' + maxAge + (isSecureRequest(req) ? '; Secure' : '');
+}
+function clearMalCookies(req, res) {
+  res.setHeader('Set-Cookie', [
+    cookieHeader(req, MAL_SESSION_COOKIE, '', 0),
+    cookieHeader(req, MAL_FLOW_COOKIE, '', 0)
+  ]);
+}
+function getMalRedirectUri(req) {
+  const configured = String(process.env.MAL_REDIRECT_URI || '').trim();
+  if (configured) return configured;
+  const renderUrl = String(process.env.RENDER_EXTERNAL_URL || '').replace(/\/+$/, '');
+  if (renderUrl) return renderUrl + '/api/mal/auth/callback';
+  const proto = String(req.headers['x-forwarded-proto'] || 'http').split(',')[0].trim();
+  const host = req.headers.host || ('localhost:' + PORT);
+  return proto + '://' + host + '/api/mal/auth/callback';
+}
+function redirect(res, location, status=303) {
+  res.writeHead(status, { Location: location, 'Cache-Control': 'no-store', 'Referrer-Policy': 'no-referrer' });
+  res.end();
+}
+async function postMalToken(form) {
+  const response = await fetch('https://myanimelist.net/v1/oauth2/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Accept': 'application/json' },
+    body: form,
+    signal: AbortSignal.timeout(12000)
+  });
+  const text = await response.text();
+  let data = {};
+  try { data = JSON.parse(text); } catch { data = { message: text.slice(0, 300) }; }
+  if (!response.ok || !data.access_token) throw new Error(data.error_description || data.message || ('MAL token exchange failed (' + response.status + ').'));
+  return data;
+}
+async function refreshMalSession(req, res, session) {
+  if (session && session.accessToken && Number(session.expiresAt || 0) > Date.now() + 60000) return session;
+  if (!session || !session.refreshToken || !malAuthConfigured()) return null;
+  try {
+    const form = new URLSearchParams({
+      client_id: process.env.MAL_CLIENT_ID,
+      client_secret: process.env.MAL_CLIENT_SECRET,
+      grant_type: 'refresh_token',
+      refresh_token: session.refreshToken
+    });
+    const token = await postMalToken(form);
+    const updated = {
+      accessToken: token.access_token,
+      refreshToken: token.refresh_token || session.refreshToken,
+      expiresAt: Date.now() + (Number(token.expires_in) || 2592000) * 1000,
+      username: session.username || ''
+    };
+    res.setHeader('Set-Cookie', cookieHeader(req, MAL_SESSION_COOKIE, sealJson(updated), 60 * 60 * 24 * 180));
+    return updated;
+  } catch (error) {
+    console.warn('MAL token refresh failed:', error.message);
+    res.setHeader('Set-Cookie', cookieHeader(req, MAL_SESSION_COOKIE, '', 0));
+    return null;
+  }
+}
+async function getMalSession(req, res) {
+  const initial = unsealJson(readCookie(req, MAL_SESSION_COOKIE));
+  return refreshMalSession(req, res, initial);
+}
+async function malAuthStatus(req, res) {
+  let session = null;
+  if (malAuthConfigured()) session = await getMalSession(req, res);
+  return send(res, 200, {
+    configured: malAuthConfigured(),
+    connected: Boolean(session && session.accessToken),
+    username: session ? session.username || '' : ''
+  });
+}
+async function startMalAuth(req, res) {
+  if (!malAuthConfigured()) return send(res, 503, { error: 'Folio MAL sign-in is not configured yet. The app maintainer must add MAL_CLIENT_ID, MAL_CLIENT_SECRET, and FOLIO_SESSION_SECRET to the server environment.' });
+  const state = crypto.randomBytes(24).toString('hex');
+  const verifier = crypto.randomBytes(32).toString('base64url');
+  const redirectUri = getMalRedirectUri(req);
+  const flow = { state, verifier, redirectUri, expiresAt: Date.now() + 10 * 60 * 1000 };
+  const authorize = new URL('https://myanimelist.net/v1/oauth2/authorize');
+  authorize.search = new URLSearchParams({
+    response_type: 'code',
+    client_id: process.env.MAL_CLIENT_ID,
+    code_challenge: verifier,
+    code_challenge_method: 'plain',
+    state,
+    redirect_uri: redirectUri
+  }).toString();
+  res.setHeader('Set-Cookie', cookieHeader(req, MAL_FLOW_COOKIE, sealJson(flow), 600));
+  redirect(res, authorize.toString(), 302);
+}
+async function completeMalAuth(req, res, query) {
+  const flow = unsealJson(readCookie(req, MAL_FLOW_COOKIE));
+  const state = query.get('state') || '';
+  const code = query.get('code') || '';
+  if (!malAuthConfigured() || query.get('error') || !flow || !state || state !== flow.state || Date.now() > Number(flow.expiresAt || 0) || !code) {
+    res.setHeader('Set-Cookie', cookieHeader(req, MAL_FLOW_COOKIE, '', 0));
+    console.warn('MAL OAuth callback rejected: configuration, code, state, or expiry check failed.');
+    return redirect(res, '/?mal=error');
+  }
+  try {
+    const form = new URLSearchParams({
+      client_id: process.env.MAL_CLIENT_ID,
+      client_secret: process.env.MAL_CLIENT_SECRET,
+      grant_type: 'authorization_code',
+      code,
+      code_verifier: flow.verifier,
+      redirect_uri: flow.redirectUri
+    });
+    const token = await postMalToken(form);
+    let username = '';
+    try {
+      const profile = await fetch('https://api.myanimelist.net/v2/users/@me', {
+        headers: { 'X-MAL-CLIENT-ID': process.env.MAL_CLIENT_ID, Authorization: 'Bearer ' + token.access_token, Accept: 'application/json' },
+        signal: AbortSignal.timeout(10000)
+      });
+      if (profile.ok) {
+        const data = await profile.json();
+        username = String(data.name || '');
+      }
+    } catch {}
+    const session = {
+      accessToken: token.access_token,
+      refreshToken: token.refresh_token || '',
+      expiresAt: Date.now() + (Number(token.expires_in) || 2592000) * 1000,
+      username
+    };
+    res.setHeader('Set-Cookie', [
+      cookieHeader(req, MAL_SESSION_COOKIE, sealJson(session), 60 * 60 * 24 * 180),
+      cookieHeader(req, MAL_FLOW_COOKIE, '', 0)
+    ]);
+    return redirect(res, '/?mal=connected');
+  } catch (error) {
+    console.error('MAL OAuth token exchange failed:', error.message);
+    res.setHeader('Set-Cookie', cookieHeader(req, MAL_FLOW_COOKIE, '', 0));
+    return redirect(res, '/?mal=error');
+  }
+}
+async function malLogout(req, res) {
+  clearMalCookies(req, res);
+  return send(res, 200, { ok: true });
+}
+async function malRequest(req, res, pathname, query) {
+  const clientId = process.env.MAL_CLIENT_ID;
+  if (!clientId) return send(res, 503, { error: 'MAL catalog search is not configured by the Folio maintainer yet.' });
+  if (!['/search','/me','/list','/update'].includes(pathname)) return send(res,404,{error:'Unknown MAL endpoint.'});
+  let session = null;
+  if (pathname !== '/search') {
+    session = await getMalSession(req, res);
+    if (!session || !session.accessToken) return send(res,401,{error:'Sign in with MyAnimeList first.'});
+  }
+  let apiPath = '';
+  let method = 'GET';
+  let body;
+  if (pathname === '/search') apiPath='/anime?q='+encodeURIComponent(query.get('q')||'')+'&limit=10&fields=alternative_titles,synopsis,mean,genres,num_episodes,media_type,main_picture';
+  if (pathname === '/me') apiPath='/users/@me';
+  if (pathname === '/list') apiPath='/users/@me/animelist?limit=100&fields=list_status,num_episodes,mean,media_type,main_picture';
+  if (pathname === '/update') {
+    const data = await readBody(req);
+    if (!Number.isInteger(Number(data.id))) return send(res,400,{error:'A valid anime ID is required.'});
+    apiPath='/anime/'+Number(data.id)+'/my_list_status'; method='PATCH';
+    const form=new URLSearchParams();
+    for(const k of ['status','score','num_watched_episodes']) if(data[k]!==undefined && data[k]!==null && data[k]!=='') form.set(k,String(data[k]));
+    body=form;
+  }
+  const headers = { 'X-MAL-CLIENT-ID': clientId, Accept: 'application/json' };
+  if (session) headers.Authorization = 'Bearer ' + session.accessToken;
+  if (body) headers['Content-Type'] = 'application/x-www-form-urlencoded';
+  try {
+    const r = await fetch('https://api.myanimelist.net/v2' + apiPath, { method, headers, body, signal: AbortSignal.timeout(12000) });
+    const txt = await r.text();
+    let data;
+    try { data = JSON.parse(txt); } catch { data = { message: txt.slice(0, 500) }; }
+    return send(res, r.status, data);
+  } catch (e) {
+    return send(res, 502, { error: 'Could not reach the MyAnimeList API: ' + e.message });
+  }
+}
+
 const server=http.createServer(async(req,res)=>{
   const origin=req.headers.origin;
   if(origin && !origin.startsWith(`http://localhost:${PORT}`) && !origin.startsWith(`http://127.0.0.1:${PORT}`)) { /* no permissive cross-origin access */ }
@@ -245,7 +442,11 @@ const server=http.createServer(async(req,res)=>{
     try { const data=await readBody(req); if(!data.url) return send(res,400,{error:'Website URL required.'}); const result=await inspectWebsite(String(data.url)); return send(res,200,result); }
     catch(e) { return send(res,400,{error:e.message||'Website inspection failed.'}); }
   }
-  if(url.pathname.startsWith('/api/mal/')) return malRequest(req,res,url.pathname.slice('/api/mal'.length),url.searchParams).catch(e=>send(res,400,{error:e.message||'MAL request failed.'}));
+  if(req.method==='GET' && url.pathname==='/api/mal/auth/status') return malAuthStatus(req,res).catch(e=>send(res,500,{error:e.message||'Could not check MAL connection.'}));
+  if(req.method==='GET' && url.pathname==='/api/mal/auth/start') return startMalAuth(req,res).catch(e=>send(res,500,{error:e.message||'Could not start MAL sign-in.'}));
+  if(req.method==='GET' && url.pathname==='/api/mal/auth/callback') return completeMalAuth(req,res,url.searchParams);
+  if(req.method==='POST' && url.pathname==='/api/mal/auth/logout') return malLogout(req,res);
+  if(url.pathname.startsWith('/api/mal/')) return malRequest(req,res,url.pathname.slice('/api/mal'.length),url.searchParams).catch(e=>send(res,500,{error:e.message||'MAL request failed.'}));
   if(req.method!=='GET' && req.method!=='HEAD') return send(res,405,{error:'Method not allowed.'});
   let filePath=path.resolve(__dirname, '.'+decodeURIComponent(url.pathname==='/'?'/index.html':url.pathname));
   if(!filePath.startsWith(__dirname+path.sep) && filePath!==path.join(__dirname,'index.html')) return send(res,403,'Forbidden');
