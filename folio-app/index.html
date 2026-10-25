@@ -481,8 +481,9 @@ input[type="range"]:disabled{opacity:.45;cursor:not-allowed}
     catalogFilteredItems=list;catalogVisibleCount=Math.min(catalogVisibleCount,list.length);
     $('#filterResultCount').textContent=list.length+' of '+lastCatalogSearchItems.length+' results';
     $('#catalogSearchResults').innerHTML=list.length?list.slice(0,catalogVisibleCount).map(m=>catalogCardMarkup(m,m._catalogKind)).join(''):'<div class="catalog-loading">No titles match these filters. Try lowering the score or clearing a filter.</div>';
-    $('#catalogLoadMoreWrap').classList.toggle('hidden',catalogVisibleCount>=list.length||!list.length);
-    $('#catalogLoadMore').textContent='Load more results ('+Math.max(0,list.length-catalogVisibleCount)+' left)';
+    $('#catalogLoadMoreWrap').classList.toggle('hidden',!(catalogVisibleCount<list.length||catalogHasNextPage));
+    const localRemaining=Math.max(0,list.length-catalogVisibleCount);
+    $('#catalogLoadMore').textContent=localRemaining?'Load more results ('+localRemaining+' left)':(catalogHasNextPage?'Load next page':'Load more results');
     $('#catalogSearchStatus').textContent=list.length+' filtered result'+(list.length===1?'':'s')+' for “'+lastCatalogSearchQuery+'”.';
     const genres=[...new Set(lastCatalogSearchItems.flatMap(m=>m.genres||[]))].sort((a,b)=>a.localeCompare(b));
     $('#genreQuickChips').innerHTML=genres.slice(0,10).map(g=>'<button type="button" class="genre-chip" data-genre-chip="'+esc(g)+'" aria-pressed="'+String(g===f.genre)+'">'+esc(g)+'</button>').join('');
