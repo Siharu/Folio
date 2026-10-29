@@ -190,7 +190,7 @@ function mangaScrapeChapterUrl(provider, mangaId, chapterId, rawSourceKind) {
   if (provider === 'mangakakalot') return 'https://mangakakalot.com/chapter/' + safeMangaId + '/' + safeChapterId;
   throw new Error('This provider does not expose a supported chapter URL.');
 }
-async async function mangaHookApiRequest(path) {
+async function mangaHookApiRequest(path) {
   if (typeof path !== 'string' || !path.startsWith('/api/')) throw new Error('Invalid Manga Hook API path.');
   const target = new URL(path, MANGAHOOK_API_BASE);
   if (target.origin !== MANGAHOOK_API_BASE) throw new Error('Invalid Manga Hook API host.');
