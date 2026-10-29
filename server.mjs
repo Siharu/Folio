@@ -1493,7 +1493,9 @@ if(req.method==='POST' && url.pathname==='/api/mangascrape/discover') {
       const provider=String(data.provider||'mangahook').trim().toLowerCase();
       const selected=mangaScrapeProvider(provider);
       const id=mangaScrapeCleanId(provider,data.id);
-      const chapterId=mangaScrapeId(data.chapterId);
+      const chapterId=provider==='mangadex'
+        ? mangaScrapeCleanId('mangadex',data.chapterId)
+        : mangaScrapeId(data.chapterId);
       const sourceKind=mangaScrapeSourceKind(provider,data.sourceKind);
       const apiPath='/api/manga/'+encodeURIComponent(id)+'/'+encodeURIComponent(chapterId);
       let payload;
