@@ -433,15 +433,17 @@ body[data-page="manga"] #mangaView{display:block!important}
 }
 
 
-/* Hekomi dual identity: the same mark slips from anime motion into manga panels. */
-.brandmark{position:relative!important;isolation:isolate;perspective:420px;transform-style:preserve-3d;padding:0!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;color:transparent!important;overflow:visible!important}
+/* Hekomi's neutral identity is the default; mode marks take over after a deliberate choice. */
+.brandmark{position:relative!important;isolation:isolate;perspective:420px;transform-style:preserve-3d;width:64px!important;height:42px!important;flex:0 0 64px;padding:0!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;color:transparent!important;overflow:visible!important}
 .brandmark img.brandmark-layer{position:absolute;inset:0;display:block;width:100%;height:100%;object-fit:contain;pointer-events:none;backface-visibility:hidden;transform-origin:center;will-change:opacity,transform;transition:none}
-.brandmark .mark-anime{opacity:1;transform:rotateY(0deg) scale(1)}
-.brandmark .mark-manga{opacity:0;transform:rotateY(-78deg) scale(.78)}
-.brandmark[data-media="manga"] .mark-anime{opacity:0;transform:rotateY(78deg) scale(.78)}
-.brandmark[data-media="manga"] .mark-manga{opacity:1;transform:rotateY(0deg) scale(1)}
+.brandmark .mark-dual{opacity:1;transform:rotateY(0deg) scale(1)}
+.brandmark .mark-anime,.brandmark .mark-manga{opacity:0;transform:rotateY(-78deg) scale(.78)}
+.brandmark[data-media="anime"] .mark-dual,.brandmark[data-media="manga"] .mark-dual{opacity:0;transform:rotateY(-78deg) scale(.78)}
+.brandmark[data-media="anime"] .mark-anime,.brandmark[data-media="manga"] .mark-manga{opacity:1;transform:rotateY(0deg) scale(1)}
+.brandmark[data-media="anime"] .mark-manga,.brandmark[data-media="manga"] .mark-anime{opacity:0;transform:rotateY(78deg) scale(.78)}
 .brandmark.brandmark-ready img.brandmark-layer{transition:opacity .28s cubic-bezier(.22,1,.36,1),transform .38s cubic-bezier(.22,1,.36,1)}
 @media(prefers-reduced-motion:reduce){.brandmark.brandmark-ready img.brandmark-layer{transition:none!important}}
+@media(max-width:760px){.brandmark{width:57px!important;height:38px!important;flex-basis:57px}}
 </style>
 </head>
 <body data-page="__HEKOMI_PAGE__">
@@ -450,9 +452,10 @@ body[data-page="manga"] #mangaView{display:block!important}
 
 <div class="app" id="app">
   <header class="topbar">
-    <div class="brand"><div class="brandmark" data-media="anime" role="img" aria-label="Hekomi Anime">
-      <img class="brandmark-layer mark-anime" src="/icon.svg" alt="" width="36" height="36" decoding="async">
-      <img class="brandmark-layer mark-manga" src="/assets/hekomi-manga-mark.svg" alt="" width="36" height="36" decoding="async">
+    <div class="brand"><div class="brandmark" data-media="dual" role="img" aria-label="Hekomi — One Identity, Two Worlds">
+      <img class="brandmark-layer mark-dual" src="/assets/hekomi-dual-mark.svg" alt="" width="64" height="42" decoding="async">
+      <img class="brandmark-layer mark-anime" src="/assets/hekomi-anime-mark.svg" alt="" width="42" height="42" decoding="async">
+      <img class="brandmark-layer mark-manga" src="/assets/hekomi-manga-mark.svg" alt="" width="42" height="42" decoding="async">
     </div><div>Hekomi<small>ANIME · MANGA · AFTER HOURS</small></div></div>
     <nav class="primary-nav" aria-label="Main navigation"><a href="/" data-route-link="home">Home</a><a href="/discover" data-route-link="discover">Discover</a><a href="/anime" data-route-link="mal">Anime</a><a href="/manga" data-route-link="manga">Manga</a></nav>
     <div class="top-actions"><span class="chip">LOCAL-FIRST · PERSONAL</span><button class="iconbtn" id="themeSettingsBtn" aria-label="Appearance settings" title="Appearance settings">◐</button><button class="iconbtn" id="headerHome" aria-label="Home" title="Switch mode / Home">⌂</button></div>
@@ -741,10 +744,10 @@ body[data-page="manga"] #mangaView{display:block!important}
   async function api(path, options={}){const h={...(options.headers||{})};if(options.body && typeof options.body!=='string'){h['Content-Type']='application/json';options={...options,body:JSON.stringify(options.body)};}const r=await fetch(path,{...options,credentials:'same-origin',headers:h});let data;try{data=await r.json();}catch{data={error:'Unexpected server response.'};}if(!r.ok)throw new Error(data.error||data.message||`Request failed (${r.status})`);return data;}
   const routePathForMode={home:'/',discover:'/discover',mal:'/anime',manga:'/manga'};
   function currentPageFromPath(){let p=window.location.pathname;while(p.length>1&&p.endsWith('/'))p=p.slice(0,-1);return ({'/':'home','/discover':'discover','/anime':'mal','/manga':'manga'})[p]||'home';}
-  function setBrandMode(mode){const mark=$('.brandmark');if(!mark)return;mark.dataset.media=mode==='manga'?'manga':'anime';mark.setAttribute('aria-label',mode==='manga'?'Hekomi Manga':'Hekomi Anime');}
-  function renderPage(page){const visualPage=page==='mal'?'anime':page==='manga'?'manga':page;document.body.dataset.page=visualPage;setBrandMode(page==='manga'?'manga':'anime');$('#landing').classList.toggle('hidden',!['home','discover'].includes(page));$('#malView').classList.toggle('hidden',page!=='mal');$('#mangaView').classList.toggle('hidden',page!=='manga');$('#app').classList.toggle('manga-mode',page==='manga');const activePath=routePathForMode[page]||'/';$('.primary-nav [data-route-link]').forEach(a=>{if(a.getAttribute('href')===activePath)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});if(page==='mal'){renderLocalAnime();if(remoteReady)renderRemoteList();}if(page==='manga'){renderMangaLibrary();renderSources();}}
+  function setBrandMode(mode){const mark=$('.brandmark');if(!mark)return;const visualMode=mode==='manga'?'manga':mode==='anime'?'anime':'dual';mark.dataset.media=visualMode;mark.setAttribute('aria-label',visualMode==='dual'?'Hekomi — One Identity, Two Worlds':visualMode==='manga'?'Hekomi Manga':'Hekomi Anime');}
+  function renderPage(page){const visualPage=page==='mal'?'anime':page==='manga'?'manga':page;document.body.dataset.page=visualPage;setBrandMode(page==='manga'?'manga':page==='mal'?'anime':'dual');$('#landing').classList.toggle('hidden',!['home','discover'].includes(page));$('#malView').classList.toggle('hidden',page!=='mal');$('#mangaView').classList.toggle('hidden',page!=='manga');$('#app').classList.toggle('manga-mode',page==='manga');const activePath=routePathForMode[page]||'/';$('.primary-nav [data-route-link]').forEach(a=>{if(a.getAttribute('href')===activePath)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});if(page==='mal'){renderLocalAnime();if(remoteReady)renderRemoteList();}if(page==='manga'){renderMangaLibrary();renderSources();}}
   let modeNavigationPending=false;
-  function setMode(mode){const page=mode==='mal'?'mal':mode==='manga'?'manga':'home';const path=routePathForMode[page];if(window.location.pathname!==path){if(modeNavigationPending)return;modeNavigationPending=true;setBrandMode(page==='manga'?'manga':'anime');const reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches;window.setTimeout(()=>{window.location.href=path;},reduced?0:370);return;}renderPage(page);window.scrollTo({top:0,behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});}
+  function setMode(mode){const page=mode==='mal'?'mal':mode==='manga'?'manga':'home';const path=routePathForMode[page];if(window.location.pathname!==path){if(modeNavigationPending)return;modeNavigationPending=true;setBrandMode(page==='manga'?'manga':page==='mal'?'anime':'dual');const reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches;window.setTimeout(()=>{window.location.href=path;},reduced?0:370);return;}renderPage(page);window.scrollTo({top:0,behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});}
   document.addEventListener('click',event=>{const a=event.target.closest('a[href]');if(!a||event.defaultPrevented||a.target==='_blank'||event.metaKey||event.ctrlKey||event.shiftKey||event.altKey)return;let destination;try{destination=new URL(a.href,window.location.href);}catch{return;}if(destination.origin!==window.location.origin)return;const route=(destination.pathname!=='/'&&destination.pathname.endsWith('/')?destination.pathname.slice(0,-1):destination.pathname)||'/';if(route==='/anime'||route==='/manga'){event.preventDefault();setMode(route==='/manga'?'manga':'mal');}});
   $$('[data-enter]').forEach(el=>{el.addEventListener('click',()=>setMode(el.dataset.enter));el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();setMode(el.dataset.enter);}})});$('#headerHome').addEventListener('click',()=>setMode(null));$('#themeSettingsBtn').addEventListener('click',openThemeSettings);
   renderPage(currentPageFromPath());
