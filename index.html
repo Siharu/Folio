@@ -1505,7 +1505,7 @@ function mangaFeedCardMarkup(item,index){
       $('#mangaAdapterStatus').textContent='Enable at least one extension to search.';
     }
   }
-  $('#mangaExtensionList input[type="checkbox"]').forEach(input=>{
+  $$('#mangaExtensionList input[type="checkbox"]').forEach(input=>{
     input.checked=mangaPreferences.enabledExtensions.includes(input.value);
     input.addEventListener('change',saveEnabledMangaExtensions);
   });
