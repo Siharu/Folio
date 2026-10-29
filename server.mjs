@@ -17,6 +17,8 @@ const axios = require('axios');
 const { Batoto, MangaBuddy, Mangakakalot } = require('mangascrape');
 axios.defaults.headers.common['User-Agent'] = USER_AGENT;
 axios.defaults.headers.common['Accept'] = 'text/html,application/xhtml+xml;q=0.9,*/*;q=0.5';
+// Do not follow source redirects without re-checking the destination host and its robots rules.
+axios.defaults.maxRedirects = 0;
 const mangaScrapeAdapters = {
   batoto: new Batoto({ baseUrl:'https://fto.to', cache:false }),
   mangabuddy: new MangaBuddy({ cache:false }),
@@ -179,6 +181,7 @@ async function assertMangaScrapeAllowed(rawUrl) {
   const now = Date.now();
   const last = mangaScrapeLastRequest.get(url.origin) || 0;
   if (now - last < 1400) throw new Error('Please wait a moment before requesting another page from this source.');
+  mangaScrapeLastRequest.set(url.origin, now);
   let cached = mangaScrapeRobotsCache.get(url.origin);
   if (!cached || now - cached.checkedAt > 10 * 60 * 1000) {
     let robots = '';
@@ -201,7 +204,6 @@ async function assertMangaScrapeAllowed(rawUrl) {
   const rule = robotsAllowed(url, cached.text);
   if (!rule.allowed) throw new Error('This page is disallowed by the source robots.txt rules.');
   if (rule.delay > 0) await new Promise(resolve => setTimeout(resolve, Math.min(rule.delay, 10) * 1000));
-  mangaScrapeLastRequest.set(url.origin, Date.now());
   return url;
 }
 function mangaScrapeSafeAsset(raw) {
