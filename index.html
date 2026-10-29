@@ -547,7 +547,7 @@ body[data-page="manga"] #mangaView{display:block!important}
       <div class="home-section-heading" id="homeModeHeading"><div><span class="eyebrow">PICK YOUR PORTAL</span><h2>What are we getting into?</h2></div><p>Two different moods. One home base.</p></div>
   <div class="choice-grid">
         <article class="choice mal" data-card-number="01" data-enter="mal" tabindex="0" role="button" aria-label="Open MAL Client"><div class="choice-top"><div class="choice-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4.5h10.2A2.8 2.8 0 0 1 18 7.3v12.2H7.4A2.4 2.4 0 0 1 5 17.1V4.5Z"/><path d="M7.5 8h7M7.5 11.5h7M7.5 15h4.5M18 8.5h2v11h-2"/></svg></div><div class="arrow">↗</div></div><h2>MAL Client</h2><p>Your anime list, on your terms. Search shows, update watched episodes, score titles, and sync changes with your MyAnimeList account.</p><div class="choice-foot"><span class="dot"></span> Anime tracking & account sync</div></article>
-        <article class="choice manga" data-card-number="02" data-enter="manga" tabindex="0" role="button" aria-label="Open Manga Crawler"><div class="choice-top"><div class="choice-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 5.5c3.2-1.4 6.1-1.1 8.5.8v13c-2.4-1.9-5.3-2.2-8.5-.8v-13Z"/><path d="M20.5 5.5c-3.2-1.4-6.1-1.1-8.5.8v13c2.4-1.9 5.3-2.2 8.5-.8v-13Z"/><path d="M6.3 8.5h2.8M6.3 11.3h2.8M14.8 8.5h2.8M14.8 11.3h2.8"/></svg></div><div class="arrow">↗</div></div><h2>Manga Crawler</h2><p>Discover manga, manhwa, and manhua from supported websites. Collect covers, inspect chapter links, and build your own reading library.</p><div class="choice-foot"><span class="dot"></span> Website discovery & reading library</div></article>
+        <article class="choice manga" data-card-number="02" data-enter="manga" tabindex="0" role="button" aria-label="Open Manga Library"><div class="choice-top"><div class="choice-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 5.5c3.2-1.4 6.1-1.1 8.5.8v13c-2.4-1.9-5.3-2.2-8.5-.8v-13Z"/><path d="M20.5 5.5c-3.2-1.4-6.1-1.1-8.5.8v13c2.4-1.9 5.3-2.2 8.5-.8v-13Z"/><path d="M6.3 8.5h2.8M6.3 11.3h2.8M14.8 8.5h2.8M14.8 11.3h2.8"/></svg></div><div class="arrow">↗</div></div><h2>Manga Library</h2><p>Discover manga, manhwa, and manhua from supported websites. Collect covers, inspect chapter links, and build your own reading library.</p><div class="choice-foot"><span class="dot"></span> Website discovery & reading library</div></article>
       </div>
       <div class="landing-footer">This is your private workspace — choose a mode to get started.</div>
       <div class="statusline"><span class="led"></span><span id="healthLabel">Checking local services…</span><span>·</span><span>Library data stays in this browser</span></div>
@@ -646,7 +646,7 @@ body[data-page="manga"] #mangaView{display:block!important}
         
       </div>
       <div id="mangaSourcesTab" class="hidden">
-        <div class="panel"><div class="panel-head"><div><h2>Saved websites</h2><p class="muted small">Sources you have chosen to keep. Inspect them again to refresh discovered titles and chapters.</p></div><button class="btn-mint" id="addSourceBtn">＋ Add website</button></div><div id="sourceList" class="shelf"></div></div>
+        <div class="panel"><div class="panel-head"><div><h2>Your sources</h2><p class="muted small">Manage the manga websites you have saved.</p></div><button class="btn-mint" id="addSourceBtn">＋ Add website</button></div><div id="sourceList" class="shelf"></div></div>
         <div class="panel advanced-source-tools"><h2>How source discovery works</h2><p class="muted small">The generic crawler reads a publicly accessible HTML page and looks for title metadata, cover images, same-site manga links, and chapter-like links. Websites with unusual layouts, script-rendered catalogs, CAPTCHAs, or image protections may need a custom adapter. Discovery is not a guarantee that every title on a site will be found.</p></div>
       </div>
     </section>
@@ -1463,7 +1463,7 @@ function mangaFeedCardMarkup(item,index){
       }catch(error){
         status.classList.add('error');
         status.textContent=error.message||'Manga discovery could not be loaded.';
-        $('#mangaExploreGrid').innerHTML='<div class="empty"><strong>Could not load manga discovery</strong>Try refreshing, changing sources, or opening Source search. Hekomi will not bypass source restrictions.</div>';
+        $('#mangaExploreGrid').innerHTML='<div class="empty"><strong>Could not load manga</strong>Try refreshing in a moment.</div>';
         $('#mangaExploreSourceErrors').textContent='';
       }finally{
         if(mangaExploreInFlight.get(cacheKey)===task)mangaExploreInFlight.delete(cacheKey);
@@ -1528,7 +1528,7 @@ function mangaFeedCardMarkup(item,index){
       $('#mangaAdapterResults').innerHTML=results.length?results.map((item,index)=>{
         const meta=[item.providerLabel,item.status,(item.genres||[]).slice(0,4).join(' · '),item.latestChapter?'Latest: '+item.latestChapter:'',item.lastUpdate].filter(Boolean).join(' · ');
         return '<div class="resultitem">'+coverHtml(item.cover,'manga',item.title)+'<div class="resulttext"><h3>'+esc(item.title)+'</h3><p>'+esc(meta||'Source metadata available')+'</p>'+(item.description?'<p class="muted small">'+esc(item.description.slice(0,240))+(item.description.length>240?'…':'')+'</p>':'')+'<div class="resultactions"><button class="mini-btn" data-mangascrape-details="'+index+'">Details &amp; chapters</button><a class="mini-btn" href="'+esc(item.url)+'" target="_blank" rel="noreferrer">Open source ↗</a></div></div></div>';
-      }).join(''):'<div class="empty"><strong>No results returned</strong>Try another title or enable another extension. Unavailable sources are reported rather than bypassed.</div>';
+      }).join(''):'<div class="empty"><strong>No results found</strong>Try another title or turn on more sources.</div>';
       $('#mangaAdapterResults [data-mangascrape-details]').forEach(button=>button.onclick=()=>{const item=results[Number(button.dataset.mangascrapeDetails)];showMangaScrapeDetails(item&&item.provider||provider,item);});
       if(data.errors&&data.errors.length){
         $('#mangaAdapterStatus').textContent+=' · '+data.errors.length+' extension'+(data.errors.length===1?'':'s')+' unavailable: '+data.errors.map(x=>x.label).join(', ');
