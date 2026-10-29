@@ -40,12 +40,14 @@ const mangaScrapeAdapters = {
   batoto: new Batoto({ baseUrl:'https://fto.to', cache:false }),
   mangabuddy: new MangaBuddy({ cache:false }),
   mangakakalot: new Mangakakalot({ cache:false }),
-  // Manga Hook and GoManga expose JSON APIs; their adapters are handled below.
+  // JSON APIs are handled here rather than via HTML page scraping.
   mangahook: { cache:false },
-  gomanga: { cache:false }
+  gomanga: { cache:false },
+  mangadex: { cache:false }
 };
 const MANGAHOOK_API_BASE = 'https://mangahook-api.vercel.app';
 const GOMANGA_API_BASE = 'https://gomanga-api.vercel.app';
+const MANGADEX_API_BASE = 'https://api.mangadex.org';
 const mangaScrapeFeedCache = new Map();
 const mangaScrapeLastRequest = new Map();
 const MANGASCRAPE_SOURCES = {
@@ -53,7 +55,8 @@ const MANGASCRAPE_SOURCES = {
   mangabuddy: { label:'MangaBuddy', origin:'https://mangabuddy.com', allowedHosts:['mangabuddy.com'] },
   mangakakalot: { label:'Mangakakalot', origin:'https://mangakakalot.com', allowedHosts:['mangakakalot.com','chapmanganato.to'] },
   mangahook: { label:'Manga Hook API', origin:MANGAHOOK_API_BASE, allowedHosts:['mangahook-api.vercel.app'] },
-  gomanga: { label:'GoManga API', origin:GOMANGA_API_BASE, allowedHosts:['gomanga-api.vercel.app'] }
+  gomanga: { label:'GoManga API', origin:GOMANGA_API_BASE, allowedHosts:['gomanga-api.vercel.app'] },
+  mangadex: { label:'MangaDex', origin:MANGADEX_API_BASE, allowedHosts:['api.mangadex.org','uploads.mangadex.org','mangadex.network'] }
 };
 
 function send(res, status, payload, headers={}) {
@@ -169,6 +172,9 @@ function mangaScrapeId(raw) {
 }
 function mangaScrapeCleanId(provider, raw) {
   let id = mangaScrapeId(raw);
+  if (provider === 'mangadex' && !/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(id)) {
+    throw new Error('MangaDex returned an invalid manga or chapter ID.');
+  }
   // The Manga List endpoint prefixes some IDs with "1"; the detail API expects the raw ID.
   if (provider === 'mangahook' && id.startsWith('1manga-')) id = id.slice(1);
   return id;
@@ -193,6 +199,7 @@ function mangaScrapeTitleUrl(provider, id, rawSourceKind) {
   const safeId = mangaScrapeCleanId(provider, id);
   const sourceKind = mangaScrapeSourceKind(provider, rawSourceKind);
   if (provider === 'gomanga') return GOMANGA_API_BASE + '/api/manga/' + encodeURIComponent(safeId);
+  if (provider === 'mangadex') return 'https://mangadex.org/title/' + encodeURIComponent(safeId);
   if (provider === 'mangahook') return 'https://ww6.mangakakalot.tv/manga/' + safeId;
   if (provider === 'batoto') return 'https://fto.to/title/' + safeId;
   if (provider === 'mangabuddy') return 'https://mangabuddy.com/' + safeId;
@@ -205,6 +212,7 @@ function mangaScrapeChapterUrl(provider, mangaId, chapterId, rawSourceKind) {
   const safeChapterId = mangaScrapeId(chapterId);
   const sourceKind = mangaScrapeSourceKind(provider, rawSourceKind);
   if (provider === 'gomanga') return GOMANGA_API_BASE + '/api/manga/' + encodeURIComponent(safeMangaId) + '/' + encodeURIComponent(safeChapterId);
+  if (provider === 'mangadex') return 'https://mangadex.org/chapter/' + encodeURIComponent(safeChapterId);
   if (provider === 'mangahook') return 'https://ww6.mangakakalot.tv/chapter/' + safeMangaId + '/' + safeChapterId;
   if (provider === 'batoto') return 'https://fto.to/title/' + safeMangaId + '/' + safeChapterId;
   if (provider === 'mangabuddy') return 'https://mangabuddy.com/' + safeMangaId + '/' + safeChapterId;
@@ -287,8 +295,10 @@ async function assertMangaSourceRequestAllowed(rawUrl) {
   return url;
 }
 function mangaScrapeSafeAsset(raw) {
+  const local = String(raw || '').trim();
+  if (local.startsWith('/api/mangadex/image?src=') && !local.startsWith('//')) return local;
   try {
-    const url = new URL(String(raw || ''));
+    const url = new URL(local);
     if (!['https:','http:'].includes(url.protocol) || url.username || url.password) return '';
     // GoManga's documentation examples contain http:// image-proxy links; keep those
     // same-host assets on HTTPS so modern browsers do not block them as mixed content.
@@ -336,8 +346,123 @@ function mangaScrapeTitleText(value) {
   if (value && typeof value === 'object') return String(value.original || value.english || value.romaji || value.title || '').trim();
   return '';
 }
+function mangaDexImageProxyUrl(rawUrl) {
+  return '/api/mangadex/image?src=' + encodeURIComponent(String(rawUrl || ''));
+}
+function mangaDexTitle(attributes) {
+  const a = attributes || {};
+  const title = a.title && typeof a.title === 'object' ? a.title : {};
+  if (title.en) return String(title.en);
+  for (const alt of Array.isArray(a.altTitles) ? a.altTitles : []) {
+    if (alt && alt.en) return String(alt.en);
+  }
+  return String(title['ja-ro'] || title['ko-ro'] || title.ja || title.romaji || Object.values(title)[0] || 'Untitled manga');
+}
+function mangaDexMapManga(item) {
+  if (!item || typeof item !== 'object' || !item.id) return null;
+  const attrs = item.attributes || {};
+  const relationships = Array.isArray(item.relationships) ? item.relationships : [];
+  const coverRel = relationships.find(rel => rel && rel.type === 'cover_art');
+  const coverName = coverRel && coverRel.attributes && coverRel.attributes.fileName;
+  const cover = coverName
+    ? mangaDexImageProxyUrl('https://uploads.mangadex.org/covers/' + encodeURIComponent(item.id) + '/' + encodeURIComponent(String(coverName)) + '.256.jpg')
+    : '';
+  const namesFor = type => relationships.filter(rel => rel && rel.type === type && rel.attributes && rel.attributes.name).map(rel => String(rel.attributes.name));
+  const genres = (Array.isArray(attrs.tags) ? attrs.tags : []).map(tag => {
+    const names = tag && tag.attributes && tag.attributes.name;
+    return String(names && (names.en || Object.values(names)[0]) || '');
+  }).filter(Boolean);
+  const descriptions = attrs.description && typeof attrs.description === 'object' ? attrs.description : {};
+  const description = String(descriptions.en || descriptions['en-us'] || Object.values(descriptions)[0] || '');
+  return {
+    id:String(item.id), title:mangaDexTitle(attrs), name:mangaDexTitle(attrs),
+    url:'https://mangadex.org/title/' + encodeURIComponent(String(item.id)),
+    cover, image:cover, poster:cover, description,
+    genres, authors:namesFor('author'), artists:namesFor('artist'),
+    status:String(attrs.status || ''), lastUpdate:String(attrs.updatedAt || attrs.createdAt || ''),
+    latestChapter:String(attrs.latestUploadedChapter || ''), score:0,
+    source:'mangadex', mature:(attrs.contentRating === 'erotica' || attrs.contentRating === 'pornographic')
+  };
+}
+function mangaDexQuery(path, extra = {}) {
+  const params = new URLSearchParams();
+  for (const [key,value] of Object.entries(extra)) {
+    if (Array.isArray(value)) value.forEach(entry => params.append(key, String(entry)));
+    else if (value !== undefined && value !== null && value !== '') params.append(key, String(value));
+  }
+  return path + (params.size ? '?' + params.toString() : '');
+}
+function mangaDexIncludes() {
+  return {'includes[]':['cover_art','author','artist'],'contentRating[]':['safe','suggestive','erotica','pornographic']};
+}
+function mangaDexSearchPath(query, limit=30) {
+  return mangaDexQuery('/manga',{limit,offset:0,title:query,...mangaDexIncludes()});
+}
+function mangaDexImageHostAllowed(hostname) {
+  const host = String(hostname || '').toLowerCase().replace(/\.$/,'');
+  return host === 'uploads.mangadex.org' || host === 'mangadex.network' || host.endsWith('.mangadex.network');
+}
+async function mangaDexApiRequest(path) {
+  if (typeof path !== 'string' || !path.startsWith('/') || path.startsWith('//')) throw new Error('Invalid MangaDex API path.');
+  const target = new URL(path, MANGADEX_API_BASE);
+  if (target.origin !== MANGADEX_API_BASE) throw new Error('Invalid MangaDex API host.');
+  await validatePublicUrl(target.href);
+  const now = Date.now();
+  const last = mangaScrapeLastRequest.get(target.origin) || 0;
+  const waitMs = 400 - (now - last);
+  if (waitMs > 0) await new Promise(resolve => setTimeout(resolve, waitMs));
+  mangaScrapeLastRequest.set(target.origin,Date.now());
+  let response;
+  try {
+    response = await fetch(target.href,{redirect:'manual',signal:AbortSignal.timeout(12000),headers:{'User-Agent':USER_AGENT + '; contact: https://hekomi.vercel.app',Accept:'application/json'}});
+  } catch(error) {
+    throw new Error('MangaDex API could not be reached: ' + String(error && error.message || 'network error'));
+  }
+  if (response.status >= 300 && response.status < 400) throw new Error('MangaDex API redirected this request unexpectedly.');
+  if (!response.ok) throw new Error('MangaDex API returned HTTP ' + response.status + '.');
+  const body = await response.text();
+  if (body.length > 8_000_000) throw new Error('MangaDex returned an unexpectedly large response.');
+  let payload;
+  try { payload = JSON.parse(body); } catch { throw new Error('MangaDex returned invalid JSON.'); }
+  if (!payload || typeof payload !== 'object' || payload.result === 'error' || (Array.isArray(payload.errors) && payload.errors.length)) {
+    throw new Error('MangaDex could not complete the request.');
+  }
+  return payload;
+}
+async function mangaDexGetDetails(id) {
+  mangaScrapeCleanId('mangadex',id);
+  const detailPayload = await mangaDexApiRequest(mangaDexQuery('/manga/' + encodeURIComponent(id),{'includes[]':['cover_art','author','artist']}));
+  const raw = detailPayload && detailPayload.data;
+  if (!raw) throw new Error('MangaDex returned no manga details.');
+  const feedPayload = await mangaDexApiRequest(mangaDexQuery('/manga/' + encodeURIComponent(id) + '/feed',{
+    limit:100,offset:0,'translatedLanguage[]':['en'],'order[chapter]':'desc','includes[]':['scanlation_group','user']
+  }));
+  const chapters = (Array.isArray(feedPayload.data) ? feedPayload.data : []).map(chapter => {
+    const attrs = chapter && chapter.attributes || {};
+    const groups = (Array.isArray(chapter && chapter.relationships) ? chapter.relationships : [])
+      .filter(rel => rel && rel.type === 'scanlation_group')
+      .map(rel => rel.attributes && rel.attributes.name || '')
+      .filter(Boolean);
+    const n = attrs.chapter ? 'Chapter ' + attrs.chapter : '';
+    const subtitle = attrs.title ? String(attrs.title) : '';
+    const chapterTitle = [n,subtitle].filter(Boolean).join(' · ') || 'Chapter';
+    return {
+      id:String(chapter.id), title:chapterTitle,
+      url:attrs.externalUrl || ('https://mangadex.org/chapter/' + chapter.id),
+      externalUrl:String(attrs.externalUrl || ''),
+      pageCount:Number(attrs.pages)||0,
+      isUnavailable:attrs.isUnavailable === true,
+      readerGroup:groups.join(', '),
+      update:String(attrs.readableAt || attrs.publishAt || attrs.updatedAt || ''),
+      views:''
+    };
+  });
+  return {...mangaDexMapManga(raw),chapters};
+}
 function mangaScrapeNormalizeSearch(provider, item) {
   if (!item || typeof item !== 'object') return null;
+  if (provider === 'mangadex') item = mangaDexMapManga(item);
+  if (!item) return null;
   let id;
   try { id = mangaScrapeCleanId(provider, item.id); } catch { return null; }
   const sourceKind = mangaScrapeSourceKind(provider, item.source);
@@ -374,8 +499,11 @@ function mangaScrapeNormalizeDetails(provider, id, rawSourceKind, item) {
     return {
       id: chapterId,
       title: String(chapter.title || chapter.name || ('Chapter ' + chapterId)).replace(/\s+/g, ' ').trim().slice(0, 240),
-      url: mangaScrapeChapterUrl(provider, safeId, chapterId, sourceKind),
-      readerProvider: provider,
+      url: provider === 'mangadex' && chapter.externalUrl ? (mangaScrapeSafeAsset(chapter.externalUrl) || mangaScrapeChapterUrl(provider, safeId, chapterId, sourceKind)) : mangaScrapeChapterUrl(provider, safeId, chapterId, sourceKind),
+      readerProvider: provider === 'mangadex' && (chapter.externalUrl || chapter.isUnavailable || !(Number(chapter.pageCount) > 0)) ? '' : provider,
+      readerGroup: String(chapter.readerGroup || ''),
+      externalUrl: String(chapter.externalUrl || ''),
+      pageCount: Number(chapter.pageCount) || 0,
       update: String(chapter.update || chapter.uploaded || chapter.createdAt || chapter.timestamp || chapter.date || ''),
       views: String(chapter.views || chapter.view || '')
     };
@@ -426,6 +554,16 @@ async function getMangaScrapeProviderFeed(provider, feed) {
       : await gomangaApiRequest('/api/genre/top%20read/1');
     raw = Array.isArray(payload.data) ? payload.data : (Array.isArray(payload.manga) ? payload.manga : []);
     if (!raw.length) throw new Error('GoManga returned no titles for its ' + (feed === 'latest' ? 'latest' : 'Top read') + ' feed.');
+  } else if (provider === 'mangadex') {
+    const query = mangaDexQuery('/manga',{
+      limit:24,offset:0,
+      'order[followedCount]':feed === 'latest' ? undefined : 'desc',
+      'order[latestUploadedChapter]':feed === 'latest' ? 'desc' : undefined,
+      ...mangaDexIncludes()
+    });
+    const payload = await mangaDexApiRequest(query);
+    raw = Array.isArray(payload.data) ? payload.data : [];
+    if (!raw.length) throw new Error('MangaDex returned no titles for its ' + (feed === 'latest' ? 'latest' : 'trending') + ' feed.');
   }
   const normalized = (Array.isArray(raw) ? raw : [])
     .slice(0, 24)
@@ -457,7 +595,7 @@ async function loadMangaScrapeDiscovery(provider, feed, force=false) {
       });
     }
     if (!results.length) {
-      const backupProviders = ['gomanga','batoto','mangabuddy','mangakakalot'];
+      const backupProviders = ['mangadex','gomanga','batoto','mangabuddy','mangakakalot'];
       const backupSettled = await Promise.allSettled(backupProviders.map(key => getMangaScrapeProviderFeed(key, feed)));
       const successfulBackups = [];
       backupSettled.forEach((item,index) => {
@@ -1145,7 +1283,39 @@ const server=http.createServer(async(req,res)=>{
     }
   }
 
-if(req.method==='GET' && url.pathname==='/api/mangascrape/providers') {
+if(req.method==='GET' && url.pathname==='/api/mangadex/image') {
+    try {
+      let target=await validatePublicUrl(String(url.searchParams.get('src')||''));
+      if(!mangaDexImageHostAllowed(target.hostname)) throw new Error('This image is not hosted by MangaDex.');
+      let response;
+      for(let hop=0;hop<=3;hop++) {
+        response=await fetch(target.href,{redirect:'manual',signal:AbortSignal.timeout(15000),headers:{'User-Agent':USER_AGENT+'; contact: https://hekomi.vercel.app','Accept':'image/avif,image/webp,image/apng,image/*;q=0.9','Referer':'https://mangadex.org/'}});
+        if(![301,302,303,307,308].includes(response.status)) break;
+        const location=response.headers.get('location');
+        if(!location||hop===3) throw new Error('MangaDex image server returned too many redirects.');
+        target=await validatePublicUrl(new URL(location,target).href);
+        if(!mangaDexImageHostAllowed(target.hostname)) throw new Error('MangaDex redirected this image outside its image network.');
+      }
+      if(!response||!response.ok) throw new Error('MangaDex image returned HTTP '+(response&&response.status||502)+'.');
+      const type=String(response.headers.get('content-type')||'').split(';')[0].trim().toLowerCase();
+      if(!/^image\/(?:jpeg|png|webp|avif|gif)$/.test(type)) throw new Error('MangaDex did not return an image for this page.');
+      const declared=Number(response.headers.get('content-length')||0);
+      if(declared>25_000_000) throw new Error('MangaDex image is larger than the 25 MB reader limit.');
+      const reader=response.body.getReader(),chunks=[];let size=0;
+      while(true) {
+        const part=await reader.read(); if(part.done) break;
+        size+=part.value.byteLength;
+        if(size>25_000_000) { reader.cancel(); throw new Error('MangaDex image exceeded the 25 MB reader limit.'); }
+        chunks.push(Buffer.from(part.value));
+      }
+      res.writeHead(200,{'Content-Type':type,'Content-Length':String(size),'Cache-Control':'public, max-age=86400, stale-while-revalidate=604800','X-Content-Type-Options':'nosniff','Cross-Origin-Resource-Policy':'same-origin'});
+      return res.end(Buffer.concat(chunks));
+    } catch(error) {
+      const message=String(error&&error.message||'MangaDex image could not be loaded.');
+      return send(res,/HTTP 429/i.test(message)?429:400,{error:message});
+    }
+  }
+  if(req.method==='GET' && url.pathname==='/api/mangascrape/providers') {
     return send(res,200,{providers:Object.entries(MANGASCRAPE_SOURCES).map(([id,source])=>({id,label:source.label,origin:source.origin}))});
   }
 if(req.method==='POST' && url.pathname==='/api/mangascrape/discover') {
@@ -1182,7 +1352,10 @@ if(req.method==='POST' && url.pathname==='/api/mangascrape/discover') {
         let selectedProvider=key;
         const selected=mangaScrapeProvider(key);
         let raw;
-        if (key === 'mangahook') {
+        if (key === 'mangadex') {
+          const payload = await mangaDexApiRequest(mangaDexSearchPath(query));
+          raw = Array.isArray(payload.data) ? payload.data : [];
+        } else if (key === 'mangahook') {
           try {
             const target = new URL(mangaScrapeSearchUrl(key, query));
             const payload = await mangaHookApiRequest(target.pathname + target.search);
@@ -1192,13 +1365,16 @@ if(req.method==='POST' && url.pathname==='/api/mangascrape/discover') {
             if (requested === 'all') throw primaryError;
             // Preserve the selected Manga Hook-first workflow, but let search fall
             // through to every other public provider instead of stopping at GoManga.
-            const backupProviders = ['gomanga','batoto','mangabuddy','mangakakalot'];
+            const backupProviders = ['mangadex','gomanga','batoto','mangabuddy','mangakakalot'];
             const backupSettled = await Promise.allSettled(backupProviders.map(async backupKey => {
               const backup = mangaScrapeProvider(backupKey);
               let backupRaw = [];
               if (backupKey === 'gomanga') {
                 const payload = await gomangaApiRequest('/api/search/' + encodeURIComponent(query));
                 backupRaw = Array.isArray(payload.manga) ? payload.manga : [];
+              } else if (backupKey === 'mangadex') {
+                const payload = await mangaDexApiRequest(mangaDexSearchPath(query));
+                backupRaw = Array.isArray(payload.data) ? payload.data : [];
               } else {
                 const target = mangaScrapeSearchUrl(backupKey,query);
                 await assertMangaSourceRequestAllowed(target);
@@ -1268,7 +1444,9 @@ if(req.method==='POST' && url.pathname==='/api/mangascrape/discover') {
       const id=mangaScrapeId(data.id);
       const sourceKind=mangaScrapeSourceKind(selected.key,data.sourceKind);
       let item;
-      if (selected.key === 'mangahook') {
+      if (selected.key === 'mangadex') {
+        item = await mangaDexGetDetails(id);
+      } else if (selected.key === 'mangahook') {
         item = await mangaHookApiRequest('/api/manga/' + encodeURIComponent(mangaScrapeCleanId(selected.key, id)));
       } else if (selected.key === 'gomanga') {
         item = await gomangaApiRequest('/api/manga/' + encodeURIComponent(mangaScrapeCleanId(selected.key, id)));
@@ -1300,7 +1478,23 @@ if(req.method==='POST' && url.pathname==='/api/mangascrape/discover') {
       let title='Chapter '+chapterId;
       let images=[];
       let notice='Chapter pages are served by the selected source; images may load progressively.';
-      if(provider==='gomanga' || provider==='mangahook') {
+      if(provider==='mangadex') {
+        const atHome=await mangaDexApiRequest('/at-home/server/'+encodeURIComponent(chapterId));
+        const chapter=atHome&&atHome.chapter||{};
+        const fullPages=Array.isArray(chapter.data)?chapter.data:[];
+        const saverPages=Array.isArray(chapter.dataSaver)?chapter.dataSaver:[];
+        const quality=saverPages.length?'data-saver':'data';
+        const files=saverPages.length?saverPages:fullPages;
+        if(!atHome.baseUrl||!chapter.hash||!files.length) {
+          throw new Error('MangaDex has no readable page images for this chapter. It may be externally hosted or unavailable.');
+        }
+        if(!mangaDexImageHostAllowed(new URL(atHome.baseUrl).hostname)) throw new Error('MangaDex assigned an unexpected chapter image host.');
+        images=files.slice(0,300).map((file,index)=>({
+          url:mangaDexImageProxyUrl(String(atHome.baseUrl).replace(/\/$/,'')+'/'+quality+'/'+encodeURIComponent(chapter.hash)+'/'+encodeURIComponent(String(file))),
+          alt:'Page '+(index+1)
+        }));
+        notice='MangaDex · Translation: '+String(data.readerGroup||'MangaDex community group')+'. MangaDex and the translation group are credited; image pages are proxied for the reader.';
+      } else if(provider==='gomanga' || provider==='mangahook') {
         payload=provider==='gomanga'
           ? await gomangaApiRequest(apiPath)
           : await mangaHookApiRequest(apiPath);
