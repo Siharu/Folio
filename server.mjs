@@ -25,6 +25,7 @@ const mangaScrapeAdapters = {
   mangakakalot: new Mangakakalot({ cache:false })
 };
 const mangaScrapeRobotsCache = new Map();
+const mangaScrapeFeedCache = new Map();
 const mangaScrapeLastRequest = new Map();
 const MANGASCRAPE_SOURCES = {
   batoto: { label:'Bato network', origin:'https://fto.to', allowedHosts:['fto.to'] },
@@ -180,8 +181,8 @@ async function assertMangaScrapeAllowed(rawUrl) {
   const url = await validatePublicUrl(rawUrl);
   const now = Date.now();
   const last = mangaScrapeLastRequest.get(url.origin) || 0;
-  if (now - last < 1400) throw new Error('Please wait a moment before requesting another page from this source.');
-  mangaScrapeLastRequest.set(url.origin, now);
+  const waitMs = 1400 - (now - last);
+  if (waitMs > 0) await new Promise(resolve => setTimeout(resolve, waitMs));
   let cached = mangaScrapeRobotsCache.get(url.origin);
   if (!cached || now - cached.checkedAt > 10 * 60 * 1000) {
     let robots = '';
@@ -204,6 +205,7 @@ async function assertMangaScrapeAllowed(rawUrl) {
   const rule = robotsAllowed(url, cached.text);
   if (!rule.allowed) throw new Error('This page is disallowed by the source robots.txt rules.');
   if (rule.delay > 0) await new Promise(resolve => setTimeout(resolve, Math.min(rule.delay, 10) * 1000));
+  mangaScrapeLastRequest.set(url.origin, Date.now());
   return url;
 }
 function mangaScrapeSafeAsset(raw) {
@@ -273,6 +275,63 @@ function mangaScrapeNormalizeDetails(provider, id, rawSourceKind, item) {
     lastUpdate: String(item.lastUpdate || item.update || ''),
     chapters
   };
+}
+async function getMangaScrapeProviderFeed(provider, feed) {
+  const { source, adapter } = mangaScrapeProvider(provider);
+  let target = source.origin + '/';
+  let raw = [];
+  if (provider === 'batoto') {
+    target = 'https://fto.to/v3x';
+    await assertMangaScrapeAllowed(target);
+    const home = await adapter.home();
+    raw = feed === 'latest' ? (home.latestReleases || []) : (home.popularUpdates || []);
+  } else if (provider === 'mangabuddy') {
+    target = source.origin + (feed === 'latest' ? '/latest' : '/popular');
+    await assertMangaScrapeAllowed(target);
+    raw = feed === 'latest' ? await adapter.latest() : await adapter.popular();
+  } else if (provider === 'mangakakalot') {
+    target = source.origin + '/';
+    await assertMangaScrapeAllowed(target);
+    const home = await adapter.home();
+    raw = feed === 'latest' ? (home.latestUpdates || []) : (home.populars || []);
+  }
+  return (Array.isArray(raw) ? raw : [])
+    .slice(0, 24)
+    .map(item => mangaScrapeNormalizeSearch(provider, item))
+    .filter(Boolean)
+    .map(item => ({ ...item, providerLabel:source.label }));
+}
+async function loadMangaScrapeDiscovery(provider, feed, force=false) {
+  const cacheKey = provider + ':' + feed;
+  const cached = mangaScrapeFeedCache.get(cacheKey);
+  if (!force && cached && Date.now() - cached.cachedAt < 8 * 60 * 1000) return cached.payload;
+  const providers = provider === 'all' ? Object.keys(MANGASCRAPE_SOURCES) : [provider];
+  const settled = await Promise.allSettled(providers.map(key => getMangaScrapeProviderFeed(key, feed)));
+  const results = [];
+  const errors = [];
+  settled.forEach((item,index) => {
+    if (item.status === 'fulfilled') results.push(...item.value);
+    else errors.push({
+      provider:providers[index],
+      label:MANGASCRAPE_SOURCES[providers[index]].label,
+      message:String(item.reason && item.reason.message || 'This source could not be reached.')
+    });
+  });
+  // Keep results diverse and stable, without pretending failed providers succeeded.
+  const seen = new Set();
+  const unique = results.filter(item => {
+    const key = item.provider + ':' + item.id;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  }).slice(0, 60);
+  const payload = {
+    feed, provider, results:unique, errors,
+    fetchedAt:new Date().toISOString(),
+    notice:errors.length ? 'Some sources could not load. Available results are still shown; no source restrictions were bypassed.' : 'Chapter details open on the original source. Availability depends on each provider.'
+  };
+  if (unique.length || !cached) mangaScrapeFeedCache.set(cacheKey,{cachedAt:Date.now(),payload});
+  return payload;
 }
 async function inspectWebsite(rawUrl) {
   const url=await validatePublicUrl(rawUrl);
@@ -883,6 +942,21 @@ const server=http.createServer(async(req,res)=>{
 
 if(req.method==='GET' && url.pathname==='/api/mangascrape/providers') {
     return send(res,200,{providers:Object.entries(MANGASCRAPE_SOURCES).map(([id,source])=>({id,label:source.label,origin:source.origin}))});
+  }
+if(req.method==='POST' && url.pathname==='/api/mangascrape/discover') {
+    try {
+      const data=await readBody(req);
+      const provider=String(data.provider||'all').trim().toLowerCase();
+      const feed=String(data.feed||'trending').trim().toLowerCase();
+      if(provider!=='all'&&!MANGASCRAPE_SOURCES[provider]) throw new Error('Choose a supported source or All sources.');
+      if(!['trending','latest'].includes(feed)) throw new Error('Choose Trending or Latest updates.');
+      const payload=await loadMangaScrapeDiscovery(provider,feed,data.refresh===true);
+      const status=payload.results.length?200:(payload.errors.length?503:200);
+      return send(res,status,payload,{'Cache-Control':'no-store'});
+    } catch(error) {
+      const message=String(error && error.message || 'Manga discovery could not be loaded.');
+      return send(res,/temporarily unavailable|could not verify robots|robots\.txt could not be checked/i.test(message)?503:400,{error:message});
+    }
   }
   if(req.method==='POST' && url.pathname==='/api/mangascrape/search') {
     try {
