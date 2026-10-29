@@ -681,9 +681,34 @@ const server=http.createServer(async(req,res)=>{
   if(req.method==='POST' && url.pathname==='/api/mal/auth/logout') return malLogout(req,res);
   if(url.pathname.startsWith('/api/mal/')) return malRequest(req,res,url.pathname.slice('/api/mal'.length),url.searchParams).catch(e=>send(res,500,{error:e.message||'MAL request failed.'}));
   if(req.method!=='GET' && req.method!=='HEAD') return send(res,405,{error:'Method not allowed.'});
-  let filePath=path.resolve(__dirname, '.'+decodeURIComponent(url.pathname==='/'?'/index.html':url.pathname));
+  const normalizedPath=decodeURIComponent(url.pathname).replace(/\\/+$/,'')||'/';
+  const appPath=normalizedPath==='/index.html'?'/':normalizedPath;
+  const pageRoutes=new Set(['/','/discover','/anime','/manga']);
+  const isAppPage=pageRoutes.has(appPath);
+  let filePath=path.resolve(__dirname, '.'+(isAppPage?'/index.html':normalizedPath));
   if(!filePath.startsWith(__dirname+path.sep) && filePath!==path.join(__dirname,'index.html')) return send(res,403,'Forbidden');
-  try { const data=await fs.readFile(filePath); let body=data; if(filePath===path.join(__dirname,'index.html')) { const origin=publicOrigin(req); body=Buffer.from(data.toString('utf8').replaceAll('__HEKOMI_PUBLIC_URL__',origin).replaceAll('__HEKOMI_CANONICAL_URL__',origin+'/'),'utf8'); } res.writeHead(200,{'Content-Type':MIME[path.extname(filePath)]||'application/octet-stream','X-Content-Type-Options':'nosniff','Referrer-Policy':'strict-origin-when-cross-origin','Cache-Control':'no-cache'}); return req.method==='HEAD'?res.end():res.end(body); }
+  try {
+    const data=await fs.readFile(filePath);
+    let body=data;
+    if(filePath===path.join(__dirname,'index.html')) {
+      const origin=publicOrigin(req);
+      const pageName=appPath==='/'?'home':appPath.slice(1);
+      const pageTitles={
+        home:'Hekomi — Anime &amp; Manga Discovery, Tracking &amp; Reading',
+        discover:'Discover Anime &amp; Manga — Hekomi',
+        anime:'Anime List &amp; MyAnimeList Tracker — Hekomi',
+        manga:'Manga Library &amp; Website Discovery — Hekomi'
+      };
+      const canonicalPath=appPath==='/'?'/':appPath;
+      body=Buffer.from(data.toString('utf8')
+        .replaceAll('__HEKOMI_PUBLIC_URL__',origin)
+        .replaceAll('__HEKOMI_CANONICAL_URL__',origin+canonicalPath)
+        .replaceAll('__HEKOMI_PAGE__',pageRoutes.has(appPath)?pageName:'home')
+        .replaceAll('__HEKOMI_PAGE_TITLE__',pageTitles[pageName]||pageTitles.home),'utf8');
+    }
+    res.writeHead(200,{'Content-Type':MIME[path.extname(filePath)]||'application/octet-stream','X-Content-Type-Options':'nosniff','Referrer-Policy':'strict-origin-when-cross-origin','Cache-Control':'no-cache'});
+    return req.method==='HEAD'?res.end():res.end(body);
+  }
   catch { return send(res,404,'Not found'); }
 });
 server.listen(PORT,'0.0.0.0',()=>console.log(`Hekomi running at http://localhost:${PORT}`));
