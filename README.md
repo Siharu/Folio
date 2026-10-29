@@ -40,7 +40,7 @@ Hekomi includes an optional, manually triggered adapter search powered by the MI
 
 Dedicated adapter requests to each provider are rate-limited and validate public URLs. The package client follows only a small number of redirects within known manga-provider domains; unknown redirect hosts are rejected. Manga feeds and chapter reads are not blocked just because a robots.txt file is unavailable or disallows a path. A provider may still fail if it is offline, changes its page format, or requires JavaScript, sign-in, a paywall, or an anti-bot challenge. Review source terms and only access material you are authorized to read.
 
-The library README lists additional providers, but Hekomi does not automatically expose every one: support in an upstream package does not guarantee current availability, and MangaDex is marked unfinished in the package README. Dedicated adapters supplement the generic robots-aware page inspector rather than replacing it.
+Hekomi also includes a direct MangaDex API source for discovery, title search, chapter metadata, and readable chapter pages when MangaDex supplies page files. MangaDex chapters hosted elsewhere or marked unavailable are shown with their original source link rather than a fake in-app reader button. Chapter lists and the reader display translation-group credit when available; the image proxy is limited to MangaDex upload and at-home image hosts, with URL validation, redirect checks, response-size limits, and caching. Follow MangaDex's current API and acceptable-use rules, credit MangaDex and translation groups, and do not add advertising or paid access to MangaDex-powered content. Dedicated adapters supplement the generic robots-aware page inspector rather than replacing it.
 
 ## Public catalog and SEO
 
