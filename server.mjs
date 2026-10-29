@@ -595,26 +595,36 @@ async function loadMangaScrapeDiscovery(provider, feed, force=false) {
       });
     }
     if (!results.length) {
-      const backupProviders = ['mangadex','gomanga','batoto','mangabuddy','mangakakalot'];
-      const backupSettled = await Promise.allSettled(backupProviders.map(key => getMangaScrapeProviderFeed(key, feed)));
-      const successfulBackups = [];
-      backupSettled.forEach((item,index) => {
-        const key = backupProviders[index];
-        if (item.status === 'fulfilled' && item.value.length) {
-          results.push(...item.value);
-          successfulBackups.push(key);
-        } else {
-          errors.push({
-            provider:key,
-            label:MANGASCRAPE_SOURCES[key].label,
-            message:item.status === 'rejected'
-              ? String(item.reason && item.reason.message || 'Backup source failed.')
-              : MANGASCRAPE_SOURCES[key].label + ' returned no titles.'
-          });
-        }
-      });
-      if (successfulBackups.length === 1) sourceFallback = successfulBackups[0];
-      else if (successfulBackups.length > 1) sourceFallback = 'multiple';
+      // MangaDex is the direct JSON/API backup. Prefer it before slower HTML scrapers;
+      // a dead scraper must not hold up a live feed that already returned titles.
+      try {
+        results = await getMangaScrapeProviderFeed('mangadex', feed);
+        sourceFallback = results.length ? 'mangadex' : '';
+      } catch(error) {
+        errors.push({provider:'mangadex',label:MANGASCRAPE_SOURCES.mangadex.label,message:String(error&&error.message||'MangaDex feed failed.')});
+      }
+      if (!results.length) {
+        const backupProviders = ['gomanga','batoto','mangabuddy','mangakakalot'];
+        const backupSettled = await Promise.allSettled(backupProviders.map(key => getMangaScrapeProviderFeed(key, feed)));
+        const successfulBackups = [];
+        backupSettled.forEach((item,index) => {
+          const key = backupProviders[index];
+          if (item.status === 'fulfilled' && item.value.length) {
+            results.push(...item.value);
+            successfulBackups.push(key);
+          } else {
+            errors.push({
+              provider:key,
+              label:MANGASCRAPE_SOURCES[key].label,
+              message:item.status === 'rejected'
+                ? String(item.reason && item.reason.message || 'Backup source failed.')
+                : MANGASCRAPE_SOURCES[key].label + ' returned no titles.'
+            });
+          }
+        });
+        if (successfulBackups.length === 1) sourceFallback = successfulBackups[0];
+        else if (successfulBackups.length > 1) sourceFallback = 'multiple';
+      }
     }
   } else {
     const providers = provider === 'all' ? Object.keys(MANGASCRAPE_SOURCES) : [provider];
@@ -1363,9 +1373,21 @@ if(req.method==='POST' && url.pathname==='/api/mangascrape/discover') {
             if (!raw.length) throw new Error('Manga Hook search returned no titles.');
           } catch (primaryError) {
             if (requested === 'all') throw primaryError;
-            // Preserve the selected Manga Hook-first workflow, but let search fall
-            // through to every other public provider instead of stopping at GoManga.
-            const backupProviders = ['mangadex','gomanga','batoto','mangabuddy','mangakakalot'];
+            // Preserve Manga Hook as the preferred source, then query MangaDex first.
+            // It is a direct API and returns quickly; do not hold a successful search open
+            // while slow HTML scrapers time out.
+            let mangaDexFailure = '';
+            try {
+              const mdPayload = await mangaDexApiRequest(mangaDexSearchPath(query));
+              const mdResults = (Array.isArray(mdPayload.data) ? mdPayload.data : [])
+                .slice(0,30).map(item => mangaScrapeNormalizeSearch('mangadex',item)).filter(Boolean)
+                .map(item => ({...item,providerLabel:MANGASCRAPE_SOURCES.mangadex.label}));
+              if (mdResults.length) return mdResults;
+              mangaDexFailure = 'MangaDex returned no titles.';
+            } catch(error) {
+              mangaDexFailure = String(error&&error.message||'MangaDex search failed.');
+            }
+            const backupProviders = ['gomanga','batoto','mangabuddy','mangakakalot'];
             const backupSettled = await Promise.allSettled(backupProviders.map(async backupKey => {
               const backup = mangaScrapeProvider(backupKey);
               let backupRaw = [];
@@ -1395,7 +1417,7 @@ if(req.method==='POST' && url.pathname==='/api/mangascrape/discover') {
               return normalized;
             }));
             const backupResults = [];
-            const backupErrors = [];
+            const backupErrors = ['mangadex: '+mangaDexFailure];
             backupSettled.forEach((item,index) => {
               if (item.status === 'fulfilled') backupResults.push(...item.value);
               else backupErrors.push(backupProviders[index] + ': ' + String(item.reason && item.reason.message || 'search failed'));
