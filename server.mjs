@@ -428,18 +428,42 @@ async function loadMangaScrapeDiscovery(provider, feed, force=false) {
   const cacheKey = provider + ':' + feed;
   const cached = mangaScrapeFeedCache.get(cacheKey);
   if (!force && cached && Date.now() - cached.cachedAt < 8 * 60 * 1000) return cached.payload;
-  const providers = provider === 'all' ? Object.keys(MANGASCRAPE_SOURCES) : [provider];
-  const settled = await Promise.allSettled(providers.map(key => getMangaScrapeProviderFeed(key, feed)));
-  const results = [];
+
   const errors = [];
-  settled.forEach((item,index) => {
-    if (item.status === 'fulfilled') results.push(...item.value);
-    else errors.push({
-      provider:providers[index],
-      label:MANGASCRAPE_SOURCES[providers[index]].label,
-      message:String(item.reason && item.reason.message || 'This source could not be reached.')
+  let results = [];
+  let sourceFallback = '';
+  if (provider === 'mangahook') {
+    // Keep Manga Hook first, but transparently try GoManga if its live feed is down.
+    try {
+      results = await getMangaScrapeProviderFeed('mangahook', feed);
+    } catch (primaryError) {
+      errors.push({
+        provider:'mangahook', label:MANGASCRAPE_SOURCES.mangahook.label,
+        message:String(primaryError && primaryError.message || 'Manga Hook feed failed.')
+      });
+      try {
+        results = await getMangaScrapeProviderFeed('gomanga', feed);
+        sourceFallback = results.length ? 'gomanga' : '';
+      } catch (fallbackError) {
+        errors.push({
+          provider:'gomanga', label:MANGASCRAPE_SOURCES.gomanga.label,
+          message:String(fallbackError && fallbackError.message || 'GoManga backup feed failed.')
+        });
+      }
+    }
+  } else {
+    const providers = provider === 'all' ? Object.keys(MANGASCRAPE_SOURCES) : [provider];
+    const settled = await Promise.allSettled(providers.map(key => getMangaScrapeProviderFeed(key, feed)));
+    settled.forEach((item,index) => {
+      if (item.status === 'fulfilled') results.push(...item.value);
+      else errors.push({
+        provider:providers[index],
+        label:MANGASCRAPE_SOURCES[providers[index]].label,
+        message:String(item.reason && item.reason.message || 'This source could not be reached.')
+      });
     });
-  });
+  }
+
   // Keep results diverse and stable, without pretending failed providers succeeded.
   const seen = new Set();
   let unique = results.filter(item => {
@@ -449,8 +473,9 @@ async function loadMangaScrapeDiscovery(provider, feed, force=false) {
     return true;
   }).slice(0, 60);
   let fallback = false;
-  // AniList is only a cross-source fallback when the user explicitly selects all sources.
-  // A Manga Hook-only feed must never silently display unrelated AniList catalogue results.
+
+  // AniList remains available only when the user explicitly selects all sources.
+  // A Manga Hook-only feed uses GoManga as its API backup and never substitutes AniList.
   if (!unique.length && provider === 'all') {
     try {
       const catalog = await getPublicCatalog();
@@ -473,11 +498,15 @@ async function loadMangaScrapeDiscovery(provider, feed, force=false) {
     }
   }
   const payload = {
-    feed, provider, results:unique, errors, fallback,
+    feed, provider, results:unique, errors, fallback, sourceFallback,
     fetchedAt:new Date().toISOString(),
-    notice:fallback
-      ? 'Showing catalog recommendations because live source feeds are unavailable. Open a title on AniList; source restrictions were not bypassed.'
-      : errors.length ? 'Some sources could not load. Available results are still shown; no source restrictions were bypassed.' : 'Chapter details open on the original source. Availability depends on each provider.'
+    notice:sourceFallback === 'gomanga'
+      ? 'Manga Hook is unavailable. Showing GoManga API results instead; GoManga availability depends on its upstream service.'
+      : fallback
+        ? 'Showing catalog recommendations because live source feeds are unavailable. Open a title on AniList; source restrictions were not bypassed.'
+        : errors.length
+          ? 'No live manga feed was available from the selected sources. Check the source error details below.'
+          : 'Chapter details open on the original source. Availability depends on each provider.'
   };
   // Do not cache empty/error responses: a transient upstream failure should be retryable immediately.
   if (unique.length) mangaScrapeFeedCache.set(cacheKey,{cachedAt:Date.now(),payload});
