@@ -432,6 +432,10 @@ body[data-page="manga"] #mangaView{display:block!important}
   body[data-page="discover"] #discoverCatalog{padding-top:18px}
 }
 
+
+/* Hekomi custom identity mark */
+.brandmark{padding:0!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;color:transparent!important;overflow:visible!important}
+.brandmark img{display:block;width:100%;height:100%;object-fit:contain}
 </style>
 </head>
 <body data-page="__HEKOMI_PAGE__">
@@ -440,7 +444,7 @@ body[data-page="manga"] #mangaView{display:block!important}
 
 <div class="app" id="app">
   <header class="topbar">
-    <div class="brand"><div class="brandmark">H</div><div>Hekomi<small>ANIME · MANGA · AFTER HOURS</small></div></div>
+    <div class="brand"><div class="brandmark"><img src="/icon.svg" alt="" width="36" height="36" decoding="async"></div><div>Hekomi<small>ANIME · MANGA · AFTER HOURS</small></div></div>
     <nav class="primary-nav" aria-label="Main navigation"><a href="/" data-route-link="home">Home</a><a href="/discover" data-route-link="discover">Discover</a><a href="/anime" data-route-link="mal">Anime</a><a href="/manga" data-route-link="manga">Manga</a></nav>
     <div class="top-actions"><span class="chip">LOCAL-FIRST · PERSONAL</span><button class="iconbtn" id="themeSettingsBtn" aria-label="Appearance settings" title="Appearance settings">◐</button><button class="iconbtn" id="headerHome" aria-label="Home" title="Switch mode / Home">⌂</button></div>
   </header>
