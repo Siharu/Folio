@@ -1537,7 +1537,7 @@ function mangaFeedCardMarkup(item,index){
         const meta=[item.providerLabel,item.status,(item.genres||[]).slice(0,4).join(' · '),item.latestChapter?'Latest: '+item.latestChapter:'',item.lastUpdate].filter(Boolean).join(' · ');
         return '<div class="resultitem">'+coverHtml(item.cover,'manga',item.title)+'<div class="resulttext"><h3>'+esc(item.title)+'</h3><p>'+esc(meta||'Source metadata available')+'</p>'+(item.description?'<p class="muted small">'+esc(item.description.slice(0,240))+(item.description.length>240?'…':'')+'</p>':'')+'<div class="resultactions"><button class="mini-btn" data-mangascrape-details="'+index+'">Details &amp; chapters</button><a class="mini-btn" href="'+esc(item.url)+'" target="_blank" rel="noreferrer">Open source ↗</a></div></div></div>';
       }).join(''):'<div class="empty"><strong>No results found</strong>Try another title or turn on more sources.</div>';
-      $('#mangaAdapterResults [data-mangascrape-details]').forEach(button=>button.onclick=()=>{const item=results[Number(button.dataset.mangascrapeDetails)];showMangaScrapeDetails(item&&item.provider||provider,item);});
+      $$('#mangaAdapterResults [data-mangascrape-details]').forEach(button=>button.onclick=()=>{const item=results[Number(button.dataset.mangascrapeDetails)];showMangaScrapeDetails(item&&item.provider||provider,item);});
       if(data.errors&&data.errors.length){
         $('#mangaAdapterStatus').textContent+=' · '+data.errors.length+' extension'+(data.errors.length===1?'':'s')+' unavailable: '+data.errors.map(x=>x.label).join(', ');
       }
@@ -1574,7 +1574,7 @@ function mangaFeedCardMarkup(item,index){
       openModal('<div class="modal-top"><div><h2>'+esc(detail.title)+'</h2><p class="muted small">'+esc(detail.providerLabel)+' · '+chapters.length+' chapter links</p></div><button class="close" data-close>×</button></div>'+
         '<div class="resultitem">'+coverHtml(detail.cover,'manga',detail.title)+'<div class="resulttext"><p class="muted small">'+esc(metadata||'Series details')+'</p><p>'+esc(detail.description||'No description was supplied by this source.')+'</p>'+people.join('')+'<div class="resultactions"><button class="btn-mint" id="saveMangaScrapeTitle">＋ Save to library</button><a class="mini-btn" href="'+esc(detail.url)+'" target="_blank" rel="noreferrer">Open source ↗</a></div></div></div>'+
         '<div class="panel" style="margin-top:15px"><div class="panel-head"><div><h2>Chapter list</h2><p class="muted small">Read supported chapters in Hekomi. If a source does not allow in-app reading, use its source link.</p></div><span class="pill-label">'+chapters.length+'</span></div><div class="results">'+(chapterHtml||'<p class="small muted">No chapters were returned by this source.</p>')+'</div>'+(chapters.length>80?'<p class="muted small">Showing the first 80 chapter links.</p>':'')+'</div>');
-      $('#modalRoot [data-read-provider-chapter]').forEach(button=>{
+      $$('#modalRoot [data-read-provider-chapter]').forEach(button=>{
         button.onclick=()=>{
           const chapter=chapters[Number(button.dataset.readProviderChapter)];
           if(chapter&&chapter.url){
