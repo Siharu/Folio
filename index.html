@@ -1470,8 +1470,10 @@ function mangaFeedCardMarkup(item,index){
         mangaExploreResults=data.results||[];
         renderMangaExplore(mangaExploreResults);
         status.textContent=data.fallback
-          ? 'Live source feeds are unavailable · Showing '+mangaExploreResults.length+' catalog recommendations instead.'
-          : mangaExploreResults.length+' titles · '+(feed==='latest'?'Latest updates':'Trending now')+(data.fetchedAt?' · Refreshed '+new Date(data.fetchedAt).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}):'');
+          ? 'Live manga feeds are unavailable · Showing catalogue recommendations because you selected all sources.'
+          : mangaExploreResults.length
+            ? mangaExploreResults.length+' titles · '+(feed==='latest'?'Latest updates':'Trending now')+(data.fetchedAt?' · Refreshed '+new Date(data.fetchedAt).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}):'')
+            : (provider==='mangahook' ? 'Manga Hook returned no live titles. No AniList fallback was used.' : 'No manga titles were returned by the selected sources.');
         renderMangaExploreErrors(data.errors||[]);
       }catch(error){
         status.classList.add('error');
