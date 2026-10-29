@@ -960,7 +960,7 @@ body[data-page="manga"] #mangaView{display:block!important}
   function metadataDate(value){
     if(!value)return '';
     if(typeof value==='string'){
-      const match=value.match(/^(\\d{4})(?:-(\\d{2})(?:-(\\d{2}))?)?/);
+      const match=value.match(/^(\d{4})(?:-(\d{2})(?:-(\d{2}))?)?/);
       if(!match)return value;
       const year=Number(match[1]),month=Number(match[2]||0),day=Number(match[3]||0);
       if(!month)return String(year);
@@ -973,7 +973,7 @@ body[data-page="manga"] #mangaView{display:block!important}
     return new Date(Date.UTC(year,month-1,day||1)).toLocaleDateString('en-US',{year:'numeric',month:'short',...(day?{day:'numeric'}:{}),timeZone:'UTC'});
   }
   function humanizeAnimeValue(value){
-    return String(value||'').replace(/_/g,' ').replace(/\\b\\w/g,ch=>ch.toUpperCase());
+    return String(value||'').replace(/_/g,' ').replace(/\b\w/g,ch=>ch.toUpperCase());
   }
   function malAnimeRecord(n){
     n=n||{};
@@ -1060,7 +1060,7 @@ body[data-page="manga"] #mangaView{display:block!important}
     const sourceUrl=entry.externalUrl||(entry.malId?'https://myanimelist.net/anime/'+Number(entry.malId):entry.anilistId?'https://anilist.co/anime/'+Number(entry.anilistId):'');
     const coverHtml=cover?'<img class="anime-info-cover" src="'+esc(cover)+'" alt="Cover artwork for '+esc(entry.title)+'" loading="lazy" decoding="async" referrerpolicy="no-referrer">':'<div class="anime-info-cover anime-info-cover-empty" aria-hidden="true">H</div>';
     openModal('<div class="modal-top"><div><h2>'+esc(entry.title||'Anime details')+'</h2><p class="muted small">Full series information · '+esc(entry.metadataProvider||'Hekomi local entry')+'</p></div><button class="close" data-close>×</button></div>'+
-      '<div id="animeInfoBody"><div class="anime-info-hero">'+coverHtml+'<div><div class="anime-info-genres">'+genresHtml+'</div><p class="anime-info-synopsis">'+(synopsis?esc(synopsis).replace(/\\n/g,'<br><br>'):'No synopsis is saved for this entry yet.')+'</p>'+(alternatives.length?'<p class="muted small"><strong>Alternative titles:</strong> '+esc(alternatives.join(' · '))+'</p>':'')+'</div></div>'+
+      '<div id="animeInfoBody"><div class="anime-info-hero">'+coverHtml+'<div><div class="anime-info-genres">'+genresHtml+'</div><p class="anime-info-synopsis">'+(synopsis?esc(synopsis).replace(/\n/g,'<br><br>'):'No synopsis is saved for this entry yet.')+'</p>'+(alternatives.length?'<p class="muted small"><strong>Alternative titles:</strong> '+esc(alternatives.join(' · '))+'</p>':'')+'</div></div>'+
       '<dl class="anime-info-grid">'+rows+'</dl>'+(entry.nextAiringEpisode&&entry.nextAiringEpisode.airingAt?'<p class="notice">Next episode: '+esc(String(entry.nextAiringEpisode.episode||'?'))+' · '+esc(new Date(Number(entry.nextAiringEpisode.airingAt)*1000).toLocaleString())+'</p>':'')+
       '<div class="detail-actions">'+(sourceUrl?'<a class="btn-secondary" href="'+esc(sourceUrl)+'" target="_blank" rel="noreferrer">Open source ↗</a>':'')+'</div></div>');
   }
@@ -1107,7 +1107,7 @@ body[data-page="manga"] #mangaView{display:block!important}
       return '<div class="listrow">'+(animeCover(n)?'<img class="listpic" src="'+esc(animeCover(n))+'" alt="'+esc('Cover artwork for '+(n.title||'anime'))+'" loading="lazy" decoding="async" onerror="this.style.visibility=\'hidden\'">':'<div class="listpic"></div>')+
         '<div class="grow"><h3>'+esc(n.title||'Untitled anime')+'</h3><p>'+esc(humanizeAnimeValue(s.status||'not_in_list'))+' · '+watched+' / '+(total||'?')+' eps · Your score '+(s.score||'—')+'</p>'+
         '<p class="muted small">'+esc([release,date].filter(Boolean).join(' · ')||'Release details unavailable')+'</p>'+
-        (n.synopsis?'<p class="muted small">'+esc(String(n.synopsis).replace(/\\s+/g,' ').slice(0,145))+(String(n.synopsis).length>145?'…':'')+'</p>':'')+
+        (n.synopsis?'<p class="muted small">'+esc(String(n.synopsis).replace(/\s+/g,' ').slice(0,145))+(String(n.synopsis).length>145?'…':'')+'</p>':'')+
         (genres?'<p class="muted small">'+esc(genres)+'</p>':'')+
         '<p class="muted small">MAL ID: '+Number(n.id)+'</p></div><div class="controls"><button class="mini-btn" data-remote-details="'+Number(n.id)+'">Details</button><button class="mini-btn" data-remote-edit="'+Number(n.id)+'">Edit</button><a class="mini-btn" href="https://myanimelist.net/anime/'+Number(n.id)+'" target="_blank" rel="noreferrer">MAL ↗</a></div></div>';
     }).join(''):'<div class="empty"><strong>No entries to show</strong>Sync your list or change the filter.</div>';
@@ -1188,7 +1188,7 @@ body[data-page="manga"] #mangaView{display:block!important}
     const watched=Number(a.episodes)||0,total=Number(a.totalEpisodes||a.num_episodes)||0;
     const release=humanizeAnimeValue(a.airingStatus||'');
     const dates=[metadataDate(a.startDate),metadataDate(a.endDate)].filter(Boolean);
-    const synopsis=String(a.description||'').replace(/\\s+/g,' ').trim();
+    const synopsis=String(a.description||'').replace(/\s+/g,' ').trim();
     const summary=[release,dates.length?dates.join(' → '):'',total?watched+' / '+total+' eps':watched+' eps watched',a.mean?'MAL '+Number(a.mean).toFixed(2):''].filter(Boolean).join(' · ');
     return '<div class="listrow">'+(cover?'<img class="listpic" src="'+esc(cover)+'" alt="Cover artwork for '+esc(a.title)+'" loading="lazy" decoding="async">':'<div class="listpic" aria-hidden="true" style="display:grid;place-items:center;color:#ccbfff;font-size:20px">✦</div>')+
       '<div class="grow"><h3>'+esc(a.title)+'</h3><p>'+esc((a.status||'plan_to_watch').replaceAll('_',' '))+' · '+esc(summary||'Anime details available')+'</p>'+
