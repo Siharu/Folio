@@ -32,13 +32,13 @@ Hekomi includes **Midnight**, **Late Night**, and **Dawn** themes, plus **Device
 
 ## Crawler boundaries
 
-Website support varies by source. Hekomi inspects accessible public HTML, checks robots.txt, and extracts common metadata and image attributes. Some websites need dedicated adapters or JavaScript rendering. Hekomi does not bypass paywalls, DRM, sign-in restrictions, or anti-bot challenges.
+Website support varies by source. The generic website inspector checks robots.txt and extracts common metadata and image attributes from accessible public HTML. Dedicated manga feeds and the in-app chapter reader do not gate public provider requests on a robots.txt check; they still validate public URLs, throttle requests, limit redirects and response sizes, and can fail when a provider is unavailable. Hekomi does not bypass paywalls, DRM, sign-in restrictions, or anti-bot challenges.
 
 ## Dedicated manga-source adapters
 
 Hekomi includes an optional, manually triggered adapter search powered by the MIT-licensed `mangascrape@1.5.0` package. The current UI exposes the Bato network (through `fto.to`), MangaBuddy, and Mangakakalot for structured title search and series/chapter metadata. Search results and detail records can be saved to the device-local manga library. Provider chapter links open on their original host; this adapter flow does not mirror image files into Hekomi.
 
-The adapters are deliberately conservative: requests are gated by a robots.txt check, requests to each origin are rate-limited, and the package HTTP client does not follow unverified redirects. A provider may therefore fail closed when its robots file cannot be checked, it disallows a path, it redirects to an unverified host, its markup changes, or its site is unavailable. These failures are not bypassed. Review each provider's current terms before use and only access material you are authorized to read.
+Dedicated adapter requests to each provider are rate-limited and validate public URLs. The package client follows only a small number of redirects within known manga-provider domains; unknown redirect hosts are rejected. Manga feeds and chapter reads are not blocked just because a robots.txt file is unavailable or disallows a path. A provider may still fail if it is offline, changes its page format, or requires JavaScript, sign-in, a paywall, or an anti-bot challenge. Review source terms and only access material you are authorized to read.
 
 The library README lists additional providers, but Hekomi does not automatically expose every one: support in an upstream package does not guarantee current availability, and MangaDex is marked unfinished in the package README. Dedicated adapters supplement the generic robots-aware page inspector rather than replacing it.
 
@@ -56,7 +56,7 @@ The home catalog uses a live title spotlight with banner artwork, ratings and me
 
 - The generic crawler is a page inspector, not a hosted content mirror: it reads accessible HTML and detects links/images; it does not download chapters into a server-side archive.
 - Search terms sent through the built-in web search are processed by the search provider. Choosing a result may contact that website, and images are loaded from their original hosts. Private browsing in Hekomi does not make those network requests invisible to those providers or your network.
-- Keep your library personal and use sources whose terms permit your intended use. Hekomi checks robots.txt and blocks private-network URLs, but robots.txt is not a copyright licence and generic extraction cannot determine every site's legal terms.
+- Keep your library personal and use sources whose terms permit your intended use. Hekomi's generic website inspector checks robots.txt and all server-side fetch paths block private-network URLs; dedicated manga reading does not treat robots.txt as a playback gate. robots.txt is not a copyright licence and generic extraction cannot determine every site's legal terms.
 - Do not submit private URLs, credentials, or account-only pages to the crawler. Hekomi intentionally does not bypass sign-in restrictions, paywalls, DRM, or anti-bot challenges.
 - For a stronger private archive workflow, prefer files you own or are authorized to access and store them on a device or server you control. A future source-adapter system should be opt-in, rate-limited, transparent about each source, and easy to disable.
 
