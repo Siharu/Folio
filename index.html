@@ -875,13 +875,18 @@ body[data-page="manga"] #mangaView{display:block!important}
   if(themeSystemQuery.addEventListener) themeSystemQuery.addEventListener('change',syncDeviceTheme);
   else if(themeSystemQuery.addListener) themeSystemQuery.addListener(syncDeviceTheme);
 
-  let localAnime=read(key.anime), mangaLibrary=read(key.manga), sources=read(key.sources); let malConnected=false, malUsername='', malConfigured=true; let malRemote=[]; let lastInspection=null; let activeMalStatus='all', activeMangaType='all'; let remoteReady=false; let toastTimer; localStorage.removeItem('folio_mal_client_id'); sessionStorage.removeItem('folio_mal_token');
+  let localAnime=read(key.anime), mangaLibrary=read(key.manga), sources=read(key.sources); let malConnected=false, malUsername='', malConfigured=true; let malRemote=[]; let lastInspection=null; let activeMalStatus='all', activeMangaType='all'; let remoteReady=false; let toastTimer;
+  let profileData=(()=>{try{return {displayName:'Hekomi reader',handle:'reader',bio:'A little corner for the stories that stay with me.',avatarUrl:'',...JSON.parse(localStorage.getItem('hekomi_profile_v1')||'{}')};}catch{return {displayName:'Hekomi reader',handle:'reader',bio:'A little corner for the stories that stay with me.',avatarUrl:''};}})();
+  let mangaPreferences=(()=>{try{return {defaultFeed:'trending',defaultProvider:'all',compactCards:false,...JSON.parse(localStorage.getItem('hekomi_preferences_v1')||'{}')};}catch{return {defaultFeed:'trending',defaultProvider:'all',compactCards:false};}})();
+  const mangaExploreCache=new Map(),mangaExploreInFlight=new Map();
+  let mangaExploreResults=[],activeProfileTab='overview';
+  try{localStorage.removeItem('folio_mal_client_id');sessionStorage.removeItem('folio_mal_token');}catch{}
   function esc(s=''){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
   function notify(msg){const t=$('#toast');t.textContent=msg;t.classList.remove('hidden');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.add('hidden'),3200);}
   function slug(s){return String(s).toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');}
   async function api(path, options={}){const h={...(options.headers||{})};if(options.body && typeof options.body!=='string'){h['Content-Type']='application/json';options={...options,body:JSON.stringify(options.body)};}const r=await fetch(path,{...options,credentials:'same-origin',headers:h});let data;try{data=await r.json();}catch{data={error:'Unexpected server response.'};}if(!r.ok)throw new Error(data.error||data.message||`Request failed (${r.status})`);return data;}
-  const routePathForMode={home:'/',discover:'/discover',mal:'/anime',manga:'/manga'};
-  function currentPageFromPath(){let p=window.location.pathname;while(p.length>1&&p.endsWith('/'))p=p.slice(0,-1);return ({'/':'home','/discover':'discover','/anime':'mal','/manga':'manga'})[p]||'home';}
+  const routePathForMode={home:'/',discover:'/discover',mal:'/anime',manga:'/manga',profile:'/profile'};
+  function currentPageFromPath(){let p=window.location.pathname;while(p.length>1&&p.endsWith('/'))p=p.slice(0,-1);return ({'/':'home','/discover':'discover','/anime':'mal','/manga':'manga','/profile':'profile'})[p]||'home';}
   function setBrandMode(mode){const mark=$('.brandmark');if(!mark)return;const visualMode=mode==='manga'?'manga':mode==='anime'?'anime':'dual';mark.dataset.media=visualMode;mark.setAttribute('aria-label',visualMode==='dual'?'Hekomi — One Identity, Two Worlds':visualMode==='manga'?'Hekomi Manga':'Hekomi Anime');}
   function animateBrandMode(mode){
     const mark=$('.brandmark');
@@ -915,10 +920,24 @@ body[data-page="manga"] #mangaView{display:block!important}
       // The data-media CSS state now owns the settled appearance.
     }).catch(()=>{});
   }
-  function renderPage(page){const visualPage=page==='mal'?'anime':page==='manga'?'manga':page;document.body.dataset.page=visualPage;setBrandMode(page==='manga'?'manga':page==='mal'?'anime':'dual');$('#landing').classList.toggle('hidden',!['home','discover'].includes(page));$('#malView').classList.toggle('hidden',page!=='mal');$('#mangaView').classList.toggle('hidden',page!=='manga');$('#app').classList.toggle('manga-mode',page==='manga');const activePath=routePathForMode[page]||'/';document.querySelectorAll('.primary-nav [data-route-link]').forEach(a=>{if(a.getAttribute('href')===activePath)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});if(page==='mal'){renderLocalAnime();if(remoteReady)renderRemoteList();}if(page==='manga'){renderMangaLibrary();renderSources();}}
+  function renderPage(page){
+    const visualPage=page==='mal'?'anime':page==='manga'?'manga':page;
+    document.body.dataset.page=visualPage;
+    setBrandMode(page==='manga'?'manga':page==='mal'?'anime':'dual');
+    $('#landing').classList.toggle('hidden',!['home','discover'].includes(page));
+    $('#malView').classList.toggle('hidden',page!=='mal');
+    $('#mangaView').classList.toggle('hidden',page!=='manga');
+    $('#profileView').classList.toggle('hidden',page!=='profile');
+    $('#app').classList.toggle('manga-mode',page==='manga');
+    const activePath=routePathForMode[page]||'/';
+    document.querySelectorAll('.primary-nav [data-route-link]').forEach(a=>{if(a.getAttribute('href')===activePath)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});
+    if(page==='mal'){renderLocalAnime();if(remoteReady)renderRemoteList();}
+    if(page==='manga'){renderMangaLibrary();renderSources();showMangaTab(window.location.hash==='#library'?'library':'explore');}
+    if(page==='profile'){showProfileTab('overview');renderProfileOverview();syncProfileForms();}
+  }
   let modeNavigationPending=false;
   function setMode(mode){
-    const page=mode==='mal'?'mal':mode==='manga'?'manga':'home';
+    const page=mode==='mal'?'mal':mode==='manga'?'manga':mode==='profile'?'profile':'home';
     const path=routePathForMode[page];
     const target=page==='manga'?'manga':page==='mal'?'anime':'dual';
     const destinationIsDifferent=window.location.pathname!==path;
@@ -933,8 +952,8 @@ body[data-page="manga"] #mangaView{display:block!important}
     }else renderPage(page);
     window.scrollTo({top:0,behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
   }
-  document.addEventListener('click',event=>{const a=event.target.closest('a[href]');if(!a||event.defaultPrevented||a.target==='_blank'||event.metaKey||event.ctrlKey||event.shiftKey||event.altKey)return;let destination;try{destination=new URL(a.href,window.location.href);}catch{return;}if(destination.origin!==window.location.origin)return;const route=(destination.pathname!=='/'&&destination.pathname.endsWith('/')?destination.pathname.slice(0,-1):destination.pathname)||'/';if(route==='/anime'||route==='/manga'){event.preventDefault();setMode(route==='/manga'?'manga':'mal');}});
-  $$('[data-enter]').forEach(el=>{el.addEventListener('click',()=>setMode(el.dataset.enter));el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();setMode(el.dataset.enter);}})});$('#headerHome').addEventListener('click',()=>setMode(null));$('#themeSettingsBtn').addEventListener('click',openThemeSettings);
+  document.addEventListener('click',event=>{const a=event.target.closest('a[href]');if(!a||event.defaultPrevented||a.target==='_blank'||event.metaKey||event.ctrlKey||event.shiftKey||event.altKey)return;let destination;try{destination=new URL(a.href,window.location.href);}catch{return;}if(destination.origin!==window.location.origin)return;const route=(destination.pathname!=='/'&&destination.pathname.endsWith('/')?destination.pathname.slice(0,-1):destination.pathname)||'/';if(route==='/anime'||route==='/manga'||route==='/profile'){event.preventDefault();setMode(route==='/manga'?'manga':route==='/profile'?'profile':'mal');}});
+  $$('[data-enter]').forEach(el=>{el.addEventListener('click',()=>setMode(el.dataset.enter));el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();setMode(el.dataset.enter);}})});$('#headerHome').addEventListener('click',()=>setMode(null));$('#profileBtn').addEventListener('click',()=>setMode('profile'));$('#themeSettingsBtn').addEventListener('click',openThemeSettings);
   renderPage(currentPageFromPath());
   requestAnimationFrame(()=>$('.brandmark')?.classList.add('brandmark-ready'));
   
@@ -1044,8 +1063,9 @@ body[data-page="manga"] #mangaView{display:block!important}
 
   async function health(){try{const h=await fetch('/api/health');if(h.ok){$('#healthLabel').textContent='Local backend connected';return;}}catch{}$('#healthLabel').textContent='Open via the local server to enable crawling & MAL sync';}health();
   function showMalTab(tab){$$('#malTabs button').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));const ids={mylist:'malMyListTab',search:'malSearchTab',local:'malLocalTab',about:'malAboutTab'};Object.entries(ids).forEach(([t,id])=>$('#'+id).classList.toggle('hidden',t!==tab));}
-  function showMangaTab(tab){$$('#mangaTabs button').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));['library','discover','sources'].forEach(t=>$('#manga'+t[0].toUpperCase()+t.slice(1)+'Tab').classList.toggle('hidden',t!==tab));if(tab==='sources')renderSources();if(tab==='library')renderMangaLibrary();}
-  $$('#malTabs button').forEach(b=>b.addEventListener('click',()=>showMalTab(b.dataset.tab))); $$('#mangaTabs button').forEach(b=>b.addEventListener('click',()=>showMangaTab(b.dataset.tab)));
+  function showMangaTab(tab){$('#mangaTabs button').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));['explore','library','discover','sources'].forEach(t=>$('#manga'+t[0].toUpperCase()+t.slice(1)+'Tab').classList.toggle('hidden',t!==tab));if(tab==='sources')renderSources();if(tab==='library')renderMangaLibrary();if(tab==='explore'){const provider=mangaPreferences.defaultProvider||'all';if($('#mangaExploreProvider'))$('#mangaExploreProvider').value=provider;if($('#mangaFeedSwitch'))$('#mangaFeedSwitch [data-manga-feed]').forEach(b=>b.classList.toggle('active',b.dataset.mangaFeed===(mangaPreferences.defaultFeed||'trending')));void loadMangaExplore();}}
+function showProfileTab(tab){activeProfileTab=tab;$('#profileTabs button').forEach(b=>b.classList.toggle('active',b.dataset.profileTab===tab));const ids={overview:'profileOverviewTab',settings:'profileSettingsTab',privacy:'profilePrivacyTab'};Object.entries(ids).forEach(([key,id])=>$('#'+id).classList.toggle('hidden',key!==tab));if(tab==='overview')renderProfileOverview();if(tab==='settings')syncProfileForms();}
+    $('#malTabs button').forEach(b=>b.addEventListener('click',()=>showMalTab(b.dataset.tab))); $$('#mangaTabs button').forEach(b=>b.addEventListener('click',()=>showMangaTab(b.dataset.tab)));
   function beginMalLogin(){if(!malConfigured){notify('Hekomi sign-in has not been configured by the app maintainer yet.');showMalTab('about');return;}window.location.href='/api/mal/auth/start';}
   async function refreshMalAuthStatus(){
     try{
