@@ -333,15 +333,23 @@ async function getMangaScrapeProviderFeed(provider, feed) {
     const home = await adapter.home();
     raw = feed === 'latest' ? (home.latestUpdates || []) : (home.populars || []);
   } else if (provider === 'mangahook') {
-    const type = feed === 'latest' ? 'latest' : 'topview';
-    const payload = await mangaHookApiRequest('/api/mangaList?page=1&type=' + type);
+    // Manga Hook's own middleware validates the human-readable filter labels,
+    // not just the filter IDs. "Top read" is normalized to "topview" by its controller.
+    const type = feed === 'latest' ? 'Latest' : 'Top read';
+    const query = new URLSearchParams({ page:'1', type, category:'ALL', state:'all' });
+    const payload = await mangaHookApiRequest('/api/mangaList?' + query.toString());
     raw = Array.isArray(payload.mangaList) ? payload.mangaList : [];
+    if (!raw.length) throw new Error('Manga Hook /api/mangaList returned no titles.');
   }
-  return (Array.isArray(raw) ? raw : [])
+  const normalized = (Array.isArray(raw) ? raw : [])
     .slice(0, 24)
     .map(item => mangaScrapeNormalizeSearch(provider, item))
     .filter(Boolean)
     .map(item => ({ ...item, providerLabel:source.label }));
+  if (provider === 'mangahook' && !normalized.length) {
+    throw new Error('Manga Hook returned manga entries, but none had valid manga IDs.');
+  }
+  return normalized;
 }
 async function loadMangaScrapeDiscovery(provider, feed, force=false) {
   const cacheKey = provider + ':' + feed;
@@ -368,9 +376,9 @@ async function loadMangaScrapeDiscovery(provider, feed, force=false) {
     return true;
   }).slice(0, 60);
   let fallback = false;
-  // Never let an unavailable/robots-disallowed scraper take the whole discovery page down.
-  // Use the public AniList catalog as a read-only discovery fallback; do not crawl blocked sources.
-  if (!unique.length) {
+  // AniList is only a cross-source fallback when the user explicitly selects all sources.
+  // A Manga Hook-only feed must never silently display unrelated AniList catalogue results.
+  if (!unique.length && provider === 'all') {
     try {
       const catalog = await getPublicCatalog();
       const manga = Array.isArray(catalog.manga) ? catalog.manga.slice() : [];
@@ -398,7 +406,8 @@ async function loadMangaScrapeDiscovery(provider, feed, force=false) {
       ? 'Showing catalog recommendations because live source feeds are unavailable. Open a title on AniList; source restrictions were not bypassed.'
       : errors.length ? 'Some sources could not load. Available results are still shown; no source restrictions were bypassed.' : 'Chapter details open on the original source. Availability depends on each provider.'
   };
-  if (unique.length || !cached) mangaScrapeFeedCache.set(cacheKey,{cachedAt:Date.now(),payload});
+  // Do not cache empty/error responses: a transient upstream failure should be retryable immediately.
+  if (unique.length) mangaScrapeFeedCache.set(cacheKey,{cachedAt:Date.now(),payload});
   return payload;
 }
 async function inspectWebsite(rawUrl) {
