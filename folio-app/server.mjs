@@ -681,7 +681,7 @@ const server=http.createServer(async(req,res)=>{
   if(req.method==='POST' && url.pathname==='/api/mal/auth/logout') return malLogout(req,res);
   if(url.pathname.startsWith('/api/mal/')) return malRequest(req,res,url.pathname.slice('/api/mal'.length),url.searchParams).catch(e=>send(res,500,{error:e.message||'MAL request failed.'}));
   if(req.method!=='GET' && req.method!=='HEAD') return send(res,405,{error:'Method not allowed.'});
-  const normalizedPath=decodeURIComponent(url.pathname).replace(/\\/+$/,'')||'/';
+  const normalizedPath=decodeURIComponent(url.pathname).replace(/\/+$/,'')||'/';
   const appPath=normalizedPath==='/index.html'?'/':normalizedPath;
   const pageRoutes=new Set(['/','/discover','/anime','/manga']);
   const isAppPage=pageRoutes.has(appPath);
