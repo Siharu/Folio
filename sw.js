@@ -1,5 +1,5 @@
-const CACHE = 'hekomi-shell-v6-brand';
-const SHELL = ['/', '/index.html', '/manifest.webmanifest', '/icon.svg', '/assets/folio-night-scene.svg', '/assets/hekomi-social.svg'];
+const CACHE = 'hekomi-shell-v7-mode-morph';
+const SHELL = ['/', '/index.html', '/manifest.webmanifest', '/icon.svg', '/assets/folio-night-scene.svg', '/assets/hekomi-social.svg', '/assets/hekomi-manga-mark.svg'];
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(SHELL)).then(() => self.skipWaiting()));
 });
