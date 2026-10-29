@@ -507,6 +507,10 @@ body[data-page="manga"] #mangaView{display:block!important}
 @media(max-width:520px){.anime-info-hero{grid-template-columns:82px minmax(0,1fr);gap:11px}.anime-info-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.anime-info-synopsis{font-size:12px}}
 @media(prefers-reduced-motion:reduce){.anime-info-cover{scroll-behavior:auto}}
 </style>
+
+<style>
+.extension-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:12px}.extension-option{display:flex;align-items:flex-start;gap:10px;border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--panel);cursor:pointer;min-width:0}.extension-option input{margin-top:3px;accent-color:var(--mint);flex-shrink:0}.extension-option span{display:grid;gap:4px;min-width:0}.extension-option strong{font-size:12px}.extension-option small{font-size:10px;color:var(--muted);line-height:1.4}.extension-option em{font-size:9px;font-style:normal;color:var(--mint);margin-left:auto;white-space:nowrap}.extension-option:has(input:not(:checked)){opacity:.58}.extension-option:has(input:checked){border-color:color-mix(in srgb,var(--mint) 45%,var(--line))}@media(max-width:760px){.extension-list{grid-template-columns:1fr}}
+</style>
 </head>
 <body data-page="__HEKOMI_PAGE__">
 <div class="app-scroll-progress" aria-hidden="true"><span id="appScrollProgressBar"></span></div>
@@ -613,15 +617,21 @@ body[data-page="manga"] #mangaView{display:block!important}
       </div>
       <div id="mangaDiscoverTab" class="hidden">
         <div class="panel">
-          <div class="panel-head"><div><h2>MangaScrape source search</h2><p class="muted small">Use dedicated adapters to search structured manga catalogs and inspect chapter lists.</p></div><span class="pill-label">SOURCE ADAPTERS</span></div>
-          <div class="formrow mobile-stack">
-            <select class="input" id="mangaAdapterProvider" aria-label="Manga source">
-              <option value="batoto">Bato network (fto.to)</option>
-              <option value="mangabuddy">MangaBuddy</option>
-              <option value="mangakakalot">Mangakakalot</option>
+          <div class="panel-head"><div><h2>Extension manager</h2><p class="muted small">Enable a source once. Hekomi will search every enabled extension together, just like an extension-based reader.</p></div><span class="pill-label">BUILT-IN EXTENSIONS</span></div>
+          <div id="mangaExtensionList" class="extension-list">
+            <label class="extension-option"><input type="checkbox" value="batoto" checked><span><strong>Bato network</strong><small>Catalog search · chapter metadata</small></span><em>Built in</em></label>
+            <label class="extension-option"><input type="checkbox" value="mangabuddy" checked><span><strong>MangaBuddy</strong><small>Catalog search · chapter metadata</small></span><em>Built in</em></label>
+            <label class="extension-option"><input type="checkbox" value="mangakakalot" checked><span><strong>Mangakakalot</strong><small>Catalog search · chapter metadata</small></span><em>Built in</em></label>
+          </div>
+          <div class="formrow mobile-stack" style="margin-top:15px">
+            <select class="input" id="mangaAdapterProvider" aria-label="Search scope">
+              <option value="all">All enabled extensions</option>
+              <option value="batoto">Bato network only</option>
+              <option value="mangabuddy">MangaBuddy only</option>
+              <option value="mangakakalot">Mangakakalot only</option>
             </select>
-            <input class="input" id="mangaAdapterQuery" placeholder="Search manga, manhwa, or manhua…" autocomplete="off">
-            <button class="btn-mint" id="mangaAdapterSearchBtn">Search source</button>
+            <input class="input" id="mangaAdapterQuery" placeholder="Search all enabled extensions…" autocomplete="off">
+            <button class="btn-mint" id="mangaAdapterSearchBtn">Search all</button>
           </div>
           <div id="mangaAdapterStatus" class="small muted" style="margin-top:10px" role="status"></div>
           <div id="mangaAdapterResults" class="results"></div>
@@ -877,7 +887,8 @@ body[data-page="manga"] #mangaView{display:block!important}
 
   let localAnime=read(key.anime), mangaLibrary=read(key.manga), sources=read(key.sources); let malConnected=false, malUsername='', malConfigured=true; let malRemote=[]; let lastInspection=null; let activeMalStatus='all', activeMangaType='all'; let remoteReady=false; let toastTimer;
   let profileData=(()=>{try{return {displayName:'Hekomi reader',handle:'reader',bio:'A little corner for the stories that stay with me.',avatarUrl:'',...JSON.parse(localStorage.getItem('hekomi_profile_v1')||'{}')};}catch{return {displayName:'Hekomi reader',handle:'reader',bio:'A little corner for the stories that stay with me.',avatarUrl:''};}})();
-  let mangaPreferences=(()=>{try{return {defaultFeed:'trending',defaultProvider:'all',compactCards:false,...JSON.parse(localStorage.getItem('hekomi_preferences_v1')||'{}')};}catch{return {defaultFeed:'trending',defaultProvider:'all',compactCards:false};}})();
+  let mangaPreferences=(()=>{try{return {defaultFeed:'trending',defaultProvider:'all',compactCards:false,enabledExtensions:['batoto','mangabuddy','mangakakalot'],...JSON.parse(localStorage.getItem('hekomi_preferences_v1')||'{}')};}catch{return {defaultFeed:'trending',defaultProvider:'all',compactCards:false,enabledExtensions:['batoto','mangabuddy','mangakakalot']};}})();
+  if(!Array.isArray(mangaPreferences.enabledExtensions))mangaPreferences.enabledExtensions=['batoto','mangabuddy','mangakakalot'];
   const mangaExploreCache=new Map(),mangaExploreInFlight=new Map();
   let mangaExploreResults=[],activeProfileTab='overview';
   try{localStorage.removeItem('folio_mal_client_id');sessionStorage.removeItem('folio_mal_token');}catch{}
@@ -1474,32 +1485,56 @@ function mangaFeedCardMarkup(item,index){
     void loadMangaExplore();
   }));
   $('#mangaExploreRefresh').addEventListener('click',()=>loadMangaExplore(true));
+  function saveEnabledMangaExtensions(){
+    mangaPreferences.enabledExtensions=$('#mangaExtensionList input[type="checkbox"]:checked').map(input=>input.value);
+    write('hekomi_preferences_v1',mangaPreferences);
+    const all=$('#mangaAdapterProvider');
+    if(all&&all.value==='all'&&!mangaPreferences.enabledExtensions.length){
+      $('#mangaAdapterStatus').textContent='Enable at least one extension to search.';
+    }
+  }
+  $('#mangaExtensionList input[type="checkbox"]').forEach(input=>{
+    input.checked=mangaPreferences.enabledExtensions.includes(input.value);
+    input.addEventListener('change',saveEnabledMangaExtensions);
+  });
+  $('#mangaAdapterProvider').value='all';
+  $('#mangaAdapterQuery').placeholder='Search all enabled extensions…';
+  $('#mangaAdapterProvider').addEventListener('change',()=>{
+    const provider=$('#mangaAdapterProvider').value;
+    $('#mangaAdapterSearchBtn').textContent=provider==='all'?'Search all':'Search source';
+    $('#mangaAdapterQuery').placeholder=provider==='all'?'Search all enabled extensions…':'Search '+$('#mangaAdapterProvider').selectedOptions[0].textContent.replace(/ only$/,'')+'…';
+  });
   $('#mangaAdapterSearchBtn').onclick=searchMangaScrapeSources;
   $('#mangaAdapterQuery').addEventListener('keydown',e=>{if(e.key==='Enter')searchMangaScrapeSources();});
   async function searchMangaScrapeSources(){
     const provider=$('#mangaAdapterProvider').value;
     const query=$('#mangaAdapterQuery').value.trim();
-    if(!query){$('#mangaAdapterStatus').textContent='Enter a manga title to search.';return;}
+    if(!query){$('#mangaAdapterStatus').textContent='Enter a manga title to search enabled extensions.';return;}
+    const enabledProviders=mangaPreferences.enabledExtensions.slice();
+    if(provider==='all'&&!enabledProviders.length){$('#mangaAdapterStatus').textContent='Enable at least one extension above.';return;}
     const button=$('#mangaAdapterSearchBtn');
     button.disabled=true;button.textContent='Searching…';
     $('#mangaAdapterResults').innerHTML='';
-    $('#mangaAdapterStatus').textContent='Checking source rules and searching…';
+    $('#mangaAdapterStatus').textContent=provider==='all'?'Searching all enabled extensions…':'Searching the selected extension…';
     $('#mangaAdapterStatus').classList.remove('error');
     try{
-      const data=await api('/api/mangascrape/search',{method:'POST',body:{provider,query}});
+      const data=await api('/api/mangascrape/search',{method:'POST',body:{provider,query,enabledProviders}});
       const results=data.results||[];
-      $('#mangaAdapterStatus').textContent=results.length+' result'+(results.length===1?'':'s')+' from '+data.providerLabel+'.';
+      $('#mangaAdapterStatus').textContent=results.length+' result'+(results.length===1?'':'s')+' across '+data.providerLabel+'.';
       $('#mangaAdapterResults').innerHTML=results.length?results.map((item,index)=>{
-        const meta=[item.status,item.genres.slice(0,4).join(' · '),item.latestChapter?'Latest: '+item.latestChapter:'',item.lastUpdate].filter(Boolean).join(' · ');
+        const meta=[item.providerLabel,item.status,(item.genres||[]).slice(0,4).join(' · '),item.latestChapter?'Latest: '+item.latestChapter:'',item.lastUpdate].filter(Boolean).join(' · ');
         return '<div class="resultitem">'+coverHtml(item.cover,'manga',item.title)+'<div class="resulttext"><h3>'+esc(item.title)+'</h3><p>'+esc(meta||'Source metadata available')+'</p>'+(item.description?'<p class="muted small">'+esc(item.description.slice(0,240))+(item.description.length>240?'…':'')+'</p>':'')+'<div class="resultactions"><button class="mini-btn" data-mangascrape-details="'+index+'">Details &amp; chapters</button><a class="mini-btn" href="'+esc(item.url)+'" target="_blank" rel="noreferrer">Open source ↗</a></div></div></div>';
-      }).join(''):'<div class="empty"><strong>No results returned</strong>Try another title or provider. If the source is unavailable or blocks automated access, Hekomi will not try to bypass it.</div>';
-      $$('#mangaAdapterResults [data-mangascrape-details]').forEach(button=>button.onclick=()=>showMangaScrapeDetails(provider,results[Number(button.dataset.mangascrapeDetails)]));
+      }).join(''):'<div class="empty"><strong>No results returned</strong>Try another title or enable another extension. Unavailable sources are reported rather than bypassed.</div>';
+      $('#mangaAdapterResults [data-mangascrape-details]').forEach(button=>button.onclick=()=>{const item=results[Number(button.dataset.mangascrapeDetails)];showMangaScrapeDetails(item&&item.provider||provider,item);});
+      if(data.errors&&data.errors.length){
+        $('#mangaAdapterStatus').textContent+=' · '+data.errors.length+' extension'+(data.errors.length===1?'':'s')+' unavailable: '+data.errors.map(x=>x.label).join(', ');
+      }
       if(data.notice)$('#mangaAdapterStatus').textContent+=' '+data.notice;
     }catch(error){
-      $('#mangaAdapterStatus').textContent=error.message||'MangaScrape search failed.';
+      $('#mangaAdapterStatus').textContent=error.message||'Extension search failed.';
       $('#mangaAdapterStatus').classList.add('error');
     }finally{
-      button.disabled=false;button.textContent='Search source';
+      button.disabled=false;button.textContent=$('#mangaAdapterProvider').value==='all'?'Search all':'Search source';
     }
   }
   async function showMangaScrapeDetails(provider,result){
