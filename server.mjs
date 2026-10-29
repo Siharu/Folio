@@ -402,9 +402,9 @@ async function malRequest(req, res, pathname, query) {
   let apiPath = '';
   let method = 'GET';
   let body;
-  if (pathname === '/search') apiPath='/anime?q='+encodeURIComponent(query.get('q')||'')+'&limit=10&fields=alternative_titles,synopsis,mean,genres,num_episodes,media_type,main_picture';
+  if (pathname === '/search') apiPath='/anime?q='+encodeURIComponent(query.get('q')||'')+'&limit=10&fields=alternative_titles,synopsis,mean,rank,popularity,num_list_users,num_scoring_users,genres,num_episodes,media_type,main_picture,start_date,end_date,status,start_season,broadcast,source,average_episode_duration,rating,studios,updated_at';
   if (pathname === '/me') apiPath='/users/@me';
-  if (pathname === '/list') apiPath='/users/@me/animelist?limit=100&fields=list_status,num_episodes,mean,media_type,main_picture';
+  if (pathname === '/list') apiPath='/users/@me/animelist?limit=100&fields=list_status,alternative_titles,synopsis,mean,rank,popularity,num_list_users,num_scoring_users,genres,num_episodes,media_type,main_picture,start_date,end_date,status,start_season,broadcast,source,average_episode_duration,rating,studios,updated_at';
   if (pathname === '/update') {
     const data = await readBody(req);
     if (!Number.isInteger(Number(data.id))) return send(res,400,{error:'A valid anime ID is required.'});
@@ -429,7 +429,7 @@ async function malRequest(req, res, pathname, query) {
 
 
 const ANILIST_ENDPOINT = 'https://graphql.anilist.co';
-const MEDIA_CATALOG_FIELDS = 'id idMal type title { romaji english native } coverImage { color extraLarge large medium } bannerImage description(asHtml:false) genres averageScore popularity status episodes chapters volumes seasonYear format countryOfOrigin startDate { year month day } isAdult';
+const MEDIA_CATALOG_FIELDS = 'id idMal type title { romaji english native } coverImage { color extraLarge large medium } bannerImage description(asHtml:false) genres averageScore popularity favourites status episodes chapters volumes season seasonYear format countryOfOrigin source duration startDate { year month day } endDate { year month day } studios(isMain:true) { nodes { name } } nextAiringEpisode { airingAt timeUntilAiring episode } trailer { id site thumbnail } siteUrl updatedAt isLicensed isAdult';
 const HOME_CATALOG_QUERY = 'query HekomiHomeCatalog($season:MediaSeason!,$seasonYear:Int!) { anime: Page(page:1,perPage:10) { media(type:ANIME,sort:[TRENDING_DESC,POPULARITY_DESC],isAdult:false) { ' + MEDIA_CATALOG_FIELDS + ' } } manga: Page(page:1,perPage:10) { media(type:MANGA,sort:[TRENDING_DESC,POPULARITY_DESC],isAdult:false) { ' + MEDIA_CATALOG_FIELDS + ' } } airing: Page(page:1,perPage:10) { media(type:ANIME,status:RELEASING,sort:[POPULARITY_DESC],isAdult:false) { ' + MEDIA_CATALOG_FIELDS + ' } } seasonal: Page(page:1,perPage:10) { media(type:ANIME,season:$season,seasonYear:$seasonYear,sort:[POPULARITY_DESC],isAdult:false) { ' + MEDIA_CATALOG_FIELDS + ' } } }';
 function currentAnimeSeason(date=new Date()) { const month=date.getUTCMonth()+1; return month<=3?'WINTER':month<=6?'SPRING':month<=9?'SUMMER':'FALL'; }
 const SEASON_CATALOG_QUERY = 'query HekomiSeasonCatalog($season:MediaSeason!,$seasonYear:Int!) { seasonal: Page(page:1,perPage:18) { media(type:ANIME,season:$season,seasonYear:$seasonYear,sort:[POPULARITY_DESC],isAdult:false) { ' + MEDIA_CATALOG_FIELDS + ' } } }';
@@ -476,6 +476,13 @@ function packMedia(item) {
   if (!item || item.isAdult) return null;
   const title = item.title && (item.title.english || item.title.romaji || item.title.native) || 'Untitled';
   const cover = item.coverImage && (item.coverImage.extraLarge || item.coverImage.large || item.coverImage.medium) || '';
+  const studios = item.studios && Array.isArray(item.studios.nodes) ? item.studios.nodes.map(studio=>studio&&studio.name).filter(Boolean) : [];
+  const nextAiringEpisode = item.nextAiringEpisode ? {
+    episode:Number(item.nextAiringEpisode.episode)||null,
+    airingAt:Number(item.nextAiringEpisode.airingAt)||null,
+    timeUntilAiring:Number(item.nextAiringEpisode.timeUntilAiring)||null
+  } : null;
+  const trailer = item.trailer ? {id:item.trailer.id||'',site:item.trailer.site||'',thumbnail:item.trailer.thumbnail||''} : null;
   return {
     id:Number(item.id), idMal:item.idMal || null, type:item.type || '',
     accentColor:item.coverImage && item.coverImage.color || '',
@@ -486,10 +493,13 @@ function packMedia(item) {
     description:cleanText(item.description || '').slice(0,3500),
     genres:Array.isArray(item.genres)?item.genres.slice(0,8):[],
     averageScore:Number(item.averageScore)||0,popularity:Number(item.popularity)||0,
+    favourites:Number(item.favourites)||0,
     status:item.status||'',episodes:item.episodes||null,chapters:item.chapters||null,
-    volumes:item.volumes||null,seasonYear:item.seasonYear||(item.startDate&&item.startDate.year)||null,
-    format:item.format||'',countryOfOrigin:item.countryOfOrigin||'',
-    siteUrl:item.siteUrl||'',isAdult:false,startDate:item.startDate||null
+    volumes:item.volumes||null,season:item.season||'',seasonYear:item.seasonYear||(item.startDate&&item.startDate.year)||null,
+    format:item.format||'',countryOfOrigin:item.countryOfOrigin||'',source:item.source||'',
+    duration:Number(item.duration)||null,studios,nextAiringEpisode,trailer,
+    siteUrl:item.siteUrl||'',isLicensed:!!item.isLicensed,isAdult:false,
+    startDate:item.startDate||null,endDate:item.endDate||null,updatedAt:Number(item.updatedAt)||null
   };
 }
 async function getPublicCatalog(force=false) {
@@ -575,10 +585,29 @@ function renderMediaPage(req,kind,media) {
   const description = (synopsis ? synopsis.slice(0,190).replace(/\s+\S*$/,'') + ' ' : '') + 'Explore the synopsis, genres, score and details for ' + media.title + ' on Hekomi.';
   const cover = media.cover && /^https:\/\//i.test(media.cover) ? media.cover : '';
   const score = media.averageScore ? (media.averageScore/10).toFixed(1) + '/10' : 'Not rated';
+  const dateText = value => {
+    if(!value)return '';
+    const year=Number(value.year)||null,month=Number(value.month)||null,day=Number(value.day)||null;
+    if(!year)return '';
+    if(!month)return String(year);
+    if(!day)return new Date(Date.UTC(year,month-1,1)).toLocaleDateString('en-US',{month:'short',year:'numeric',timeZone:'UTC'});
+    return new Date(Date.UTC(year,month-1,day)).toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric',timeZone:'UTC'});
+  };
+  const sourceLabel = String(media.source||'').replace(/_/g,' ').toLowerCase().replace(/\b\w/g,ch=>ch.toUpperCase());
+  const seasonLabel = [media.season,media.seasonYear].filter(Boolean).join(' ');
+  const nextEpisodeLabel = media.nextAiringEpisode && media.nextAiringEpisode.airingAt
+    ? 'Episode '+(media.nextAiringEpisode.episode||'?')+' · '+new Date(media.nextAiringEpisode.airingAt*1000).toISOString().replace('T',' ').slice(0,16)+' UTC'
+    : '';
   const details = [
-    ['Format',media.format],['Status',media.status],['Year',media.seasonYear],
-    ['Episodes',kind==='anime'?media.episodes:null],['Chapters',kind==='manga'?media.chapters:null],
-    ['Volumes',kind==='manga'?media.volumes:null]
+    ['Format',media.format],['Release status',String(media.status||'').replace(/_/g,' ')],
+    ['First aired',dateText(media.startDate)],['Last aired',dateText(media.endDate)],
+    ['Season',seasonLabel],['Episodes',kind==='anime'?media.episodes:null],
+    ['Episode length',kind==='anime'&&media.duration?media.duration+' minutes':null],
+    ['Next episode',kind==='anime'?nextEpisodeLabel:null],
+    ['Source material',sourceLabel],['Studio',(media.studios||[]).join(', ')],
+    ['Country',media.countryOfOrigin],['Popularity',media.popularity?Number(media.popularity).toLocaleString():null],
+    ['Favorites',media.favourites?Number(media.favourites).toLocaleString():null],
+    ['Chapters',kind==='manga'?media.chapters:null],['Volumes',kind==='manga'?media.volumes:null]
   ].filter(pair=>pair[1] !== null && pair[1] !== undefined && pair[1] !== '');
   const infoRows = details.map(pair=>'<div class="info-cell"><dt>'+htmlEscape(pair[0])+'</dt><dd>'+htmlEscape(String(pair[1]).replace(/_/g,' '))+'</dd></div>').join('');
   const schema = {
