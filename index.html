@@ -1441,7 +1441,9 @@ function mangaFeedCardMarkup(item,index){
         mangaExploreCache.set(cacheKey,{savedAt:Date.now(),data});
         mangaExploreResults=data.results||[];
         renderMangaExplore(mangaExploreResults);
-        status.textContent=mangaExploreResults.length+' titles · '+(feed==='latest'?'Latest updates':'Trending now')+(data.fetchedAt?' · Refreshed '+new Date(data.fetchedAt).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}):'');
+        status.textContent=data.fallback
+          ? 'Live source feeds are unavailable · Showing '+mangaExploreResults.length+' catalog recommendations instead.'
+          : mangaExploreResults.length+' titles · '+(feed==='latest'?'Latest updates':'Trending now')+(data.fetchedAt?' · Refreshed '+new Date(data.fetchedAt).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}):'');
         renderMangaExploreErrors(data.errors||[]);
       }catch(error){
         status.classList.add('error');
