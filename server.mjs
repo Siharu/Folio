@@ -265,7 +265,7 @@ function mangaScrapeNormalizeSearch(provider, item) {
   try { id = mangaScrapeCleanId(provider, item.id); } catch { return null; }
   const sourceKind = mangaScrapeSourceKind(provider, item.source);
   const title = mangaScrapeTitleText(item.title || item.name) || 'Untitled manga';
-  const chapter = item.lastChapter || (Array.isArray(item.lastChapters) ? item.lastChapters[0] : null) || {};
+  const chapter = item.lastChapter || (Array.isArray(item.lastChapters) ? item.lastChapters[0] : null) || (item.chapter ? { title:typeof item.chapter === 'string' ? item.chapter : (item.chapter.title || item.chapter.name || ''), id:typeof item.chapter === 'string' ? item.chapter : item.chapter.id } : {});
   return {
     id, provider, sourceKind, title,
     url: mangaScrapeTitleUrl(provider, id, sourceKind),
