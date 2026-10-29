@@ -401,7 +401,55 @@ h1,h2,h3,.workspace-head h1,.catalog-heading h2,.showcase-copy h2{font-family:va
 ::selection{background:var(--acid);color:#15170c}
 @media(max-width:760px){.showcase-copy h2{font-size:clamp(29px,8.5vw,42px)}.catalog-heading h2{font-size:clamp(27px,8vw,37px)}}
 
-.chapter-reader-modal{width:min(1100px,100%)!important;height:min(90vh,900px);display:flex;flex-direction:column;gap:0;padding:0!important;overflow:hidden}.chapter-reader-head{padding:17px 20px;border-bottom:1px solid var(--line);flex:0 0 auto}.chapter-reader-head h2{font-size:19px;margin:4px 0}.chapter-reader-tools{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:10px 16px;background:#111319;border-bottom:1px solid #292c35;flex:0 0 auto}.chapter-reader-frame{display:block;width:100%;flex:1;min-height:0;border:0;background:#08090c}@media(max-width:760px){.chapter-reader-modal{height:94vh!important;max-height:94vh!important;border-radius:14px!important}.chapter-reader-head{padding:13px}.chapter-reader-tools{align-items:flex-start;flex-direction:column;gap:7px}}</style>
+.chapter-reader-modal{width:min(1100px,100%)!important;height:min(90vh,900px);display:flex;flex-direction:column;gap:0;padding:0!important;overflow:hidden}.chapter-reader-head{padding:17px 20px;border-bottom:1px solid var(--line);flex:0 0 auto}.chapter-reader-head h2{font-size:19px;margin:4px 0}.chapter-reader-tools{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:10px 16px;background:#111319;border-bottom:1px solid #292c35;flex:0 0 auto}.chapter-reader-frame{display:block;width:100%;flex:1;min-height:0;border:0;background:#08090c}@media(max-width:760px){.chapter-reader-modal{height:94vh!important;max-height:94vh!important;border-radius:14px!important}.chapter-reader-head{padding:13px}.chapter-reader-tools{align-items:flex-start;flex-direction:column;gap:7px}}
+/* Manga discovery and local profile */
+.manga-explore-heading{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;margin:12px 0 18px}
+.manga-explore-heading h2{font-size:clamp(24px,3vw,36px);letter-spacing:-.045em;margin:6px 0}
+.manga-explore-heading p{margin:0;max-width:620px}
+.manga-explore-controls{display:flex;align-items:center;gap:8px;min-width:270px}
+.manga-explore-controls .input{min-width:0;flex:1}
+.manga-feed-switch{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 14px}
+.manga-feed-switch button{border:1px solid var(--line);background:var(--panel);color:var(--muted);padding:9px 14px;border-radius:999px;cursor:pointer;font:inherit;font-size:12px;transition:background .18s ease,border-color .18s ease,color .18s ease}
+.manga-feed-switch button.active{color:var(--text);border-color:var(--mint);background:color-mix(in srgb,var(--mint) 11%,var(--panel))}
+.manga-explore-grid{margin-top:16px}
+.manga-feed-card .cover{aspect-ratio:3/4;overflow:hidden}
+.manga-feed-card .cover img{width:100%;height:100%;object-fit:cover}
+.manga-feed-card .card-body{display:flex;flex-direction:column;gap:8px}
+.manga-feed-card .card-title{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:2.5em}
+.manga-feed-meta{color:var(--muted);font-size:11px;line-height:1.45}
+.manga-feed-description{font-size:12px;color:var(--muted);line-height:1.5;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;min-height:4.4em}
+.manga-feed-card .card-bottom{display:flex;flex-wrap:wrap;gap:6px;margin-top:auto}
+.manga-feed-card .card-bottom>*{flex:1;min-width:88px}
+.manga-explore-grid.compact-manga-cards{grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:10px}
+.manga-explore-grid.compact-manga-cards .card-body{padding:10px;gap:6px}
+.manga-explore-grid.compact-manga-cards .manga-feed-description{display:none}
+.manga-explore-grid.compact-manga-cards .cover{aspect-ratio:3/4}
+.profile-hero{display:flex;align-items:center;gap:22px;padding:24px;margin-bottom:18px;background:radial-gradient(ellipse at 0% 0%,color-mix(in srgb,var(--violet) 17%,transparent),transparent 65%),var(--panel)}
+.profile-avatar{width:92px;height:92px;flex:0 0 92px;border-radius:27px;display:grid;place-items:center;overflow:hidden;background:linear-gradient(140deg,var(--violet),var(--mint));color:#0b0c10;font-size:32px;font-weight:800;letter-spacing:-.06em;border:1px solid color-mix(in srgb,var(--mint) 40%,var(--line))}
+.profile-avatar img{width:100%;height:100%;object-fit:cover}
+.profile-identity h2{font-size:clamp(24px,3vw,34px);letter-spacing:-.045em;margin:5px 0}
+.profile-identity p{margin:5px 0 10px;max-width:660px}
+.profile-local-badge{display:inline-flex;align-items:center;gap:8px;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.profile-local-badge i{width:7px;height:7px;border-radius:50%;background:var(--mint);box-shadow:0 0 12px color-mix(in srgb,var(--mint) 65%,transparent)}
+.profile-columns{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px}
+.profile-columns>.panel{min-width:0}
+.profile-stats-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:14px 0}
+.profile-stat{border:1px solid var(--line);background:var(--panel2);border-radius:14px;padding:14px}
+.profile-stat span{display:block;font-size:11px;color:var(--muted)}
+.profile-stat strong{display:block;font-size:28px;letter-spacing:-.05em;margin-top:6px}
+.profile-genre-block{margin:18px 0}
+.profile-genre-block h3{font-size:14px;margin:0 0 10px}
+.profile-genre-list{display:flex;gap:7px;flex-wrap:wrap}
+.profile-genre-chip{font-size:11px;padding:6px 9px;border:1px solid var(--line);border-radius:999px;color:var(--muted);background:var(--panel2)}
+.profile-settings-form{max-width:720px}
+.profile-toggle{display:flex;align-items:flex-start;gap:11px;padding:12px;border:1px solid var(--line);border-radius:12px;cursor:pointer}
+.profile-toggle input{margin-top:3px;accent-color:var(--mint)}
+.profile-toggle strong,.profile-toggle small{display:block}
+.profile-toggle small{margin-top:5px;color:var(--muted);line-height:1.45}
+.profile-privacy-actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:16px}
+@media(max-width:760px){.manga-explore-heading{align-items:stretch;flex-direction:column}.manga-explore-controls{min-width:0;width:100%}.profile-hero{align-items:flex-start;gap:14px;padding:17px}.profile-avatar{width:68px;height:68px;flex-basis:68px;border-radius:20px;font-size:25px}.profile-columns{grid-template-columns:minmax(0,1fr)}.manga-explore-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.manga-feed-card .card-body{padding:10px}.manga-feed-card .card-title{font-size:13px}.manga-feed-card .card-bottom>*{min-width:0;font-size:10px;padding:8px 6px}}
+
+</style>
 
 <style>
 /* Hekomi home refresh — mobile-first editorial layout */
@@ -472,7 +520,7 @@ body[data-page="manga"] #mangaView{display:block!important}
       <img class="brandmark-layer mark-manga" src="/assets/hekomi-manga-mark.svg" alt="" width="42" height="42" decoding="async">
     </div><div>Hekomi<small>ANIME · MANGA · AFTER HOURS</small></div></div>
     <nav class="primary-nav" aria-label="Main navigation"><a href="/" data-route-link="home">Home</a><a href="/discover" data-route-link="discover">Discover</a><a href="/anime" data-route-link="mal">Anime</a><a href="/manga" data-route-link="manga">Manga</a></nav>
-    <div class="top-actions"><span class="chip">LOCAL-FIRST · PERSONAL</span><button class="iconbtn" id="themeSettingsBtn" aria-label="Appearance settings" title="Appearance settings">◐</button><button class="iconbtn" id="headerHome" aria-label="Home" title="Switch mode / Home">⌂</button></div>
+    <div class="top-actions"><span class="chip">LOCAL-FIRST · PERSONAL</span><button class="iconbtn" id="profileBtn" aria-label="Your profile" title="Your profile">◎</button><button class="iconbtn" id="themeSettingsBtn" aria-label="Appearance settings" title="Appearance settings">◐</button><button class="iconbtn" id="headerHome" aria-label="Home" title="Switch mode / Home">⌂</button></div>
   </header>
   <main>
     <section id="landing">
@@ -551,8 +599,15 @@ body[data-page="manga"] #mangaView{display:block!important}
     <section id="mangaView" class="view manga-mode hidden">
       <div class="workspace-head"><div><span class="mode-label">MODE 02 · MANGA CRAWLER</span><h1>Your manga library</h1><p>Inspect permitted public website pages, collect covers and chapter links, and maintain your own collection.</p></div><div class="head-actions"><button class="btn-secondary" id="mangaLibraryBtn">▥ My library</button><button class="btn-mint" id="openCrawlerBtn">＋ Inspect website</button></div></div>
       <div class="mode-banner"><strong>✧ THE MANGA SIGNAL IS OPEN</strong><span>Find a source. Follow the chapters. Get lost in another world.</span></div>
-      <nav class="subnav" id="mangaTabs"><button class="active" data-tab="library">My library</button><button data-tab="discover">Website discovery</button><button data-tab="sources">Saved websites</button></nav>
-      <div id="mangaLibraryTab">
+      <nav class="subnav" id="mangaTabs"><button class="active" data-tab="explore">For you</button><button data-tab="library">My library</button><button data-tab="discover">Source search</button><button data-tab="sources">Saved websites</button></nav>
+      <div id="mangaExploreTab">
+        <div class="manga-explore-heading"><div><span class="eyebrow">YOUR NEXT RABBIT HOLE</span><h2>Stories people are reading.</h2><p class="muted">Trending series and fresh chapter updates, gathered from supported public sources.</p></div><div class="manga-explore-controls"><select class="input" id="mangaExploreProvider" aria-label="Discovery sources"><option value="all">All supported sources</option><option value="batoto">Bato network</option><option value="mangabuddy">MangaBuddy</option><option value="mangakakalot">Mangakakalot</option></select><button class="btn-secondary" type="button" id="mangaExploreRefresh">↻ Refresh</button></div></div>
+        <div class="manga-feed-switch" id="mangaFeedSwitch" aria-label="Manga feed"><button type="button" class="active" data-manga-feed="trending">✦ Trending</button><button type="button" data-manga-feed="latest">◷ Latest updates</button></div>
+        <div id="mangaExploreStatus" class="small muted" role="status">Preparing your manga feed…</div>
+        <div class="grid manga-explore-grid" id="mangaExploreGrid"></div>
+        <div id="mangaExploreSourceErrors" class="small muted"></div>
+      </div>
+      <div id="mangaLibraryTab" class="hidden">
         <div class="toolbar"><div class="searchbox"><span>⌕</span><input id="mangaSearchInput" placeholder="Search your manga library…" autocomplete="off"></div><div class="filterrow" id="mangaTypeFilters"><button class="filter active" data-type="all">All</button><button class="filter" data-type="Manga">Manga</button><button class="filter" data-type="Manhwa">Manhwa</button><button class="filter" data-type="Manhua">Manhua</button></div></div>
         <div class="grid" id="mangaGrid"></div>
       </div>
@@ -579,6 +634,43 @@ body[data-page="manga"] #mangaView{display:block!important}
       <div id="mangaSourcesTab" class="hidden">
         <div class="panel"><div class="panel-head"><div><h2>Saved websites</h2><p class="muted small">Sources you have chosen to keep. Inspect them again to refresh discovered titles and chapters.</p></div><button class="btn-mint" id="addSourceBtn">＋ Add website</button></div><div id="sourceList" class="shelf"></div></div>
         <div class="panel"><h2>How source discovery works</h2><p class="muted small">The generic crawler reads a publicly accessible HTML page and looks for title metadata, cover images, same-site manga links, and chapter-like links. Websites with unusual layouts, script-rendered catalogs, CAPTCHAs, or image protections may need a custom adapter. Discovery is not a guarantee that every title on a site will be found.</p></div>
+      </div>
+    </section>
+    <section id="profileView" class="view hidden">
+      <div class="workspace-head"><div><span class="mode-label">YOUR SPACE · LOCAL PROFILE</span><h1>Make Hekomi yours.</h1><p>Your profile, reading habits, and preferences — saved privately in this browser.</p></div><div class="head-actions"><button class="btn-secondary" type="button" id="profileAppearanceBtn">◐ Appearance</button></div></div>
+      <nav class="subnav" id="profileTabs"><button class="active" data-profile-tab="overview">Profile</button><button data-profile-tab="settings">Settings</button><button data-profile-tab="privacy">Data &amp; privacy</button></nav>
+      <div id="profileOverviewTab">
+        <div class="profile-hero panel"><div class="profile-avatar" id="profileAvatarPreview" aria-hidden="true">H</div><div class="profile-identity"><span class="eyebrow">AFTER HOURS MEMBER</span><h2 id="profileDisplayName">Hekomi reader</h2><p id="profileHandleLabel" class="muted small">@reader</p><p id="profileBioLabel">A little corner for the stories that stay with you.</p><span class="profile-local-badge"><i></i> Local profile · This device only</span></div></div>
+        <div class="profile-columns">
+          <div class="panel"><div class="panel-head"><div><h2>About you</h2><p class="muted small">A name and a little personality go a long way.</p></div></div>
+            <form id="profileForm" class="formstack">
+              <label><span class="small-label">Display name</span><input id="profileNameInput" class="input" maxlength="48" placeholder="What should Hekomi call you?"></label>
+              <label><span class="small-label">Handle</span><input id="profileHandleInput" class="input" maxlength="24" placeholder="reader_001" autocomplete="nickname"></label>
+              <label><span class="small-label">Avatar image URL (optional)</span><input id="profileAvatarInput" class="input" type="url" placeholder="https://…"></label>
+              <label><span class="small-label">Bio</span><textarea id="profileBioInput" class="input" rows="3" maxlength="220" placeholder="Favourite genres, current obsession, or whatever feels like you."></textarea></label>
+              <button class="btn-primary" type="submit">Save profile</button>
+            </form>
+          </div>
+          <div class="panel"><div class="panel-head"><div><h2>Your Hekomi activity</h2><p class="muted small">A little snapshot of your personal archive.</p></div><span class="pill-label">ON THIS DEVICE</span></div>
+            <div class="profile-stats-grid"><div class="profile-stat"><span>Saved manga</span><strong id="profileMangaCount">0</strong></div><div class="profile-stat"><span>Anime titles</span><strong id="profileAnimeCount">0</strong></div><div class="profile-stat"><span>Saved sources</span><strong id="profileSourceCount">0</strong></div><div class="profile-stat"><span>Chapters in library</span><strong id="profileChapterCount">0</strong></div></div>
+            <div class="profile-genre-block"><h3>Your genre shelf</h3><div id="profileGenreList" class="profile-genre-list"><span class="muted small">Save a few titles to build your genre shelf.</span></div></div>
+            <button class="btn-secondary" type="button" id="profileGoLibrary">Open my manga library ↗</button>
+          </div>
+        </div>
+      </div>
+      <div id="profileSettingsTab" class="hidden">
+        <div class="panel"><div class="panel-head"><div><h2>Discovery preferences</h2><p class="muted small">Choose how Hekomi greets you when you open manga discovery.</p></div></div>
+          <form id="profilePreferencesForm" class="formstack profile-settings-form">
+            <label><span class="small-label">Default feed</span><select class="input" id="profileDefaultFeed"><option value="trending">Trending stories</option><option value="latest">Latest chapter updates</option></select></label>
+            <label><span class="small-label">Default manga sources</span><select class="input" id="profileDefaultProvider"><option value="all">All supported sources</option><option value="batoto">Bato network</option><option value="mangabuddy">MangaBuddy</option><option value="mangakakalot">Mangakakalot</option></select></label>
+            <label class="profile-toggle"><input type="checkbox" id="profileCompactCards"><span><strong>Compact manga cards</strong><small>Show more titles on screen with less card spacing.</small></span></label>
+            <button class="btn-primary" type="submit">Save preferences</button>
+          </form>
+        </div>
+        <div class="panel"><div class="panel-head"><div><h2>Appearance</h2><p class="muted small">Switch between Hekomi’s visual themes. Your choice is saved on this device.</p></div></div><button class="btn-secondary" type="button" id="profileAppearanceBtn2">◐ Choose appearance theme</button></div>
+      </div>
+      <div id="profilePrivacyTab" class="hidden">
+        <div class="panel"><h2>Your data belongs to you.</h2><p class="muted">Hekomi’s profile and personal libraries are stored in this browser, not in a Hekomi user account. Clearing browser storage can remove them. This local profile is not a cloud-sync account.</p><div class="profile-privacy-actions"><button class="btn-primary" type="button" id="profileExportBtn">↓ Export my Hekomi data</button><button class="btn-secondary" type="button" id="profileResetBtn">Reset profile details</button></div><div id="profilePrivacyStatus" class="small muted" role="status"></div></div>
       </div>
     </section>
   </main>
