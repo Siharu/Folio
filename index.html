@@ -1381,7 +1381,98 @@ function showProfileTab(tab){activeProfileTab=tab;$('#profileTabs button').forEa
 
   function showCrawl(status,error=false){$('#crawlStatus').textContent=status;$('#crawlStatus').style.color=error?'#ffb1b1':'';}
   $('#openCrawlerBtn').onclick=()=>{showMangaTab('discover');$('#crawlUrl').focus();};$('#mangaLibraryBtn').onclick=()=>showMangaTab('library');$('#addSourceBtn').onclick=()=>{showMangaTab('discover');$('#crawlUrl').focus();};
-$('#mangaAdapterSearchBtn').onclick=searchMangaScrapeSources;
+function mangaFeedCardMarkup(item,index){
+    const title=item.title||'Untitled manga';
+    const cover=item.cover||'';
+    const provider=item.providerLabel||item.provider||'Source';
+    const genres=Array.isArray(item.genres)?item.genres.slice(0,3).join(' · '):'';
+    const meta=[provider,item.status,genres,item.latestChapter?'Latest · '+item.latestChapter:''].filter(Boolean).join(' · ');
+    const synopsis=String(item.description||'').replace(/\s+/g,' ').trim();
+    return '<article class="card manga-feed-card"><div class="cover mint">'+
+      (cover?'<img src="'+esc(cover)+'" alt="'+esc('Cover art for '+title)+'" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.remove()">':'<div class="cover-symbol">漫</div>')+
+      '<span class="score-badge">'+esc(provider)+'</span></div><div class="card-body">'+
+      '<h3 class="card-title">'+esc(title)+'</h3><div class="manga-feed-meta">'+esc(meta||'Discover this series')+'</div>'+
+      '<p class="manga-feed-description">'+esc(synopsis||'Open this series to see available details and chapter links.')+'</p>'+
+      '<div class="card-bottom"><button class="mini-btn" type="button" data-manga-feed-details="'+index+'">Details &amp; chapters</button><button class="mini-btn" type="button" data-manga-feed-save="'+index+'">＋ Save</button></div></div></article>';
+  }
+  function renderMangaExplore(items){
+    const grid=$('#mangaExploreGrid');
+    grid.classList.toggle('compact-manga-cards',!!mangaPreferences.compactCards);
+    if(!items.length){
+      grid.innerHTML='<div class="empty"><strong>Nothing in this feed yet</strong>Try another source or switch to Latest updates. A source may be unavailable or may not permit this request.</div>';
+    }else grid.innerHTML=items.map(mangaFeedCardMarkup).join('');
+    $('#mangaExploreGrid [data-manga-feed-details]').forEach(button=>{
+      const item=mangaExploreResults[Number(button.dataset.mangaFeedDetails)];
+      button.onclick=()=>showMangaScrapeDetails(item&&item.provider,item);
+    });
+    $('#mangaExploreGrid [data-manga-feed-save]').forEach(button=>button.onclick=()=>saveMangaFeedItem(mangaExploreResults[Number(button.dataset.mangaFeedSave)]));
+  }
+  function saveMangaFeedItem(item){
+    if(!item)return;
+    const type=guessType([item.title,item.description,item.providerLabel].filter(Boolean).join(' '));
+    addMangaEntry({
+      title:item.title,url:item.url,cover:item.cover,description:item.description,type,source:item.url,
+      chapters:[],adapterProvider:item.provider,adapterProviderLabel:item.providerLabel||item.provider,
+      providerId:item.id,sourceKind:item.sourceKind||'',authors:item.authors||[],artists:[],
+      genres:item.genres||[],releaseStatus:item.status||'',score:item.score||0,lastUpdate:item.lastUpdate||''
+    });
+  }
+  async function loadMangaExplore(force=false){
+    const provider=$('#mangaExploreProvider')?.value||mangaPreferences.defaultProvider||'all';
+    const feed=$('#mangaFeedSwitch [data-manga-feed].active')?.dataset.mangaFeed||mangaPreferences.defaultFeed||'trending';
+    const cacheKey=provider+':'+feed;
+    const cached=mangaExploreCache.get(cacheKey);
+    if(!force&&cached&&Date.now()-cached.savedAt<8*60*1000){
+      mangaExploreResults=cached.data.results||[];
+      renderMangaExplore(mangaExploreResults);
+      $('#mangaExploreStatus').textContent='Showing '+mangaExploreResults.length+' '+(feed==='latest'?'recent updates':'trending titles')+'.';
+      renderMangaExploreErrors(cached.data.errors||[]);
+      return;
+    }
+    if(mangaExploreInFlight.has(cacheKey))return mangaExploreInFlight.get(cacheKey);
+    const status=$('#mangaExploreStatus');
+    status.classList.remove('error');
+    status.textContent=feed==='latest'?'Gathering latest chapter updates…':'Finding what readers are into…';
+    $('#mangaExploreGrid').innerHTML=catalogLoadingMarkup(8);
+    $('#mangaExploreSourceErrors').textContent='';
+    const task=(async()=>{
+      try{
+        const data=await api('/api/mangascrape/discover',{method:'POST',body:{provider,feed,refresh:!!force}});
+        mangaExploreCache.set(cacheKey,{savedAt:Date.now(),data});
+        mangaExploreResults=data.results||[];
+        renderMangaExplore(mangaExploreResults);
+        status.textContent=mangaExploreResults.length+' titles · '+(feed==='latest'?'Latest updates':'Trending now')+(data.fetchedAt?' · Refreshed '+new Date(data.fetchedAt).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}):'');
+        renderMangaExploreErrors(data.errors||[]);
+      }catch(error){
+        status.classList.add('error');
+        status.textContent=error.message||'Manga discovery could not be loaded.';
+        $('#mangaExploreGrid').innerHTML='<div class="empty"><strong>Could not load manga discovery</strong>Try refreshing, changing sources, or opening Source search. Hekomi will not bypass source restrictions.</div>';
+        $('#mangaExploreSourceErrors').textContent='';
+      }finally{
+        if(mangaExploreInFlight.get(cacheKey)===task)mangaExploreInFlight.delete(cacheKey);
+      }
+    })();
+    mangaExploreInFlight.set(cacheKey,task);
+    return task;
+  }
+  function renderMangaExploreErrors(errors){
+    const root=$('#mangaExploreSourceErrors');
+    if(!errors||!errors.length){root.textContent='';return;}
+    root.innerHTML='<p>Some sources were unavailable: '+errors.map(error=>esc(error.label||error.provider)+ ' — '+esc(error.message||'unavailable')).join(' · ')+'</p>';
+  }
+  $('#mangaExploreProvider').addEventListener('change',()=>{
+    mangaPreferences.defaultProvider=$('#mangaExploreProvider').value;
+    write('hekomi_preferences_v1',mangaPreferences);
+    void loadMangaExplore();
+  });
+  $('#mangaFeedSwitch [data-manga-feed]').forEach(button=>button.addEventListener('click',()=>{
+    mangaPreferences.defaultFeed=button.dataset.mangaFeed;
+    write('hekomi_preferences_v1',mangaPreferences);
+    $('#mangaFeedSwitch [data-manga-feed]').forEach(item=>item.classList.toggle('active',item===button));
+    void loadMangaExplore();
+  }));
+  $('#mangaExploreRefresh').addEventListener('click',()=>loadMangaExplore(true));
+  $('#mangaAdapterSearchBtn').onclick=searchMangaScrapeSources;
   $('#mangaAdapterQuery').addEventListener('keydown',e=>{if(e.key==='Enter')searchMangaScrapeSources();});
   async function searchMangaScrapeSources(){
     const provider=$('#mangaAdapterProvider').value;
@@ -1400,7 +1491,7 @@ $('#mangaAdapterSearchBtn').onclick=searchMangaScrapeSources;
         const meta=[item.status,item.genres.slice(0,4).join(' · '),item.latestChapter?'Latest: '+item.latestChapter:'',item.lastUpdate].filter(Boolean).join(' · ');
         return '<div class="resultitem">'+coverHtml(item.cover,'manga',item.title)+'<div class="resulttext"><h3>'+esc(item.title)+'</h3><p>'+esc(meta||'Source metadata available')+'</p>'+(item.description?'<p class="muted small">'+esc(item.description.slice(0,240))+(item.description.length>240?'…':'')+'</p>':'')+'<div class="resultactions"><button class="mini-btn" data-mangascrape-details="'+index+'">Details &amp; chapters</button><a class="mini-btn" href="'+esc(item.url)+'" target="_blank" rel="noreferrer">Open source ↗</a></div></div></div>';
       }).join(''):'<div class="empty"><strong>No results returned</strong>Try another title or provider. If the source is unavailable or blocks automated access, Hekomi will not try to bypass it.</div>';
-      $$('#mangaAdapterResults [data-mangascrape-details]').forEach(button=>button.onclick=()=>showMangaScrapeDetails(provider,results[Number(button.dataset.mangascrapeDetails)]));
+      $$$('#mangaAdapterResults [data-mangascrape-details]').forEach(button=>button.onclick=()=>showMangaScrapeDetails(provider,results[Number(button.dataset.mangascrapeDetails)]));
       if(data.notice)$('#mangaAdapterStatus').textContent+=' '+data.notice;
     }catch(error){
       $('#mangaAdapterStatus').textContent=error.message||'MangaScrape search failed.';
