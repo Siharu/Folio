@@ -2,7 +2,7 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "functions": {
     "server.mjs": {
-      "includeFiles": "{index.html,assets/**,icon.svg,manifest.webmanifest,sw.js}"
+      "includeFiles": "{index.html,assets/**,icon.svg,manifest.webmanifest,sw.js,folio-app/index.html,folio-app/assets/**,folio-app/icon.svg,folio-app/manifest.webmanifest,folio-app/sw.js,**/index.html,**/assets/**}"
     }
   }
 }
