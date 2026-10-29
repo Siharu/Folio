@@ -1190,14 +1190,44 @@ if(req.method==='POST' && url.pathname==='/api/mangascrape/discover') {
             if (!raw.length) throw new Error('Manga Hook search returned no titles.');
           } catch (primaryError) {
             if (requested === 'all') throw primaryError;
-            try {
-              const payload = await gomangaApiRequest('/api/search/' + encodeURIComponent(query));
-              raw = Array.isArray(payload.manga) ? payload.manga : [];
-              if (!raw.length) throw new Error('GoManga search returned no titles.');
-              selectedProvider='gomanga';
-            } catch (fallbackError) {
-              throw new Error('Manga Hook search failed: ' + String(primaryError && primaryError.message || 'unavailable') + ' GoManga backup failed: ' + String(fallbackError && fallbackError.message || 'unavailable'));
+            // Preserve the selected Manga Hook-first workflow, but let search fall
+            // through to every other public provider instead of stopping at GoManga.
+            const backupProviders = ['gomanga','batoto','mangabuddy','mangakakalot'];
+            const backupSettled = await Promise.allSettled(backupProviders.map(async backupKey => {
+              const backup = mangaScrapeProvider(backupKey);
+              let backupRaw = [];
+              if (backupKey === 'gomanga') {
+                const payload = await gomangaApiRequest('/api/search/' + encodeURIComponent(query));
+                backupRaw = Array.isArray(payload.manga) ? payload.manga : [];
+              } else {
+                const target = mangaScrapeSearchUrl(backupKey,query);
+                await assertMangaSourceRequestAllowed(target);
+                if (backupKey === 'batoto') {
+                  const result = await backup.adapter.search({query});
+                  backupRaw = result && Array.isArray(result.results) ? result.results : [];
+                } else if (backupKey === 'mangabuddy') {
+                  backupRaw = await backup.adapter.search(encodeURIComponent(query));
+                } else {
+                  backupRaw = await backup.adapter.search(query);
+                }
+              }
+              const normalized = (Array.isArray(backupRaw) ? backupRaw : []).slice(0,30)
+                .map(item => mangaScrapeNormalizeSearch(backupKey,item))
+                .filter(Boolean)
+                .map(item => ({...item,providerLabel:backup.source.label}));
+              if (!normalized.length) throw new Error(backup.source.label + ' returned no titles.');
+              return normalized;
+            }));
+            const backupResults = [];
+            const backupErrors = [];
+            backupSettled.forEach((item,index) => {
+              if (item.status === 'fulfilled') backupResults.push(...item.value);
+              else backupErrors.push(backupProviders[index] + ': ' + String(item.reason && item.reason.message || 'search failed'));
+            });
+            if (!backupResults.length) {
+              throw new Error('Manga Hook search failed: ' + String(primaryError && primaryError.message || 'unavailable') + ' Backup sources failed: ' + backupErrors.join(' · '));
             }
+            return backupResults;
           }
         } else if (key === 'gomanga') {
           const payload = await gomangaApiRequest('/api/search/' + encodeURIComponent(query));
