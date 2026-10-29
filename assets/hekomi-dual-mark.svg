@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 512" role="img" aria-labelledby="title desc">
+<title id="title">Hekomi — One Identity, Two Worlds</title>
+<desc id="desc">The H-on-moon anime emblem and an open manga spread orbit together as Hekomi's combined identity.</desc>
+<g id="anime">
+<circle cx="205" cy="256" r="156" fill="#f24f68"/>
+<circle cx="205" cy="256" r="156" fill="none" stroke="#ff8494" stroke-width="3" stroke-opacity=".7"/>
+<path d="M132 174H180V252L250 220V174H298V340H250V276L180 308V340H132Z" fill="#fff5e8"/>
+<path d="M321 331L329 352L350 360L329 368L321 389L313 368L292 360L313 352Z" fill="#8be1cf"/>
+<circle cx="329" cy="309" r="4" fill="#8be1cf"/>
+<circle cx="292" cy="398" r="3" fill="#f24f68"/>
+</g>
+<path d="M395 374C457 426 600 429 701 371" fill="none" stroke="#f24f68" stroke-opacity=".45" stroke-width="2.5" stroke-linecap="round"/>
+<g id="manga">
+<circle cx="687" cy="256" r="173" fill="none" stroke="#f24f68" stroke-opacity=".24" stroke-width="2"/>
+<path d="M539 166C576 147 618 157 652 179V357C617 333 575 325 539 346Z" fill="#fff5e8"/>
+<path d="M658 179C692 157 734 147 771 166V346C735 325 693 333 658 357Z" fill="#c6fff2"/>
+<path d="M655 170V366" fill="none" stroke="#080916" stroke-width="11" stroke-linecap="round"/>
+<path d="M558 190C586 181 613 187 638 201V228C612 215 586 211 558 219Z" fill="#f24f68"/>
+<path d="M558 237C585 227 612 235 638 248V273C612 260 585 254 558 264Z" fill="#080916"/>
+<path d="M558 282C586 272 613 281 638 294V318C612 305 586 299 558 309Z" fill="#f24f68"/>
+<path d="M675 201C700 187 727 181 753 190V219C726 211 700 215 675 228Z" fill="#080916"/>
+<path d="M675 248C701 235 728 227 753 237V264C726 254 701 260 675 273Z" fill="#f24f68"/>
+<path d="M675 294C700 281 727 272 753 282V309C727 299 701 305 675 318Z" fill="#080916"/>
+<path d="M778 114L787 138L811 147L787 156L778 180L769 156L745 147L769 138Z" fill="#8be1cf"/>
+<path d="M528 343L536 365L558 373L536 381L528 403L520 381L498 373L520 365Z" fill="#f24f68"/>
+<path d="M786 340C806 312 819 277 817 246" fill="none" stroke="#f24f68" stroke-width="10" stroke-linecap="round"/>
+</g>
+</svg>
