@@ -1502,6 +1502,16 @@ function mangaFeedCardMarkup(item,index){
   }
   async function showMangaScrapeDetails(provider,result){
     if(!result)return;
+    if(provider==='catalog'||result.provider==='catalog'){
+      const genres=Array.isArray(result.genres)?result.genres:[];
+      const genreHtml=genres.length?'<p class="muted small"><strong>Genres:</strong> '+esc(genres.join(' · '))+'</p>':'';
+      const score=result.score?' · Score '+esc(result.score):'';
+      openModal('<div class="modal-top"><div><h2>'+esc(result.title)+'</h2><p class="muted small">AniList catalog · '+esc(result.status||'Series')+score+'</p></div><button class="close" data-close>×</button></div>'+
+        '<div class="resultitem">'+coverHtml(result.cover,'manga',result.title)+'<div class="resulttext"><p>'+esc(result.description||'No synopsis is available in the catalog.')+'</p>'+genreHtml+'<div class="resultactions"><button class="btn-mint" id="saveCatalogMangaTitle">＋ Save to library</button><a class="mini-btn" href="'+esc(result.url)+'" target="_blank" rel="noreferrer">Open title ↗</a></div></div></div>'+
+        '<p class="small muted">This is catalog discovery metadata, not a chapter mirror. Chapter availability is provided by the original publisher/source.</p>');
+      $('#saveCatalogMangaTitle').onclick=()=>{saveMangaFeedItem(result);closeModal();showMangaTab('library');};
+      return;
+    }
     openModal('<div class="modal-top"><div><h2>'+esc(result.title)+'</h2><p class="muted small">Loading provider details and chapters…</p></div><button class="close" data-close>×</button></div><div class="small muted">Please wait…</div>');
     try{
       const detail=await api('/api/mangascrape/details',{method:'POST',body:{provider,id:result.id,sourceKind:result.sourceKind||''}});
