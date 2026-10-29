@@ -1751,7 +1751,7 @@ function mangaFeedCardMarkup(item,index){
     try{
       const apiReader=['mangahook','gomanga','batoto','mangabuddy','mangakakalot','mangadex'].includes(readerOptions.provider);
       const data=apiReader
-        ? await api('/api/mangascrape/chapter',{method:'POST',body:{provider:readerOptions.provider,id:readerOptions.mangaId,chapterId:readerOptions.chapterId,sourceKind:readerOptions.sourceKind||'',readerGroup:readerOptions.readerGroup||''}})
+        ? await api('/api/mangascrape/chapter',{method:'POST',body:{provider:readerOptions.provider,id:readerOptions.mangaId,chapterId:readerOptions.chapterId,sourceKind:readerOptions.sourceKind||'',readerGroup:readerOptions.readerGroup||'',chapterTitle:title}})
         : await api('/api/chapter-images',{method:'POST',body:{url:chapterUrl.href}});
       const imgs=data.images||[];
       if(!imgs.length)throw new Error(data.notice||'This source did not provide readable page images.');
