@@ -1503,6 +1503,7 @@ if(req.method==='POST' && url.pathname==='/api/mangascrape/discover') {
       let images=[];
       let notice='Chapter pages are served by the selected source; images may load progressively.';
       if(provider==='mangadex') {
+        title=String(data.chapterTitle||('Chapter '+chapterId)).replace(/\s+/g,' ').trim().slice(0,240);
         const atHome=await mangaDexApiRequest('/at-home/server/'+encodeURIComponent(chapterId));
         const chapter=atHome&&atHome.chapter||{};
         const fullPages=Array.isArray(chapter.data)?chapter.data:[];
@@ -1517,7 +1518,7 @@ if(req.method==='POST' && url.pathname==='/api/mangascrape/discover') {
           url:mangaDexImageProxyUrl(String(atHome.baseUrl).replace(/\/$/,'')+'/'+quality+'/'+encodeURIComponent(chapter.hash)+'/'+encodeURIComponent(String(file))),
           alt:'Page '+(index+1)
         }));
-        notice='MangaDex · Translation: '+String(data.readerGroup||'MangaDex community group')+'. MangaDex and the translation group are credited; image pages are proxied for the reader.';
+        notice='Chapter pages provided by MangaDex. Translation group: '+String(data.readerGroup||'not supplied by the source')+'. Pages are proxied for the reader and source attribution is retained.';
       } else if(provider==='gomanga' || provider==='mangahook') {
         payload=provider==='gomanga'
           ? await gomangaApiRequest(apiPath)
