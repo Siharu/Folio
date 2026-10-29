@@ -1,7 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
 <title id="title">Hekomi Manga</title>
 <desc id="desc">A custom open manga spread made of angular ink panels, crossed by an orbital coral ribbon and a mint registration spark.</desc>
-<rect width="512" height="512" rx="112" fill="#080916"/>
+<rect width="512" height="512" fill="#080916"/>
 <circle cx="256" cy="256" r="194" fill="none" stroke="#f24f68" stroke-opacity=".18" stroke-width="2"/>
 <path d="M64 343C128 417 343 402 442 185" fill="none" stroke="#f24f68" stroke-width="14" stroke-linecap="round"/>
 <path d="M115 137C158 116 207 126 251 153V366C209 336 157 330 115 353Z" fill="#fff5e8"/>
