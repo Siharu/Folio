@@ -1068,28 +1068,7 @@ body[data-page="manga"] #mangaView{display:block!important}
     const entry=localAnime.find(item=>String(item.id)===String(id));
     if(!entry)return;
     animeInfoMarkup(entry,'local');
-    try{
-      let hydrated=false;
-      if(entry.malId&&(!entry.description||!entry.startDate||!entry.airingStatus||!entry.genres||!entry.genres.length)){
-        const detail=await api('/api/mal/details?id='+encodeURIComponent(entry.malId));
-        const meta=malAnimeRecord(detail);
-        const preserve={id:entry.id,title:entry.title,status:entry.status,episodes:entry.episodes,score:entry.score,cover:entry.cover,picture:entry.picture,malId:entry.malId,anilistId:entry.anilistId};
-        Object.assign(entry,meta,preserve);
-        hydrated=true;
-      }else if(entry.anilistId&&(!entry.description||!entry.startDate||!entry.airingStatus||!entry.genres||!entry.genres.length)){
-        const detail=await api('/api/catalog/detail?id='+encodeURIComponent(entry.anilistId)+'&kind=anime');
-        applyAniListAnimeMetadata(entry,detail);
-        hydrated=true;
-      }
-      if(hydrated){
-        if(!write(key.anime,localAnime))notify('Details loaded, but browser storage refused the update. Keep this tab open to retain them for now.');
-        renderLocalAnime();
-        animeInfoMarkup(entry,'local');
-      }
-    }catch(error){
-      const body=$('#animeInfoBody');
-      if(body&&!entry.description)body.insertAdjacentHTML('beforeend','<p class="notice warn">Full metadata could not be loaded: '+esc(error.message)+'. The saved entry is still available.</p>');
-    }
+    await hydrateLocalAnimeEntry(id,{refreshDetails:true});
   }
   function renderWeebStats(){const remote=remoteReady&&malRemote.length>0;const items=remote?malRemote.map(x=>({title:x.node&&x.node.title||'',status:String(x.list_status&&x.list_status.status||''),episodes:Number(x.list_status&&x.list_status.num_episodes_watched)||0,total:Number(x.node&&x.node.num_episodes)||0,score:Number(x.list_status&&x.list_status.score)||0,genres:[...(x.node&&Array.isArray(x.node.genres)?x.node.genres:[])]})):localAnime.map(x=>({title:x.title||'',status:String(x.status||''),episodes:Number(x.episodes)||0,total:Number(x.totalEpisodes||x.total_episodes)||0,score:Number(x.score)||0,genres:Array.isArray(x.genres)?x.genres:[]}));const totalEpisodes=items.reduce((n,x)=>n+x.episodes,0),completed=items.filter(x=>x.status==='completed').length,scored=items.filter(x=>x.score>0),mean=scored.length?scored.reduce((n,x)=>n+x.score,0)/scored.length:0,days=totalEpisodes*24/60/24;$('#weebEpisodes').textContent=totalEpisodes.toLocaleString();$('#weebDays').textContent=days<10?days.toFixed(1):Math.round(days).toLocaleString();$('#weebCompleted').textContent=completed.toLocaleString();$('#weebScore').textContent=mean?mean.toFixed(1)+'/10':'—';$('#weebTimeFoot').textContent='About '+Math.round(totalEpisodes*24).toLocaleString()+' minutes of runtime.';$('#weebStatsSubtitle').textContent=remote?'Based on '+items.length.toLocaleString()+' entries from your synced MAL list.':'Based on '+items.length.toLocaleString()+' local entries on this device.';const ratio=(a,b)=>b?Math.max(0,Math.min(1,a/b)):0;const finishedRatio=ratio(completed,items.length),episodeRatio=ratio(totalEpisodes,Math.max(1,items.length*24)),scoreRatio=ratio(mean,10),planRatio=ratio(items.filter(x=>x.status==='plan_to_watch').length,items.length),varietyRatio=ratio(new Set(items.map(x=>x.status)).size,4),completionRatio=ratio(items.filter(x=>x.status==='watching').length,items.length);const vals=[episodeRatio,finishedRatio,scoreRatio,planRatio,varietyRatio,completionRatio];let archetype='The Unclassified Weeb',roast='Sync a list or add a few local titles to reveal your anime energy.';if(items.length){if(totalEpisodes>=5000) {archetype='The Episode Devourer';roast='Time is a construct. The next episode is inevitable.';}else if(planRatio>.55){archetype='The Eternal Queue Keeper';roast='Your plan-to-watch list has its own gravitational field.';}else if(finishedRatio>.65){archetype='The Completionist';roast='You finish what you start. The rarest power of all.';}else if(mean>=8.5&&scored.length>=5){archetype='The Generous Sensei';roast='You hand out 9s like emotional support.';}else if(totalEpisodes<100&&items.length<8){archetype='The Freshly Awakened';roast='The rabbit hole has only just opened.';}else{archetype='The Seasonal Wanderer';roast='New show, new obsession, same sleep schedule casualties.';}}$('#weebType').textContent=archetype;$('#weebRoast').textContent=roast;const labels=['Episodes','Completion','Scores','Backlog','Variety','Currently watching'];const cx=130,cy=118,r=83,point=(v,i)=>{const a=(-Math.PI/2+i*Math.PI/3),rr=r*v;return (cx+Math.cos(a)*rr).toFixed(1)+','+(cy+Math.sin(a)*rr).toFixed(1)};let svg='<svg viewBox="0 0 260 246" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Six-axis anime habit radar chart">';for(let ring=1;ring<=4;ring++)svg+='<polygon points="'+labels.map((_,i)=>point(ring/4,i)).join(' ')+'" fill="none" stroke="#464153" stroke-width="1"/>';labels.forEach((label,i)=>{const a=-Math.PI/2+i*Math.PI/3,x=cx+Math.cos(a)*r,y=cy+Math.sin(a)*r;svg+='<line x1="'+cx+'" y1="'+cy+'" x2="'+x.toFixed(1)+'" y2="'+y.toFixed(1)+'" stroke="#393644"/>';const lx=cx+Math.cos(a)*(r+18),ly=cy+Math.sin(a)*(r+18);svg+='<text x="'+lx.toFixed(1)+'" y="'+ly.toFixed(1)+'" fill="#a9a2bc" font-size="9" text-anchor="middle" dominant-baseline="middle">'+label+'</text>';});svg+='<polygon points="'+vals.map((v,i)=>point(v,i)).join(' ')+'" fill="#9f87ff" fill-opacity=".27" stroke="#b9a7ff" stroke-width="2.5" stroke-linejoin="round">';svg+='</polygon></svg>';$('#weebRadar').innerHTML=svg;const genres={};items.forEach(x=>x.genres.forEach(g=>{const name=typeof g==='string'?g:g&&g.name;if(name)genres[name]=(genres[name]||0)+1;}));const ranked=Object.entries(genres).sort((a,b)=>b[1]-a[1]).slice(0,5);$('#weebGenreBadge').textContent=ranked.length?'Top '+ranked.length+' genres':'No genre data';$('#weebGenreBars').innerHTML=ranked.length?ranked.map(([name,count])=>'<div class="weeb-genre-row"><span>'+esc(name)+'</span><div class="weeb-genre-track"><div class="weeb-genre-fill" style="width:'+Math.round(count/ranked[0][1]*100)+'%"></div></div><strong>'+count+'</strong></div>').join():'<p class="muted small">Your current MAL list does not include genre metadata, so Hekomi won’t guess your favorite genre. Genre breakdown will appear for entries with genre data.</p>';}
   $('#refreshWeebStats').addEventListener('click',renderWeebStats);
@@ -1165,6 +1144,66 @@ body[data-page="manga"] #mangaView{display:block!important}
   }
   async function quickAddRemote(id,title){if(!malConnected){notify('Sign in with MyAnimeList first.');showMalTab('about');return;}try{await api('/api/mal/update',{method:'POST',body:{id,status:'plan_to_watch',num_watched_episodes:0,score:0}});notify(`${title} added to your MAL list.`);await loadRemoteList();}catch(e){notify(e.message);}}
   async function handleMalRedirect(){const params=new URLSearchParams(location.search);const result=params.get('mal');if(!result){await refreshMalAuthStatus();return;}history.replaceState(null,'',location.pathname+location.hash);setMode('mal');showMalTab('mylist');await refreshMalAuthStatus();if(result==='connected'&&malConnected){notify('Signed in'+(malUsername?' as '+malUsername:'')+' with MyAnimeList.');await loadRemoteList();}else{notify('MyAnimeList sign-in did not complete. Check the app redirect URL and server configuration.');showMalTab('about');}}handleMalRedirect();
+  const localAnimeHydrationRequests=new Map();
+  async function hydrateLocalAnimeEntry(id,options={}){
+    let entry=localAnime.find(item=>String(item.id)===String(id));
+    if(!entry)return;
+    const requestKey=String(entry.id);
+    let task=localAnimeHydrationRequests.get(requestKey);
+    if(entry.metadataComplete!==true&&!task&&(Number(entry.malId)>0||Number(entry.anilistId)>0)){
+      task=(async()=>{
+        try{
+          if(Number(entry.malId)>0){
+            const detail=await api('/api/mal/details?id='+encodeURIComponent(entry.malId));
+            const metadata=malAnimeRecord(detail);
+            const keep={
+              id:entry.id,title:entry.title||metadata.title,
+              status:entry.status||'plan_to_watch',score:Number(entry.score)||0,episodes:Number(entry.episodes)||0,
+              malId:Number(entry.malId)||metadata.malId,anilistId:entry.anilistId||null,
+              cover:entry.cover||entry.picture||metadata.cover||'',picture:entry.picture||entry.cover||metadata.picture||''
+            };
+            Object.assign(entry,metadata,keep);
+          }else{
+            const detail=await api('/api/catalog/detail?id='+encodeURIComponent(entry.anilistId)+'&kind=anime');
+            const cover=entry.cover||entry.picture||detail.cover||detail.image||'';
+            const keep={
+              id:entry.id,title:entry.title||catalogTitle(detail),
+              status:entry.status||'plan_to_watch',score:Number(entry.score)||0,episodes:Number(entry.episodes)||0,
+              cover,picture:entry.picture||cover
+            };
+            applyAniListAnimeMetadata(entry,detail);
+            Object.assign(entry,keep);
+          }
+          entry.metadataComplete=true;
+          if(!write(key.anime,localAnime)){
+            entry.metadataComplete=false;
+            notify('Full anime details loaded, but could not be saved. Check your browser storage settings.');
+            return false;
+          }
+          renderLocalAnime();
+          return true;
+        }catch(error){
+          console.warn('Hekomi could not load full anime metadata:',error);
+          return error;
+        }
+      })();
+      localAnimeHydrationRequests.set(requestKey,task);
+    }
+    let result=true;
+    if(task){
+      result=await task;
+      if(localAnimeHydrationRequests.get(requestKey)===task)localAnimeHydrationRequests.delete(requestKey);
+    }
+    entry=localAnime.find(item=>String(item.id)===String(id));
+    if(options.refreshDetails&&entry){
+      animeInfoMarkup(entry,'local');
+      if(result instanceof Error){
+        const body=$('#animeInfoBody');
+        if(body)body.insertAdjacentHTML('beforeend','<p class="notice warn">Full metadata could not be loaded: '+esc(result.message||'Please try again later.')+'. Your saved entry is still available.</p>');
+      }
+    }
+    return result;
+  }
   function addLocalAnime(a){
     const title=String(a.title||'Untitled anime').trim();
     const existing=localAnime.find(item=>String(item.id)===String(a.id)||(a.malId&&Number(item.malId)===Number(a.malId))||(a.anilistId&&Number(item.anilistId)===Number(a.anilistId))||String(item.title||'').trim().toLowerCase()===title.toLowerCase());
@@ -1173,12 +1212,15 @@ body[data-page="manga"] #mangaView{display:block!important}
       const keep={id:existing.id,title:existing.title||title,status:existing.status||'plan_to_watch',score:Number(existing.score||0),episodes:Number(existing.episodes||0)};
       Object.assign(existing,a,keep);
       if(!write(key.anime,localAnime)){Object.assign(existing,previous);notify('Could not save this entry. Check your browser storage settings.');renderLocalAnime();return;}
-      renderLocalAnime();notify('Anime already saved — refreshed its details.');return;
+      renderLocalAnime();notify('Anime already saved — refreshed its details.');
+      void hydrateLocalAnimeEntry(existing.id);
+      return;
     }
     const entry={...a,title,id:a.id||'local-'+Date.now(),status:a.status||'plan_to_watch',score:Number(a.score||0),episodes:Number(a.episodes||0)};
     localAnime.unshift(entry);
     if(!write(key.anime,localAnime)){localAnime.shift();renderLocalAnime();notify('Could not save this anime. Your browser may be blocking site storage.');return;}
     renderLocalAnime();notify('Added to your local anime list.');
+    void hydrateLocalAnimeEntry(entry.id);
   }
   function openAnimeModal(){openModal(`<div class="modal-top"><div><h2>Add to local list</h2><p class="muted small">This list stays on this device.</p></div><button class="close" data-close>×</button></div><div class="formstack"><label><span class="small-label">Anime title</span><input class="input" id="newAnimeTitle" placeholder="Anime title"></label><div class="settings-grid"><label><span class="small-label">Status</span><select class="input" id="newAnimeStatus"><option value="watching">Watching</option><option value="completed">Completed</option><option value="on_hold">On hold</option><option value="dropped">Dropped</option><option value="plan_to_watch" selected>Plan to watch</option></select></label><label><span class="small-label">Total episodes watched</span><input class="input" id="newAnimeEpisodes" type="number" min="0" value="0"></label></div><label><span class="small-label">Score (0–10)</span><input class="input" id="newAnimeScore" type="number" min="0" max="10" value="0"></label><button class="btn-primary" id="saveNewAnime">Save anime</button></div>`);$('#saveNewAnime').onclick=()=>{const title=$('#newAnimeTitle').value.trim(),episodes=Number($('#newAnimeEpisodes').value),score=Number($('#newAnimeScore').value);if(!title){notify('Enter a title.');return;}if(!Number.isInteger(episodes)||episodes<0||!Number.isInteger(score)||score<0||score>10){notify('Check episodes and score.');return;}addLocalAnime({id:'local-'+Date.now(),title,status:$('#newAnimeStatus').value,episodes,score});closeModal();};}
   $('#addLocalAnimeBtn').onclick=openAnimeModal;$('#addLocalAnimeBtn2').onclick=openAnimeModal;
