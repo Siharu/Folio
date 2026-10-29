@@ -23,10 +23,12 @@ const mangaScrapeAdapters = {
   batoto: new Batoto({ baseUrl:'https://fto.to', cache:false }),
   mangabuddy: new MangaBuddy({ cache:false }),
   mangakakalot: new Mangakakalot({ cache:false }),
-  // Manga Hook exposes a documented JSON API; its adapter is handled below.
-  mangahook: { cache:false }
+  // Manga Hook and GoManga expose JSON APIs; their adapters are handled below.
+  mangahook: { cache:false },
+  gomanga: { cache:false }
 };
 const MANGAHOOK_API_BASE = 'https://mangahook-api.vercel.app';
+const GOMANGA_API_BASE = 'https://gomanga-api.vercel.app';
 const mangaScrapeRobotsCache = new Map();
 const mangaScrapeFeedCache = new Map();
 const mangaScrapeLastRequest = new Map();
@@ -34,7 +36,8 @@ const MANGASCRAPE_SOURCES = {
   batoto: { label:'Bato network', origin:'https://fto.to', allowedHosts:['fto.to'] },
   mangabuddy: { label:'MangaBuddy', origin:'https://mangabuddy.com', allowedHosts:['mangabuddy.com'] },
   mangakakalot: { label:'Mangakakalot', origin:'https://mangakakalot.com', allowedHosts:['mangakakalot.com','chapmanganato.to'] },
-  mangahook: { label:'Manga Hook API', origin:MANGAHOOK_API_BASE, allowedHosts:['mangahook-api.vercel.app'] }
+  mangahook: { label:'Manga Hook API', origin:MANGAHOOK_API_BASE, allowedHosts:['mangahook-api.vercel.app'] },
+  gomanga: { label:'GoManga API', origin:GOMANGA_API_BASE, allowedHosts:['gomanga-api.vercel.app'] }
 };
 
 function send(res, status, payload, headers={}) {
@@ -160,6 +163,7 @@ function mangaScrapeSourceKind(provider, raw) {
 }
 function mangaScrapeSearchUrl(provider, query) {
   if (provider === 'mangahook') return MANGAHOOK_API_BASE + '/api/search/' + encodeURIComponent(query) + '?page=1';
+  if (provider === 'gomanga') return GOMANGA_API_BASE + '/api/search/' + encodeURIComponent(query);
   if (provider === 'batoto') return 'https://fto.to/v3x-search?word=' + encodeURIComponent(query);
   if (provider === 'mangabuddy') return 'https://mangabuddy.com/search?q=' + encodeURIComponent(query);
   if (provider === 'mangakakalot') {
@@ -172,6 +176,7 @@ function mangaScrapeSearchUrl(provider, query) {
 function mangaScrapeTitleUrl(provider, id, rawSourceKind) {
   const safeId = mangaScrapeCleanId(provider, id);
   const sourceKind = mangaScrapeSourceKind(provider, rawSourceKind);
+  if (provider === 'gomanga') return GOMANGA_API_BASE + '/api/manga/' + encodeURIComponent(safeId);
   if (provider === 'mangahook') return 'https://ww6.mangakakalot.tv/manga/' + safeId;
   if (provider === 'batoto') return 'https://fto.to/title/' + safeId;
   if (provider === 'mangabuddy') return 'https://mangabuddy.com/' + safeId;
@@ -183,12 +188,41 @@ function mangaScrapeChapterUrl(provider, mangaId, chapterId, rawSourceKind) {
   const safeMangaId = mangaScrapeCleanId(provider, mangaId);
   const safeChapterId = mangaScrapeId(chapterId);
   const sourceKind = mangaScrapeSourceKind(provider, rawSourceKind);
+  if (provider === 'gomanga') return GOMANGA_API_BASE + '/api/manga/' + encodeURIComponent(safeMangaId) + '/' + encodeURIComponent(safeChapterId);
   if (provider === 'mangahook') return 'https://ww6.mangakakalot.tv/chapter/' + safeMangaId + '/' + safeChapterId;
   if (provider === 'batoto') return 'https://fto.to/title/' + safeMangaId + '/' + safeChapterId;
   if (provider === 'mangabuddy') return 'https://mangabuddy.com/' + safeMangaId + '/' + safeChapterId;
   if (sourceKind === 'chapmanganato') return 'https://chapmanganato.to/manga-' + safeMangaId + '/' + safeChapterId;
   if (provider === 'mangakakalot') return 'https://mangakakalot.com/chapter/' + safeMangaId + '/' + safeChapterId;
   throw new Error('This provider does not expose a supported chapter URL.');
+}
+async function gomangaApiRequest(path) {
+  if (typeof path !== 'string' || !path.startsWith('/api/')) throw new Error('Invalid GoManga API path.');
+  const target = new URL(path, GOMANGA_API_BASE);
+  if (target.origin !== GOMANGA_API_BASE) throw new Error('Invalid GoManga API host.');
+  await validatePublicUrl(target.href);
+  const now = Date.now();
+  const last = mangaScrapeLastRequest.get(target.origin) || 0;
+  const waitMs = 1400 - (now - last);
+  if (waitMs > 0) await new Promise(resolve => setTimeout(resolve, waitMs));
+  mangaScrapeLastRequest.set(target.origin, Date.now());
+  let response;
+  try {
+    response = await fetch(target.href, {
+      redirect:'manual', signal:AbortSignal.timeout(10000),
+      headers:{'User-Agent':USER_AGENT,'Accept':'application/json'}
+    });
+  } catch {
+    throw new Error('GoManga API could not be reached. The upstream service may be unavailable.');
+  }
+  if (response.status >= 300 && response.status < 400) throw new Error('GoManga API redirected this request; it was stopped for safety.');
+  if (!response.ok) throw new Error('GoManga API returned HTTP ' + response.status + '.');
+  const body = await response.text();
+  if (body.length > 8_000_000) throw new Error('GoManga returned an unexpectedly large response.');
+  let payload;
+  try { payload = JSON.parse(body); } catch { throw new Error('GoManga returned an invalid JSON response.'); }
+  if (!payload || typeof payload !== 'object') throw new Error('GoManga returned an empty response.');
+  return payload;
 }
 async function mangaHookApiRequest(path) {
   if (typeof path !== 'string' || !path.startsWith('/api/')) throw new Error('Invalid Manga Hook API path.');
@@ -257,7 +291,11 @@ async function assertMangaScrapeAllowed(rawUrl) {
 function mangaScrapeSafeAsset(raw) {
   try {
     const url = new URL(String(raw || ''));
-    return ['https:','http:'].includes(url.protocol) && !url.username && !url.password ? url.href : '';
+    if (!['https:','http:'].includes(url.protocol) || url.username || url.password) return '';
+    // GoManga's documentation examples contain http:// image-proxy links; keep those
+    // same-host assets on HTTPS so modern browsers do not block them as mixed content.
+    if (url.protocol === 'http:' && url.hostname.toLowerCase() === 'gomanga-api.vercel.app') url.protocol = 'https:';
+    return url.href;
   } catch { return ''; }
 }
 function mangaScrapeTextList(value) {
@@ -275,20 +313,23 @@ function mangaScrapeNormalizeSearch(provider, item) {
   try { id = mangaScrapeCleanId(provider, item.id); } catch { return null; }
   const sourceKind = mangaScrapeSourceKind(provider, item.source);
   const title = mangaScrapeTitleText(item.title || item.name) || 'Untitled manga';
-  const chapter = item.lastChapter || (Array.isArray(item.lastChapters) ? item.lastChapters[0] : null) || (item.chapter ? { title:typeof item.chapter === 'string' ? item.chapter : (item.chapter.title || item.chapter.name || ''), id:typeof item.chapter === 'string' ? item.chapter : item.chapter.id } : {});
+  const chapterValue = item.lastChapter || item.latestChapter ||
+    (Array.isArray(item.latestChapters) ? item.latestChapters[0] : null) ||
+    (Array.isArray(item.lastChapters) ? item.lastChapters[0] : null) || item.chapter || {};
+  const chapter = typeof chapterValue === 'string' ? {title:chapterValue,id:chapterValue} : chapterValue;
   return {
     id, provider, sourceKind, title,
     url: mangaScrapeTitleUrl(provider, id, sourceKind),
-    cover: mangaScrapeSafeAsset(item.poster || item.cover || item.image || ''),
+    cover: mangaScrapeSafeAsset(item.poster || item.cover || item.image || item.imgUrl || ''),
     description: String(item.description || item.summary || '').replace(/\s+/g, ' ').trim().slice(0, 1400),
     genres: mangaScrapeTextList(item.genres),
-    authors: mangaScrapeTextList(item.authors || (item.author ? [item.author] : [])),
+    authors: mangaScrapeTextList(Array.isArray(item.authors) ? item.authors : (item.authors ? [item.authors] : (item.author ? [item.author] : []))),
     status: String(item.status || ''),
     score: Number(item.score || item.rating) || 0,
     mature: Boolean(item.mature),
     lastUpdate: String(item.lastUpdate || item.update || ''),
-    latestChapter: String(chapter.title || chapter.name || ''),
-    latestChapterId: String(chapter.id || ''),
+    latestChapter: String(chapter.title || chapter.name || chapter.chapter || ''),
+    latestChapterId: String(chapter.id || chapter.chapterId || chapter.chapter || ''),
     source: String(provider)
   };
 }
@@ -300,23 +341,23 @@ function mangaScrapeNormalizeDetails(provider, id, rawSourceKind, item) {
   const rawChapters = provider === 'mangahook' ? item.chapterList : item.chapters;
   const chapters = (Array.isArray(rawChapters) ? rawChapters : []).slice(0, 300).map(chapter => {
     let chapterId = '';
-    try { chapterId = mangaScrapeId(chapter && chapter.id); } catch { return null; }
+    try { chapterId = mangaScrapeId(chapter && (chapter.id || chapter.chapterId || chapter.chapter)); } catch { return null; }
     return {
       id: chapterId,
       title: String(chapter.title || chapter.name || ('Chapter ' + chapterId)).replace(/\s+/g, ' ').trim().slice(0, 240),
       url: mangaScrapeChapterUrl(provider, safeId, chapterId, sourceKind),
-      readerProvider: provider === 'mangahook' ? 'mangahook' : '',
-      update: String(chapter.update || chapter.createdAt || chapter.date || (chapter.timestamp ? new Date(Number(chapter.timestamp)).toISOString() : '') || ''),
+      readerProvider: ['mangahook','gomanga'].includes(provider) ? provider : '',
+      update: String(chapter.update || chapter.uploaded || chapter.createdAt || chapter.timestamp || chapter.date || ''),
       views: String(chapter.views || chapter.view || '')
     };
   }).filter(Boolean);
   return {
     id: safeId, provider, sourceKind, providerLabel: MANGASCRAPE_SOURCES[provider].label,
     title, url: mangaScrapeTitleUrl(provider, safeId, sourceKind),
-    cover: mangaScrapeSafeAsset(item.poster || item.cover || item.image || item.imageUrl || ''),
+    cover: mangaScrapeSafeAsset(item.poster || item.cover || item.image || item.imgUrl || item.imageUrl || ''),
     description: String(item.description || item.summary || '').replace(/\s+/g, ' ').trim().slice(0, 12000),
     genres: mangaScrapeTextList(item.genres),
-    authors: mangaScrapeTextList(item.authors || (item.author ? [item.author] : [])),
+    authors: mangaScrapeTextList(Array.isArray(item.authors) ? item.authors : (item.authors ? [item.authors] : (item.author ? [item.author] : []))),
     artists: mangaScrapeTextList(item.artists),
     status: String(item.status || ''),
     score: Number((item.rating && item.rating.average) || item.rating || item.score) || 0,
@@ -350,14 +391,36 @@ async function getMangaScrapeProviderFeed(provider, feed) {
     const payload = await mangaHookApiRequest('/api/mangaList?' + query.toString());
     raw = Array.isArray(payload.mangaList) ? payload.mangaList : [];
     if (!raw.length) throw new Error('Manga Hook /api/mangaList returned no titles.');
+  } else if (provider === 'gomanga') {
+    let payload;
+    if (feed === 'latest') {
+      payload = await gomangaApiRequest('/api/manga-list/1');
+      raw = Array.isArray(payload.data) ? payload.data : (Array.isArray(payload.manga) ? payload.manga : []);
+    } else {
+      let lastError;
+      for (const route of ['/api/genre/top%20read/1','/api/genre/top-read/1']) {
+        try {
+          payload = await gomangaApiRequest(route);
+          raw = Array.isArray(payload.manga) ? payload.manga : (Array.isArray(payload.data) ? payload.data : []);
+          if (raw.length) break;
+          lastError = new Error('GoManga returned no titles for its Top read feed.');
+        } catch (error) { lastError = error; }
+      }
+      if (!raw.length) {
+        if (lastError) throw lastError;
+        payload = await gomangaApiRequest('/api/manga-list/1');
+        raw = Array.isArray(payload.data) ? payload.data : (Array.isArray(payload.manga) ? payload.manga : []);
+      }
+    }
+    if (!raw.length) throw new Error('GoManga returned no titles.');
   }
   const normalized = (Array.isArray(raw) ? raw : [])
     .slice(0, 24)
     .map(item => mangaScrapeNormalizeSearch(provider, item))
     .filter(Boolean)
     .map(item => ({ ...item, providerLabel:source.label }));
-  if (provider === 'mangahook' && !normalized.length) {
-    throw new Error('Manga Hook returned manga entries, but none had valid manga IDs.');
+  if (['mangahook','gomanga'].includes(provider) && !normalized.length) {
+    throw new Error(source.label + ' returned entries, but none had valid manga IDs.');
   }
   return normalized;
 }
