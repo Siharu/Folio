@@ -987,22 +987,40 @@ if(req.method==='POST' && url.pathname==='/api/mangascrape/discover') {
   if(req.method==='POST' && url.pathname==='/api/mangascrape/search') {
     try {
       const data=await readBody(req);
-      const selected=mangaScrapeProvider(data.provider);
       const query=mangaScrapeQuery(data.query);
-      const target=mangaScrapeSearchUrl(selected.key,query);
-      await assertMangaScrapeAllowed(target);
-      let raw;
-      if(selected.key==='batoto') {
-        const result=await selected.adapter.search({query});
-        raw=result && Array.isArray(result.results)?result.results:[];
-      } else if(selected.key==='mangabuddy') {
-        raw=await selected.adapter.search(encodeURIComponent(query));
+      const requested=String(data.provider||'all').trim().toLowerCase();
+      let providers;
+      if(requested==='all') {
+        const enabled=Array.isArray(data.enabledProviders)?data.enabledProviders.map(x=>String(x).toLowerCase()):Object.keys(MANGASCRAPE_SOURCES);
+        providers=Object.keys(MANGASCRAPE_SOURCES).filter(key=>enabled.includes(key));
+        if(!providers.length) throw new Error('Enable at least one manga extension in Extension manager.');
       } else {
-        raw=await selected.adapter.search(query);
+        mangaScrapeProvider(requested);
+        providers=[requested];
       }
-      const items=Array.isArray(raw)?raw:[];
-      const results=items.slice(0,30).map(item=>mangaScrapeNormalizeSearch(selected.key,item)).filter(Boolean);
-      return send(res,200,{provider:selected.key,providerLabel:selected.source.label,query,results,notice:'Results are metadata from the selected source. Open chapters on their original website; availability depends on the source rules and uptime.'});
+      const settled=await Promise.allSettled(providers.map(async key=>{
+        const selected=mangaScrapeProvider(key);
+        const target=mangaScrapeSearchUrl(key,query);
+        await assertMangaScrapeAllowed(target);
+        let raw;
+        if(key==='batoto') {
+          const result=await selected.adapter.search({query});
+          raw=result && Array.isArray(result.results)?result.results:[];
+        } else if(key==='mangabuddy') {
+          raw=await selected.adapter.search(encodeURIComponent(query));
+        } else {
+          raw=await selected.adapter.search(query);
+        }
+        return (Array.isArray(raw)?raw:[]).slice(0,30).map(item=>mangaScrapeNormalizeSearch(key,item)).filter(Boolean).map(item=>({...item,providerLabel:selected.source.label}));
+      }));
+      const results=[],errors=[];
+      settled.forEach((item,index)=>{
+        if(item.status==='fulfilled') results.push(...item.value);
+        else errors.push({provider:providers[index],label:MANGASCRAPE_SOURCES[providers[index]].label,message:String(item.reason&&item.reason.message||'Extension search failed.')});
+      });
+      const seen=new Set();
+      const unique=results.filter(item=>{const key=(item.title||'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();if(!key)return true;if(seen.has(key))return false;seen.add(key);return true;}).slice(0,60);
+      return send(res,200,{provider:requested,providerLabel:requested==='all'?'Enabled extensions':MANGASCRAPE_SOURCES[requested].label,query,results:unique,errors,notice:'Search runs across enabled extensions. Results contain source metadata; chapter availability and reading access depend on each source.'});
     } catch(error) {
       const message=String(error && error.message || 'Manga source search failed.');
       const status=/wait a moment/i.test(message)?429:/temporarily unavailable|could not verify robots|robots\.txt could not be checked/i.test(message)?503:400;
