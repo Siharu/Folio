@@ -1014,7 +1014,7 @@ if(req.method==='GET' && url.pathname==='/api/mangascrape/providers') {
 if(req.method==='POST' && url.pathname==='/api/mangascrape/discover') {
     try {
       const data=await readBody(req);
-      const provider=String(data.provider||'all').trim().toLowerCase();
+      const provider=String(data.provider||'mangahook').trim().toLowerCase();
       const feed=String(data.feed||'trending').trim().toLowerCase();
       if(provider!=='all'&&!MANGASCRAPE_SOURCES[provider]) throw new Error('Choose a supported source or All sources.');
       if(!['trending','latest'].includes(feed)) throw new Error('Choose Trending or Latest updates.');
@@ -1030,7 +1030,7 @@ if(req.method==='POST' && url.pathname==='/api/mangascrape/discover') {
     try {
       const data=await readBody(req);
       const query=mangaScrapeQuery(data.query);
-      const requested=String(data.provider||'all').trim().toLowerCase();
+      const requested=String(data.provider||'mangahook').trim().toLowerCase();
       let providers;
       if(requested==='all') {
         const enabled=Array.isArray(data.enabledProviders)?data.enabledProviders.map(x=>String(x).toLowerCase()):Object.keys(MANGASCRAPE_SOURCES);
