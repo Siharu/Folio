@@ -1,10 +1,10 @@
 services:
   - type: web
-    name: folio
+    name: hekomi
     runtime: node
     plan: free
-    buildCommand: npm --prefix folio-app install
-    startCommand: npm --prefix folio-app start
+    buildCommand: npm install
+    startCommand: npm start
     healthCheckPath: /api/health
     envVars:
       - key: NODE_ENV
