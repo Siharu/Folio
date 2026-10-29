@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+<title id="title">Hekomi Anime</title>
+<desc id="desc">Hekomi's anime-mode mark: an angular ivory H on a coral moon with a mint spark.</desc>
+<rect width="512" height="512" fill="#080916"/>
+<circle cx="253" cy="235" r="174" fill="#f24f68"/>
+<circle cx="253" cy="235" r="174" fill="none" stroke="#ff8494" stroke-width="3" stroke-opacity=".7"/>
+<path d="M119 132H184V248L325 184V132H390V376H325V267L184 331V376H119Z" fill="#fff5e8"/>
+<path d="M403 353L411 376L434 384L411 392L403 415L395 392L372 384L395 376Z" fill="#8be1cf"/>
+<circle cx="420" cy="332" r="4" fill="#8be1cf"/>
+<circle cx="386" cy="430" r="3" fill="#f24f68"/>
+</svg>
