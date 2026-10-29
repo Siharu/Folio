@@ -1,11 +1,16 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
 <title id="title">Hekomi</title>
-<desc id="desc">An angular H-shaped reading mark crossing a coral moon, with a small mint discovery spark.</desc>
+<desc id="desc">Hekomi's combined emblem: the coral-moon H and an open manga spread.</desc>
 <rect width="512" height="512" fill="#080916"/>
-<circle cx="253" cy="235" r="174" fill="#f24f68"/>
-<circle cx="253" cy="235" r="174" fill="none" stroke="#ff8494" stroke-width="3" stroke-opacity=".7"/>
-<path d="M119 132H184V248L325 184V132H390V376H325V267L184 331V376H119Z" fill="#fff5e8"/>
-<path d="M403 353L411 376L434 384L411 392L403 415L395 392L372 384L395 376Z" fill="#8be1cf"/>
-<circle cx="420" cy="332" r="4" fill="#8be1cf"/>
-<circle cx="386" cy="430" r="3" fill="#f24f68"/>
+<circle cx="167" cy="250" r="111" fill="#f24f68"/>
+<circle cx="167" cy="250" r="111" fill="none" stroke="#ff8494" stroke-width="2" stroke-opacity=".7"/>
+<path d="M115 193H147V245L194 224V193H226V312H194V270L147 291V312H115Z" fill="#fff5e8"/>
+<path d="M239 306L245 324L263 330L245 336L239 354L233 336L215 330L233 324Z" fill="#8be1cf"/>
+<path d="M279 190C302 178 326 184 346 198V316C326 302 302 297 279 309Z" fill="#fff5e8"/>
+<path d="M352 198C372 184 396 178 419 190V309C396 297 372 302 352 316Z" fill="#c6fff2"/>
+<path d="M349 193V320" fill="none" stroke="#080916" stroke-width="8" stroke-linecap="round"/>
+<path d="M292 209C309 204 326 207 340 216V233C326 225 309 222 292 228Z" fill="#f24f68"/>
+<path d="M359 216C373 207 390 204 406 209V228C390 222 373 225 359 233Z" fill="#f24f68"/>
+<path d="M278 337C321 360 377 359 416 330" fill="none" stroke="#f24f68" stroke-width="7" stroke-linecap="round"/>
+<path d="M419 137L425 154L442 160L425 166L419 183L413 166L396 160L413 154Z" fill="#8be1cf"/>
 </svg>
