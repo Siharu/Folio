@@ -1288,7 +1288,7 @@ $('#mangaAdapterSearchBtn').onclick=searchMangaScrapeSources;
         const meta=[item.status,item.genres.slice(0,4).join(' · '),item.latestChapter?'Latest: '+item.latestChapter:'',item.lastUpdate].filter(Boolean).join(' · ');
         return '<div class="resultitem">'+coverHtml(item.cover,'manga',item.title)+'<div class="resulttext"><h3>'+esc(item.title)+'</h3><p>'+esc(meta||'Source metadata available')+'</p>'+(item.description?'<p class="muted small">'+esc(item.description.slice(0,240))+(item.description.length>240?'…':'')+'</p>':'')+'<div class="resultactions"><button class="mini-btn" data-mangascrape-details="'+index+'">Details &amp; chapters</button><a class="mini-btn" href="'+esc(item.url)+'" target="_blank" rel="noreferrer">Open source ↗</a></div></div></div>';
       }).join(''):'<div class="empty"><strong>No results returned</strong>Try another title or provider. If the source is unavailable or blocks automated access, Hekomi will not try to bypass it.</div>';
-      $('#mangaAdapterResults [data-mangascrape-details]').forEach(button=>button.onclick=()=>showMangaScrapeDetails(provider,results[Number(button.dataset.mangascrapeDetails)]));
+      $$('#mangaAdapterResults [data-mangascrape-details]').forEach(button=>button.onclick=()=>showMangaScrapeDetails(provider,results[Number(button.dataset.mangascrapeDetails)]));
       if(data.notice)$('#mangaAdapterStatus').textContent+=' '+data.notice;
     }catch(error){
       $('#mangaAdapterStatus').textContent=error.message||'MangaScrape search failed.';
