@@ -1279,6 +1279,7 @@ $('#mangaAdapterSearchBtn').onclick=searchMangaScrapeSources;
     button.disabled=true;button.textContent='Searching…';
     $('#mangaAdapterResults').innerHTML='';
     $('#mangaAdapterStatus').textContent='Checking source rules and searching…';
+    $('#mangaAdapterStatus').classList.remove('error');
     try{
       const data=await api('/api/mangascrape/search',{method:'POST',body:{provider,query}});
       const results=data.results||[];
@@ -1312,7 +1313,7 @@ $('#mangaAdapterSearchBtn').onclick=searchMangaScrapeSources;
         '<div class="resultitem">'+coverHtml(detail.cover,'manga',detail.title)+'<div class="resulttext"><p class="muted small">'+esc(metadata||'Series details')+'</p><p>'+esc(detail.description||'No description was supplied by this source.')+'</p>'+people.join('')+'<div class="resultactions"><button class="btn-mint" id="saveMangaScrapeTitle">＋ Save to library</button><a class="mini-btn" href="'+esc(detail.url)+'" target="_blank" rel="noreferrer">Open source ↗</a></div></div></div>'+
         '<div class="panel" style="margin-top:15px"><div class="panel-head"><div><h2>Chapter list</h2><p class="muted small">Chapter links open on the original provider. Hekomi does not mirror source images.</p></div><span class="pill-label">'+chapters.length+'</span></div><div class="results">'+(chapterHtml||'<p class="small muted">No chapters were returned by this source.</p>')+'</div>'+(chapters.length>80?'<p class="muted small">Showing the first 80 chapter links.</p>':'')+'</div>');
       $('#saveMangaScrapeTitle').onclick=()=>{
-        const type=/\bmanhwa\b/i.test(detail.title+' '+detail.description)?'Manhwa':/\bmanhua\b/i.test(detail.title+' '+detail.description)?'Manhua':'Manga';
+        const type=guessType(detail.title+' '+detail.description);
         addMangaEntry({
           title:detail.title,url:detail.url,cover:detail.cover,description:detail.description,type,source:detail.url,
           chapters:chapters.map(chapter=>({title:chapter.title,url:chapter.url,update:chapter.update,views:chapter.views,provider:detail.provider,sourceKind:detail.sourceKind})),
