@@ -319,16 +319,42 @@ async function loadMangaScrapeDiscovery(provider, feed, force=false) {
   });
   // Keep results diverse and stable, without pretending failed providers succeeded.
   const seen = new Set();
-  const unique = results.filter(item => {
+  let unique = results.filter(item => {
     const key = item.provider + ':' + item.id;
     if (seen.has(key)) return false;
     seen.add(key);
     return true;
   }).slice(0, 60);
+  let fallback = false;
+  // Never let an unavailable/robots-disallowed scraper take the whole discovery page down.
+  // Use the public AniList catalog as a read-only discovery fallback; do not crawl blocked sources.
+  if (!unique.length) {
+    try {
+      const catalog = await getPublicCatalog();
+      const manga = Array.isArray(catalog.manga) ? catalog.manga.slice() : [];
+      if (feed === 'trending') manga.sort((a,b) => (Number(b.popularity)||0) - (Number(a.popularity)||0));
+      else manga.sort((a,b) => (Number(b.updatedAt)||0) - (Number(a.updatedAt)||0));
+      unique = manga.slice(0, 48).map(item => ({
+        id:String(item.id), provider:'catalog', providerLabel:'AniList catalog',
+        title:item.title || 'Untitled manga', url:item.siteUrl || ('https://anilist.co/manga/'+Number(item.id)+'/'),
+        cover:item.cover || '', description:item.description || '',
+        genres:Array.isArray(item.genres)?item.genres:[], authors:[], artists:[],
+        status:item.status || '', score:Number(item.averageScore)||0,
+        lastUpdate:item.updatedAt ? new Date(Number(item.updatedAt)*1000).toISOString() : '',
+        latestChapter:'', latestChapterId:'', source:'catalog', sourceKind:'',
+        popularity:Number(item.popularity)||0, format:item.format||''
+      }));
+      fallback = unique.length > 0;
+    } catch (error) {
+      errors.push({provider:'catalog',label:'AniList catalog',message:String(error && error.message || 'Catalog fallback unavailable.')});
+    }
+  }
   const payload = {
-    feed, provider, results:unique, errors,
+    feed, provider, results:unique, errors, fallback,
     fetchedAt:new Date().toISOString(),
-    notice:errors.length ? 'Some sources could not load. Available results are still shown; no source restrictions were bypassed.' : 'Chapter details open on the original source. Availability depends on each provider.'
+    notice:fallback
+      ? 'Showing catalog recommendations because live source feeds are unavailable. Open a title on AniList; source restrictions were not bypassed.'
+      : errors.length ? 'Some sources could not load. Available results are still shown; no source restrictions were bypassed.' : 'Chapter details open on the original source. Availability depends on each provider.'
   };
   if (unique.length || !cached) mangaScrapeFeedCache.set(cacheKey,{cachedAt:Date.now(),payload});
   return payload;
