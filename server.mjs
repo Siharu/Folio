@@ -393,16 +393,18 @@ async function malLogout(req, res) {
 async function malRequest(req, res, pathname, query) {
   const clientId = process.env.MAL_CLIENT_ID;
   if (!clientId) return send(res, 503, { error: 'MAL catalog search is not configured by the Hekomi maintainer yet.' });
-  if (!['/search','/me','/list','/update'].includes(pathname)) return send(res,404,{error:'Unknown MAL endpoint.'});
+  if (!['/search','/details','/me','/list','/update'].includes(pathname)) return send(res,404,{error:'Unknown MAL endpoint.'});
   let session = null;
-  if (pathname !== '/search') {
+  if (!['/search','/details'].includes(pathname)) {
     session = await getMalSession(req, res);
     if (!session || !session.accessToken) return send(res,401,{error:'Sign in with MyAnimeList first.'});
   }
   let apiPath = '';
   let method = 'GET';
   let body;
-  if (pathname === '/search') apiPath='/anime?q='+encodeURIComponent(query.get('q')||'')+'&limit=10&fields=alternative_titles,synopsis,mean,rank,popularity,num_list_users,num_scoring_users,genres,num_episodes,media_type,main_picture,start_date,end_date,status,start_season,broadcast,source,average_episode_duration,rating,studios,updated_at';
+  const animeFields='alternative_titles,synopsis,mean,rank,popularity,num_list_users,num_scoring_users,genres,num_episodes,media_type,main_picture,start_date,end_date,status,start_season,broadcast,source,average_episode_duration,rating,studios,updated_at';
+  if (pathname === '/search') apiPath='/anime?q='+encodeURIComponent(query.get('q')||'')+'&limit=10&fields='+animeFields;
+  if (pathname === '/details') { const id=Number(query.get('id')); if(!Number.isSafeInteger(id)||id<1)return send(res,400,{error:'A valid anime ID is required.'}); apiPath='/anime/'+id+'?fields='+animeFields; }
   if (pathname === '/me') apiPath='/users/@me';
   if (pathname === '/list') apiPath='/users/@me/animelist?limit=100&fields=list_status,alternative_titles,synopsis,mean,rank,popularity,num_list_users,num_scoring_users,genres,num_episodes,media_type,main_picture,start_date,end_date,status,start_season,broadcast,source,average_episode_duration,rating,studios,updated_at';
   if (pathname === '/update') {
@@ -670,6 +672,18 @@ const server=http.createServer(async(req,res)=>{
   if(req.method==='GET' && url.pathname==='/api/catalog') {
     try { return send(res,200,await getPublicCatalog(url.searchParams.get('refresh')==='1'),{'Cache-Control':'public, max-age=300'}); }
     catch(e) { return send(res,502,{error:'The public catalog is temporarily unavailable. '+(e.message||'')}); }
+  }
+  if(req.method==='GET' && url.pathname==='/api/catalog/detail') {
+    const id=Number(url.searchParams.get('id'));
+    const kind=String(url.searchParams.get('kind')||'anime').toLowerCase();
+    if(!Number.isSafeInteger(id)||id<1||!['anime','manga'].includes(kind)) return send(res,400,{error:'Provide a valid catalog ID and kind.'});
+    try {
+      const media=await getMediaDetail(id,kind);
+      if(!media)return send(res,404,{error:'This title was not found in the public catalog.'});
+      return send(res,200,media,{'Cache-Control':'public, max-age=600, stale-while-revalidate=3600'});
+    } catch(e) {
+      return send(res,502,{error:'The title details are temporarily unavailable. '+(e.message||'')});
+    }
   }
   if(req.method==='GET' && url.pathname==='/api/catalog/season') {
     try { return send(res,200,await getSeasonCatalog(url.searchParams.get('season'),url.searchParams.get('year')) ,{'Cache-Control':'public, max-age=1800'}); }
