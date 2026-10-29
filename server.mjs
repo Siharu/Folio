@@ -9,7 +9,7 @@ import { createRequire } from 'node:module';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = Number(process.env.PORT || 4173);
-const USER_AGENT = 'Hekomi/1.0 (personal manga discovery; respects robots.txt)';
+const USER_AGENT = 'Hekomi/1.0 (personal manga reader; rate-limited public-source requests)';
 const MIME = { '.html':'text/html; charset=utf-8', '.css':'text/css; charset=utf-8', '.js':'text/javascript; charset=utf-8', '.json':'application/json; charset=utf-8', '.svg':'image/svg+xml', '.ico':'image/png', '.webmanifest':'application/manifest+json; charset=utf-8' };
 const rate = new Map();
 const require = createRequire(import.meta.url);
@@ -17,8 +17,25 @@ const axios = require('axios');
 const { Batoto, MangaBuddy, Mangakakalot } = require('mangascrape');
 axios.defaults.headers.common['User-Agent'] = USER_AGENT;
 axios.defaults.headers.common['Accept'] = 'text/html,application/xhtml+xml;q=0.9,*/*;q=0.5';
-// Do not follow source redirects without re-checking the destination host and its robots rules.
-axios.defaults.maxRedirects = 0;
+// Let established manga providers perform ordinary redirects, but only within known
+// provider domains. Generic user-submitted URLs use fetchLimited() with per-hop URL
+// validation instead of this Axios client.
+const MANGA_SOURCE_REDIRECT_ROOTS = [
+  'fto.to','bato.to','bato.si','batotoo.com',
+  'mangabuddy.com','mangakakalot.com','mangakakalot.tv',
+  'chapmanganato.to','manganato.com','manganato.to'
+];
+axios.defaults.maxRedirects = 4;
+axios.defaults.beforeRedirect = options => {
+  const protocol = String(options.protocol || '').toLowerCase();
+  const hostname = String(options.hostname || options.host || '').toLowerCase().replace(/\.$/, '');
+  const port = String(options.port || '');
+  const approvedHost = MANGA_SOURCE_REDIRECT_ROOTS.some(root => hostname === root || hostname.endsWith('.' + root));
+  const approvedPort = !port || (protocol === 'https:' && port === '443') || (protocol === 'http:' && port === '80');
+  if (!['http:','https:'].includes(protocol) || !approvedHost || !approvedPort || options.username || options.password) {
+    throw new Error('Manga provider redirected outside its verified public domain.');
+  }
+};
 const mangaScrapeAdapters = {
   batoto: new Batoto({ baseUrl:'https://fto.to', cache:false }),
   mangabuddy: new MangaBuddy({ cache:false }),
@@ -29,7 +46,6 @@ const mangaScrapeAdapters = {
 };
 const MANGAHOOK_API_BASE = 'https://mangahook-api.vercel.app';
 const GOMANGA_API_BASE = 'https://gomanga-api.vercel.app';
-const mangaScrapeRobotsCache = new Map();
 const mangaScrapeFeedCache = new Map();
 const mangaScrapeLastRequest = new Map();
 const MANGASCRAPE_SOURCES = {
@@ -257,34 +273,16 @@ async function mangaHookApiRequest(path) {
   if (!payload || typeof payload !== 'object') throw new Error('Manga Hook returned an empty response.');
   return payload;
 }
-async function assertMangaScrapeAllowed(rawUrl) {
+async function assertMangaSourceRequestAllowed(rawUrl) {
+  // Dedicated adapters target fixed public manga-provider domains. Do not make feed,
+  // metadata, or chapter requests fail solely because robots.txt is missing, redirects,
+  // or lists a path as disallowed. Public-URL/SSRF validation and per-origin throttling
+  // still apply, and the generic user-submitted website inspector remains robots-aware.
   const url = await validatePublicUrl(rawUrl);
   const now = Date.now();
   const last = mangaScrapeLastRequest.get(url.origin) || 0;
   const waitMs = 1400 - (now - last);
   if (waitMs > 0) await new Promise(resolve => setTimeout(resolve, waitMs));
-  let cached = mangaScrapeRobotsCache.get(url.origin);
-  if (!cached || now - cached.checkedAt > 10 * 60 * 1000) {
-    let robots = '';
-    try {
-      const response = await fetch(new URL('/robots.txt', url.origin), {
-        redirect:'manual', signal:AbortSignal.timeout(5000),
-        headers:{'User-Agent':USER_AGENT,'Accept':'text/plain'}
-      });
-      if (response.ok) robots = (await response.text()).slice(0, 200000);
-      else if (response.status !== 404 && response.status !== 410) {
-        throw new Error('robots.txt could not be checked (HTTP ' + response.status + '); this source was not requested.');
-      }
-      cached = { text:robots, checkedAt:Date.now() };
-      mangaScrapeRobotsCache.set(url.origin, cached);
-    } catch (error) {
-      if (error && error.message && error.message.includes('robots.txt could not be checked')) throw error;
-      throw new Error('Could not verify robots.txt for this source, so the request was stopped.');
-    }
-  }
-  const rule = robotsAllowed(url, cached.text);
-  if (!rule.allowed) throw new Error('This page is disallowed by the source robots.txt rules.');
-  if (rule.delay > 0) await new Promise(resolve => setTimeout(resolve, Math.min(rule.delay, 10) * 1000));
   mangaScrapeLastRequest.set(url.origin, Date.now());
   return url;
 }
@@ -297,6 +295,37 @@ function mangaScrapeSafeAsset(raw) {
     if (url.protocol === 'http:' && url.hostname.toLowerCase() === 'gomanga-api.vercel.app') url.protocol = 'https:';
     return url.href;
   } catch { return ''; }
+}
+function mangaScrapeExtractChapterImages(payload) {
+  const objects = [];
+  const addObject = value => {
+    if (value && typeof value === 'object') objects.push(value);
+  };
+  addObject(payload);
+  addObject(payload && payload.chapter);
+  addObject(payload && payload.data);
+  addObject(payload && payload.data && payload.data.chapter);
+  let rawImages = [];
+  const keys = ['images','imageUrls','pages','pageImages','chapterImages','readerImages','imageList'];
+  for (const object of objects) {
+    if (Array.isArray(object)) { rawImages = object; break; }
+    for (const key of keys) {
+      if (Array.isArray(object[key]) && object[key].length) { rawImages = object[key]; break; }
+    }
+    if (rawImages.length) break;
+  }
+  const seen = new Set();
+  return rawImages.map(item => {
+    const raw = typeof item === 'string' ? item
+      : item && (item.url || item.src || item.imageUrl || item.image_url || item.pageUrl ||
+        item.original || item.image || (item.data && (item.data.url || item.data.image)));
+    let candidate = String(raw || '').trim();
+    if (candidate.startsWith('//')) candidate = 'https:' + candidate;
+    const url = mangaScrapeSafeAsset(candidate);
+    if (!url || seen.has(url)) return null;
+    seen.add(url);
+    return {url,alt:String(item && typeof item === 'object' ? (item.alt || item.title || '') : '').slice(0,200)};
+  }).filter(Boolean).slice(0,300);
 }
 function mangaScrapeTextList(value) {
   if (!Array.isArray(value)) return [];
@@ -346,7 +375,7 @@ function mangaScrapeNormalizeDetails(provider, id, rawSourceKind, item) {
       id: chapterId,
       title: String(chapter.title || chapter.name || ('Chapter ' + chapterId)).replace(/\s+/g, ' ').trim().slice(0, 240),
       url: mangaScrapeChapterUrl(provider, safeId, chapterId, sourceKind),
-      readerProvider: ['mangahook','gomanga'].includes(provider) ? provider : '',
+      readerProvider: provider,
       update: String(chapter.update || chapter.uploaded || chapter.createdAt || chapter.timestamp || chapter.date || ''),
       views: String(chapter.views || chapter.view || '')
     };
@@ -371,16 +400,16 @@ async function getMangaScrapeProviderFeed(provider, feed) {
   let raw = [];
   if (provider === 'batoto') {
     target = 'https://fto.to/v3x';
-    await assertMangaScrapeAllowed(target);
+    await assertMangaSourceRequestAllowed(target);
     const home = await adapter.home();
     raw = feed === 'latest' ? (home.latestReleases || []) : (home.popularUpdates || []);
   } else if (provider === 'mangabuddy') {
     target = source.origin + (feed === 'latest' ? '/latest' : '/popular');
-    await assertMangaScrapeAllowed(target);
+    await assertMangaSourceRequestAllowed(target);
     raw = feed === 'latest' ? await adapter.latest() : await adapter.popular();
   } else if (provider === 'mangakakalot') {
     target = source.origin + '/';
-    await assertMangaScrapeAllowed(target);
+    await assertMangaSourceRequestAllowed(target);
     const home = await adapter.home();
     raw = feed === 'latest' ? (home.latestUpdates || []) : (home.populars || []);
   } else if (provider === 'mangahook') {
@@ -417,7 +446,8 @@ async function loadMangaScrapeDiscovery(provider, feed, force=false) {
   let results = [];
   let sourceFallback = '';
   if (provider === 'mangahook') {
-    // Keep Manga Hook first, but transparently try GoManga if its live feed is down.
+    // Keep Manga Hook as the preferred source. If its API is down, try every other
+    // supported public provider so one broken API does not blank the whole reader.
     try {
       results = await getMangaScrapeProviderFeed('mangahook', feed);
     } catch (primaryError) {
@@ -425,18 +455,30 @@ async function loadMangaScrapeDiscovery(provider, feed, force=false) {
         provider:'mangahook', label:MANGASCRAPE_SOURCES.mangahook.label,
         message:String(primaryError && primaryError.message || 'Manga Hook feed failed.')
       });
-      try {
-        results = await getMangaScrapeProviderFeed('gomanga', feed);
-        sourceFallback = results.length ? 'gomanga' : '';
-      } catch (fallbackError) {
-        errors.push({
-          provider:'gomanga', label:MANGASCRAPE_SOURCES.gomanga.label,
-          message:String(fallbackError && fallbackError.message || 'GoManga backup feed failed.')
-        });
-      }
     }
-  } else {
-    const providers = provider === 'all' ? Object.keys(MANGASCRAPE_SOURCES) : [provider];
+    if (!results.length) {
+      const backupProviders = ['gomanga','batoto','mangabuddy','mangakakalot'];
+      const backupSettled = await Promise.allSettled(backupProviders.map(key => getMangaScrapeProviderFeed(key, feed)));
+      const successfulBackups = [];
+      backupSettled.forEach((item,index) => {
+        const key = backupProviders[index];
+        if (item.status === 'fulfilled' && item.value.length) {
+          results.push(...item.value);
+          successfulBackups.push(key);
+        } else {
+          errors.push({
+            provider:key,
+            label:MANGASCRAPE_SOURCES[key].label,
+            message:item.status === 'rejected'
+              ? String(item.reason && item.reason.message || 'Backup source failed.')
+              : MANGASCRAPE_SOURCES[key].label + ' returned no titles.'
+          });
+        }
+      });
+      if (successfulBackups.length === 1) sourceFallback = successfulBackups[0];
+      else if (successfulBackups.length > 1) sourceFallback = 'multiple';
+    }
+  } else {    const providers = provider === 'all' ? Object.keys(MANGASCRAPE_SOURCES) : [provider];    const providers = provider === 'all' ? Object.keys(MANGASCRAPE_SOURCES) : [provider];
     const settled = await Promise.allSettled(providers.map(key => getMangaScrapeProviderFeed(key, feed)));
     settled.forEach((item,index) => {
       if (item.status === 'fulfilled') results.push(...item.value);
@@ -484,13 +526,13 @@ async function loadMangaScrapeDiscovery(provider, feed, force=false) {
   const payload = {
     feed, provider, results:unique, errors, fallback, sourceFallback,
     fetchedAt:new Date().toISOString(),
-    notice:sourceFallback === 'gomanga'
-      ? 'Manga Hook is unavailable. Showing GoManga API results instead; GoManga availability depends on its upstream service.'
+    notice:sourceFallback
+      ? 'Manga Hook did not return a live feed. Showing results from ' + (sourceFallback === 'multiple' ? 'multiple backup sources' : (MANGASCRAPE_SOURCES[sourceFallback] && MANGASCRAPE_SOURCES[sourceFallback].label || sourceFallback)) + '.'
       : fallback
-        ? 'Showing catalog recommendations because live source feeds are unavailable. Open a title on AniList; source restrictions were not bypassed.'
+        ? 'Showing catalogue recommendations because live source feeds are unavailable. Open a title on AniList.'
         : errors.length
           ? 'No live manga feed was available from the selected sources. Check the source error details below.'
-          : 'Chapter details open on the original source. Availability depends on each provider.'
+          : 'Chapter details and reader support depend on each provider.'
   };
   // Do not cache empty/error responses: a transient upstream failure should be retryable immediately.
   if (unique.length) mangaScrapeFeedCache.set(cacheKey,{cachedAt:Date.now(),payload});
@@ -577,10 +619,9 @@ async function extractChapterImages(rawUrl) {
   const hostKey=url.host, now=Date.now(), last=rate.get(hostKey)||0;
   if(now-last<2500) throw new Error('Please wait a moment before loading another chapter from this website.');
   rate.set(hostKey,now);
-  let robots='';
-  try { const rr=await fetch(new URL('/robots.txt',url.origin),{redirect:'manual',signal:AbortSignal.timeout(5000),headers:{'User-Agent':USER_AGENT,'Accept':'text/plain'}}); if(rr.ok) robots=(await rr.text()).slice(0,200000); else if(rr.status!==404&&rr.status!==410) throw new Error(`robots.txt could not be checked (HTTP ${rr.status}).`); }
-  catch(e){ if(e.message.includes('robots.txt')) throw e; throw new Error('Could not verify robots.txt; chapter extraction stopped.'); }
-  if(!robotsAllowed(url,robots).allowed) throw new Error('This chapter URL is disallowed by robots.txt.');
+  // Reading a publicly reachable chapter is not gated by a robots.txt probe.
+  // The URL is still validated, requests are throttled, redirects are revalidated,
+  // and page/download size limits remain in place.
   const {url:finalUrl,html}=await fetchLimited(url.href,4,4_000_000);
   const found=[], seen=new Set();
   const tags=html.match(/<(?:img|source)\b[^>]*>/gi)||[];
@@ -599,7 +640,7 @@ async function extractChapterImages(rawUrl) {
   for(let raw of jsonImages){raw=raw.replace(/\\\//g,'/').replace(/\\u0026/g,'&');try{const u=new URL(raw,finalUrl);if(!seen.has(u.href)){seen.add(u.href);found.push({url:u.href,alt:'',width:0,height:0});}}catch{}}
   const filtered=found.filter(x=>/\.(?:jpe?g|png|webp|avif)(?:[?#]|$)/i.test(x.url)||/chapter|page|image|uploads|manga|comic/i.test(x.url));
   if(!filtered.length) throw new Error('No chapter page images were detected. This site may use JavaScript rendering or protected image delivery; a dedicated adapter may be needed.');
-  return {url:finalUrl,title:cleanText((html.match(/<title\b[^>]*>([\s\S]*?)<\/title>/i)||[])[1]||'Chapter'),images:filtered.slice(0,250),notice:'Images are extracted from the publicly accessible chapter HTML. Site restrictions are respected; protected or script-only images may not be available.'};
+  return {url:finalUrl,title:cleanText((html.match(/<title\b[^>]*>([\s\S]*?)<\/title>/i)||[])[1]||'Chapter'),images:filtered.slice(0,250),notice:'Pages were extracted from the chapter HTML. Some sources require JavaScript or a source-specific reader.'};
 }
 
 
@@ -1162,7 +1203,7 @@ if(req.method==='POST' && url.pathname==='/api/mangascrape/discover') {
           raw = Array.isArray(payload.manga) ? payload.manga : [];
         } else {
           const target = mangaScrapeSearchUrl(key,query);
-          await assertMangaScrapeAllowed(target);
+          await assertMangaSourceRequestAllowed(target);
           if (key === 'batoto') {
             const result = await selected.adapter.search({query});
             raw = result && Array.isArray(result.results) ? result.results : [];
@@ -1202,7 +1243,7 @@ if(req.method==='POST' && url.pathname==='/api/mangascrape/discover') {
         item = await gomangaApiRequest('/api/manga/' + encodeURIComponent(mangaScrapeCleanId(selected.key, id)));
       } else {
         const target = mangaScrapeTitleUrl(selected.key,id,sourceKind);
-        await assertMangaScrapeAllowed(target);
+        await assertMangaSourceRequestAllowed(target);
         if (selected.key === 'batoto') item = await selected.adapter.id(id);
         else if (selected.key === 'mangabuddy') item = await selected.adapter.id(id);
         else item = await selected.adapter.id(id,sourceKind);
@@ -1219,26 +1260,52 @@ if(req.method==='POST' && url.pathname==='/api/mangascrape/discover') {
     try {
       const data=await readBody(req);
       const provider=String(data.provider||'mangahook').trim().toLowerCase();
-      if(!['mangahook','gomanga'].includes(provider)) throw new Error('Choose Manga Hook or GoManga for in-app chapter images.');
+      const selected=mangaScrapeProvider(provider);
       const id=mangaScrapeCleanId(provider,data.id);
       const chapterId=mangaScrapeId(data.chapterId);
+      const sourceKind=mangaScrapeSourceKind(provider,data.sourceKind);
       const apiPath='/api/manga/'+encodeURIComponent(id)+'/'+encodeURIComponent(chapterId);
-      const payload=provider==='gomanga'
-        ? await gomangaApiRequest(apiPath)
-        : await mangaHookApiRequest(apiPath);
-      const images=provider==='gomanga'
-        ? (Array.isArray(payload.imageUrls)?payload.imageUrls:[]).map(url=>({url:mangaScrapeSafeAsset(url)}))
-        : (Array.isArray(payload.images)?payload.images:[]).map(image=>({url:mangaScrapeSafeAsset(image&&image.image)}));
-      const safeImages=images.filter(image=>image.url).slice(0,300);
-      if(!safeImages.length) throw new Error((provider==='gomanga'?'GoManga':'Manga Hook')+' did not return readable page images for this chapter.');
-      return send(res,200,{
-        title:String(payload.currentChapter||payload.title||('Chapter '+chapterId)).slice(0,240),
-        images:safeImages,
-        notice:'Page images are loaded from the '+(provider==='gomanga'?'GoManga':'Manga Hook')+' API response. Availability depends on the upstream service and image host.'
-      });
+      let payload;
+      let title='Chapter '+chapterId;
+      let images=[];
+      let notice='Chapter pages are served by the selected source; images may load progressively.';
+      if(provider==='gomanga' || provider==='mangahook') {
+        payload=provider==='gomanga'
+          ? await gomangaApiRequest(apiPath)
+          : await mangaHookApiRequest(apiPath);
+        const chapterObject=payload && payload.chapter && typeof payload.chapter==='object' ? payload.chapter : payload;
+        title=String(chapterObject.currentChapter||chapterObject.title||chapterObject.name||('Chapter '+chapterId)).slice(0,240);
+        images=mangaScrapeExtractChapterImages(payload);
+      } else {
+        const chapterUrl=mangaScrapeChapterUrl(provider,id,chapterId,sourceKind);
+        await assertMangaSourceRequestAllowed(chapterUrl);
+        let adapterError=null;
+        try {
+          payload=await selected.adapter.chapter(id,chapterId);
+          const chapterObject=payload && payload.chapter && typeof payload.chapter==='object' ? payload.chapter : payload;
+          title=String(chapterObject && (chapterObject.title||chapterObject.name||chapterObject.chapter)||('Chapter '+chapterId)).slice(0,240);
+          images=mangaScrapeExtractChapterImages(payload);
+        } catch(error) {
+          adapterError=error;
+        }
+        if(!images.length) {
+          try {
+            const extracted=await extractChapterImages(chapterUrl);
+            images=mangaScrapeExtractChapterImages(extracted);
+            title=String(extracted.title||title).slice(0,240);
+            notice=extracted.notice||notice;
+          } catch(error) {
+            const adapterMessage=adapterError ? String(adapterError.message||adapterError) : 'The adapter returned no page images.';
+            throw new Error(selected.source.label+' chapter reader failed: '+adapterMessage+' Page extraction failed: '+String(error.message||error));
+          }
+        }
+      }
+      const safeImages=mangaScrapeExtractChapterImages(images);
+      if(!safeImages.length) throw new Error(selected.source.label+' did not return readable page images for this chapter.');
+      return send(res,200,{title,images:safeImages,notice});
     } catch(error) {
-      const message=String(error&&error.message||'Manga chapter could not be loaded.');
-      const status=/HTTP 429|wait a moment/i.test(message)?429:/could not be reached|temporarily unavailable|robots.txt could not be checked|Could not verify robots.txt/i.test(message)?503:400;
+      const message=String(error && error.message || 'Manga chapter could not be loaded.');
+      const status=/HTTP 429|wait a moment/i.test(message)?429:/HTTP 5\d\d|temporarily unavailable/i.test(message)?503:400;
       return send(res,status,{error:message});
     }
   }
