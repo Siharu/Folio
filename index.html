@@ -1084,8 +1084,7 @@ body[data-page="manga"] #mangaView{display:block!important}
       if(hydrated){
         if(!write(key.anime,localAnime))notify('Details loaded, but browser storage refused the update. Keep this tab open to retain them for now.');
         renderLocalAnime();
-        if(!$('#modalRoot').innerHTML.includes('Full series information'))animeInfoMarkup(entry,'local');
-        else animeInfoMarkup(entry,'local');
+        animeInfoMarkup(entry,'local');
       }
     }catch(error){
       const body=$('#animeInfoBody');
