@@ -1071,7 +1071,7 @@ if(req.method==='POST' && url.pathname==='/api/mangascrape/discover') {
       return send(res,200,{provider:requested,providerLabel:requested==='all'?'Enabled extensions':MANGASCRAPE_SOURCES[requested].label,query,results:unique,errors,notice:'Search runs across enabled extensions. Results contain source metadata; chapter availability and reading access depend on each source.'});
     } catch(error) {
       const message=String(error && error.message || 'Manga source search failed.');
-      const status=/wait a moment/i.test(message)?429:/temporarily unavailable|could not verify robots|robots\.txt could not be checked/i.test(message)?503:400;
+      const status=/HTTP 429|wait a moment/i.test(message)?429:/HTTP 5\d\d|temporarily unavailable|could not verify robots|robots\.txt could not be checked/i.test(message)?503:400;
       return send(res,status,{error:message});
     }
   }
@@ -1095,7 +1095,7 @@ if(req.method==='POST' && url.pathname==='/api/mangascrape/discover') {
       return send(res,200,detail);
     } catch(error) {
       const message=String(error && error.message || 'Manga details could not be loaded.');
-      const status=/wait a moment/i.test(message)?429:/temporarily unavailable|could not verify robots|robots\.txt could not be checked/i.test(message)?503:400;
+      const status=/HTTP 429|wait a moment/i.test(message)?429:/HTTP 5\d\d|temporarily unavailable|could not verify robots|robots\.txt could not be checked/i.test(message)?503:400;
       return send(res,status,{error:message});
     }
   }
