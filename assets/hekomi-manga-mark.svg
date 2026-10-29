@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+<title id="title">Hekomi Manga</title>
+<desc id="desc">A custom open manga spread made of angular ink panels, crossed by an orbital coral ribbon and a mint registration spark.</desc>
+<rect width="512" height="512" rx="112" fill="#080916"/>
+<circle cx="256" cy="256" r="194" fill="none" stroke="#f24f68" stroke-opacity=".18" stroke-width="2"/>
+<path d="M64 343C128 417 343 402 442 185" fill="none" stroke="#f24f68" stroke-width="14" stroke-linecap="round"/>
+<path d="M115 137C158 116 207 126 251 153V366C209 336 157 330 115 353Z" fill="#fff5e8"/>
+<path d="M261 153C305 126 354 116 397 137V353C355 330 303 336 261 366Z" fill="#c6fff2"/>
+<path d="M256 145V377" fill="none" stroke="#080916" stroke-width="15" stroke-linecap="round"/>
+<path d="M137 168C167 157 198 164 230 182V218C198 201 168 197 137 207Z" fill="#f24f68"/>
+<path d="M137 223C165 214 197 223 230 241V281C197 261 166 254 137 263Z" fill="#080916"/>
+<path d="M137 278C167 268 197 278 230 296V321C198 303 167 297 137 307Z" fill="#f24f68"/>
+<path d="M282 182C314 164 345 157 375 168V207C344 197 314 201 282 218Z" fill="#080916"/>
+<path d="M282 241C315 223 347 214 375 223V263C346 254 315 261 282 281Z" fill="#f24f68"/>
+<path d="M282 296C315 278 345 268 375 278V307C345 297 314 303 282 321Z" fill="#080916"/>
+<path d="M398 95L408 124L437 134L408 144L398 173L388 144L359 134L388 124Z" fill="#c6fff2"/>
+<circle cx="99" cy="117" r="7" fill="#f24f68"/>
+<path d="M104 385L112 407L134 415L112 423L104 445L96 423L74 415L96 407Z" fill="#f24f68"/>
+</svg>
