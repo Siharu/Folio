@@ -1529,6 +1529,94 @@ function mangaFeedCardMarkup(item,index){
       openModal('<div class="modal-top"><div><h2>'+esc(result.title)+'</h2><p class="muted small">Provider details unavailable</p></div><button class="close" data-close>×</button></div><div class="notice warn">'+esc(error.message||'Could not load manga details.')+'</div><div class="resultactions"><a class="mini-btn" href="'+esc(result.url)+'" target="_blank" rel="noreferrer">Open source ↗</a></div>');
     }
   }
+  function renderProfileOverview(){
+    if(!$('#profileView'))return;
+    const name=String(profileData.displayName||'Hekomi reader').trim()||'Hekomi reader';
+    const handle=String(profileData.handle||'reader').trim().replace(/^@/,'')||'reader';
+    const bio=String(profileData.bio||'').trim()||'A little corner for the stories that stay with you.';
+    const avatar=safeImageUrl(profileData.avatarUrl||'');
+    $('#profileDisplayName').textContent=name;
+    $('#profileHandleLabel').textContent='@'+handle;
+    $('#profileBioLabel').textContent=bio;
+    const avatarRoot=$('#profileAvatarPreview');
+    avatarRoot.innerHTML=avatar?'<img src="'+esc(avatar)+'" alt="" referrerpolicy="no-referrer" onerror="this.remove()">':esc(name.split(/\s+/).map(part=>part[0]||'').join('').slice(0,2).toUpperCase()||'H');
+    $('#profileMangaCount').textContent=mangaLibrary.length.toLocaleString();
+    $('#profileAnimeCount').textContent=localAnime.length.toLocaleString();
+    $('#profileSourceCount').textContent=sources.length.toLocaleString();
+    $('#profileChapterCount').textContent=mangaLibrary.reduce((count,item)=>count+(Array.isArray(item.chapters)?item.chapters.length:0),0).toLocaleString();
+    const genres=new Map();
+    mangaLibrary.forEach(item=>(Array.isArray(item.genres)?item.genres:[]).forEach(genre=>{const label=String(genre&&genre.name||genre||'').trim();if(label)genres.set(label,(genres.get(label)||0)+1);}));
+    localAnime.forEach(item=>(Array.isArray(item.genres)?item.genres:[]).forEach(genre=>{const label=String(genre&&genre.name||genre||'').trim();if(label)genres.set(label,(genres.get(label)||0)+1);}));
+    const top=[...genres.entries()].sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0])).slice(0,8);
+    $('#profileGenreList').innerHTML=top.length?top.map(([label,count])=>'<span class="profile-genre-chip">'+esc(label)+' · '+count+'</span>').join(''):'<span class="muted small">Save a few titles to build your genre shelf.</span>';
+  }
+  function syncProfileForms(){
+    if(!$('#profileForm'))return;
+    $('#profileNameInput').value=profileData.displayName||'';
+    $('#profileHandleInput').value=profileData.handle||'';
+    $('#profileBioInput').value=profileData.bio||'';
+    $('#profileAvatarInput').value=profileData.avatarUrl||'';
+    $('#profileDefaultFeed').value=mangaPreferences.defaultFeed==='latest'?'latest':'trending';
+    $('#profileDefaultProvider').value=['all','batoto','mangabuddy','mangakakalot'].includes(mangaPreferences.defaultProvider)?mangaPreferences.defaultProvider:'all';
+    $('#profileCompactCards').checked=!!mangaPreferences.compactCards;
+  }
+  $('#profileForm').addEventListener('submit',event=>{
+    event.preventDefault();
+    const displayName=$('#profileNameInput').value.trim();
+    if(!displayName){notify('Add a display name first.');$('#profileNameInput').focus();return;}
+    const rawAvatar=$('#profileAvatarInput').value.trim();
+    if(rawAvatar&&!safeImageUrl(rawAvatar)){notify('Avatar URLs must use HTTPS.');return;}
+    profileData={
+      displayName:displayName.slice(0,48),
+      handle:$('#profileHandleInput').value.trim().replace(/^@/,'').replace(/[^a-zA-Z0-9_-]/g,'').slice(0,24)||'reader',
+      bio:$('#profileBioInput').value.trim().slice(0,220),
+      avatarUrl:rawAvatar?safeImageUrl(rawAvatar):''
+    };
+    if(!write('hekomi_profile_v1',profileData)){notify('Profile could not be saved. Check browser storage settings.');return;}
+    renderProfileOverview();
+    notify('Your local profile is saved.');
+  });
+  $('#profilePreferencesForm').addEventListener('submit',event=>{
+    event.preventDefault();
+    mangaPreferences={
+      ...mangaPreferences,
+      defaultFeed:$('#profileDefaultFeed').value==='latest'?'latest':'trending',
+      defaultProvider:$('#profileDefaultProvider').value,
+      compactCards:$('#profileCompactCards').checked
+    };
+    if(!write('hekomi_preferences_v1',mangaPreferences)){notify('Preferences could not be saved.');return;}
+    if($('#mangaExploreProvider'))$('#mangaExploreProvider').value=mangaPreferences.defaultProvider;
+    if($('#mangaFeedSwitch'))$('#mangaFeedSwitch [data-manga-feed]').forEach(button=>button.classList.toggle('active',button.dataset.mangaFeed===mangaPreferences.defaultFeed));
+    $('#mangaExploreGrid')?.classList.toggle('compact-manga-cards',!!mangaPreferences.compactCards);
+    if(currentPageFromPath()==='manga')void loadMangaExplore();
+    notify('Your Hekomi preferences are saved.');
+  });
+  $('#profileAppearanceBtn').addEventListener('click',openThemeSettings);
+  $('#profileAppearanceBtn2').addEventListener('click',openThemeSettings);
+  $('#profileGoLibrary').addEventListener('click',()=>{window.location.href='/manga#library';});
+  $('#profileExportBtn').addEventListener('click',()=>{
+    const snapshot={
+      app:'Hekomi',formatVersion:1,exportedAt:new Date().toISOString(),
+      profile:profileData,preferences:mangaPreferences,
+      theme:themePreference,animeList:localAnime,mangaLibrary,savedSources:sources
+    };
+    try{
+      const blob=new Blob([JSON.stringify(snapshot,null,2)],{type:'application/json'});
+      const objectUrl=URL.createObjectURL(blob);
+      const link=document.createElement('a');
+      link.href=objectUrl;link.download='hekomi-personal-data-'+new Date().toISOString().slice(0,10)+'.json';
+      document.body.appendChild(link);link.click();link.remove();
+      setTimeout(()=>URL.revokeObjectURL(objectUrl),1000);
+      $('#profilePrivacyStatus').textContent='Export prepared. Keep the JSON file somewhere private; it contains your personal library.';
+    }catch(error){$('#profilePrivacyStatus').textContent='Export failed: '+(error.message||'Your browser could not create the file.');}
+  });
+  $('#profileResetBtn').addEventListener('click',()=>{
+    if(!window.confirm('Reset your display name, handle, bio, and avatar to the default local profile? Your manga and anime libraries will remain untouched.'))return;
+    profileData={displayName:'Hekomi reader',handle:'reader',bio:'A little corner for the stories that stay with me.',avatarUrl:''};
+    write('hekomi_profile_v1',profileData);
+    syncProfileForms();renderProfileOverview();
+    $('#profilePrivacyStatus').textContent='Profile details reset. Your libraries were not changed.';
+  });
   $('#siteSearchBtn').onclick=searchMangaSites;$('#siteSearchQuery').addEventListener('keydown',e=>{if(e.key==='Enter')searchMangaSites();});
   async function searchMangaSites(){const query=$('#siteSearchQuery').value.trim();if(!query){$('#siteSearchStatus').textContent='Enter a manga title or search phrase.';return;}const btn=$('#siteSearchBtn');btn.disabled=true;btn.textContent='Searching…';$('#siteSearchResults').innerHTML='';$('#siteSearchStatus').textContent='Searching the public web for possible manga sources…';try{const data=await api('/api/search-manga-sites',{method:'POST',body:{query}});$('#siteSearchStatus').textContent=`Found ${data.results.length} possible websites.`;$('#siteSearchResults').innerHTML=data.results.map((r,i)=>`<div class="resultitem"><div class="source-favicon">⌕</div><div class="resulttext"><h3>${esc(r.title)}</h3><p>${esc(r.domain)} · ${esc(r.snippet||'')}</p><div class="resultactions">${r.searchPage?`<button class="mini-btn" data-use-search="${i}">Use this search</button>`:`<button class="mini-btn" data-inspect-search="${i}">Inspect with Hekomi</button><button class="mini-btn" data-save-search="${i}">Save website</button>`}<a class="mini-btn" href="${esc(r.url)}" target="_blank" rel="noreferrer">Open ${r.searchPage?'search':'result'} ↗</a></div></div></div>`).join('');$$('[data-inspect-search]').forEach(b=>b.onclick=()=>{const r=data.results[Number(b.dataset.inspectSearch)];$('#crawlUrl').value=r.url;runInspection();});$$('[data-save-search]').forEach(b=>b.onclick=()=>{const r=data.results[Number(b.dataset.saveSearch)];saveSource(r.url,r.title,'');notify('Website saved. Inspect it to discover manga and chapters.');});$$('[data-use-search]').forEach(b=>b.onclick=()=>window.open(data.results[Number(b.dataset.useSearch)].url,'_blank','noopener,noreferrer'));}catch(e){$('#siteSearchStatus').textContent=e.message;$('#siteSearchStatus').classList.add('error');}finally{btn.disabled=false;btn.textContent='Search websites';}}
   $('#crawlBtn').onclick=runInspection;$('#crawlUrl').addEventListener('keydown',e=>{if(e.key==='Enter')runInspection();});
@@ -1551,7 +1639,7 @@ function mangaFeedCardMarkup(item,index){
       genres:Array.isArray(a.genres)?a.genres:[],releaseStatus:a.releaseStatus||'',
       score:Number(a.score)||0,lastUpdate:a.lastUpdate||''
     };
-    mangaLibrary.unshift(clean);write(key.manga,mangaLibrary);renderMangaLibrary();notify('Added to your manga library.');
+    mangaLibrary.unshift(clean);write(key.manga,mangaLibrary);renderMangaLibrary();if(currentPageFromPath()==='profile')renderProfileOverview();notify('Added to your manga library.');
   }
   function saveSource(url,title,cover){const origin=new URL(url).origin;if(sources.some(s=>s.origin===origin)){notify('That website is already saved.');return;}sources.unshift({id:'source-'+Date.now(),origin,url,title:title||new URL(url).hostname,cover:cover||'',addedAt:new Date().toISOString(),lastChecked:new Date().toISOString()});write(key.sources,sources);renderSources();notify('Website saved.');}
   function renderSources(){const root=$('#sourceList');if(!sources.length){root.innerHTML='<div class="empty"><strong>No saved websites yet</strong>Inspect a permitted website, then save it as a source.</div>';return;}root.innerHTML=sources.map(s=>`<div class="source-card"><div class="source-row"><div class="source-favicon">⌘</div><div style="min-width:0;flex:1"><h3>${esc(s.title||new URL(s.origin).hostname)}</h3><div class="source-url">${esc(s.origin)}</div><div class="small muted" style="margin-top:6px">Saved ${new Date(s.addedAt).toLocaleDateString()}</div></div></div><div class="source-tools"><button class="mini-btn" data-inspect-source="${esc(s.url)}">Inspect again</button><button class="mini-btn" data-remove-source="${esc(s.id)}">Remove</button><a class="mini-btn" target="_blank" rel="noreferrer" href="${esc(s.origin)}">Open ↗</a></div></div>`).join('');$$('[data-inspect-source]').forEach(b=>b.onclick=()=>{showMangaTab('discover');$('#crawlUrl').value=b.dataset.inspectSource;runInspection();});$$('[data-remove-source]').forEach(b=>b.onclick=()=>{sources=sources.filter(s=>s.id!==b.dataset.removeSource);write(key.sources,sources);renderSources();notify('Website removed.');});}
