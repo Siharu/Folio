@@ -478,7 +478,8 @@ async function loadMangaScrapeDiscovery(provider, feed, force=false) {
       if (successfulBackups.length === 1) sourceFallback = successfulBackups[0];
       else if (successfulBackups.length > 1) sourceFallback = 'multiple';
     }
-  } else {    const providers = provider === 'all' ? Object.keys(MANGASCRAPE_SOURCES) : [provider];    const providers = provider === 'all' ? Object.keys(MANGASCRAPE_SOURCES) : [provider];
+  } else {
+    const providers = provider === 'all' ? Object.keys(MANGASCRAPE_SOURCES) : [provider];
     const settled = await Promise.allSettled(providers.map(key => getMangaScrapeProviderFeed(key, feed)));
     settled.forEach((item,index) => {
       if (item.status === 'fulfilled') results.push(...item.value);
@@ -501,7 +502,7 @@ async function loadMangaScrapeDiscovery(provider, feed, force=false) {
   let fallback = false;
 
   // AniList remains available only when the user explicitly selects all sources.
-  // A Manga Hook-only feed uses GoManga as its API backup and never substitutes AniList.
+  // The Manga Hook preference tries the other providers before falling back; AniList is still only used for explicit All sources.
   if (!unique.length && provider === 'all') {
     try {
       const catalog = await getPublicCatalog();
