@@ -392,27 +392,11 @@ async function getMangaScrapeProviderFeed(provider, feed) {
     raw = Array.isArray(payload.mangaList) ? payload.mangaList : [];
     if (!raw.length) throw new Error('Manga Hook /api/mangaList returned no titles.');
   } else if (provider === 'gomanga') {
-    let payload;
-    if (feed === 'latest') {
-      payload = await gomangaApiRequest('/api/manga-list/1');
-      raw = Array.isArray(payload.data) ? payload.data : (Array.isArray(payload.manga) ? payload.manga : []);
-    } else {
-      let lastError;
-      for (const route of ['/api/genre/top%20read/1','/api/genre/top-read/1']) {
-        try {
-          payload = await gomangaApiRequest(route);
-          raw = Array.isArray(payload.manga) ? payload.manga : (Array.isArray(payload.data) ? payload.data : []);
-          if (raw.length) break;
-          lastError = new Error('GoManga returned no titles for its Top read feed.');
-        } catch (error) { lastError = error; }
-      }
-      if (!raw.length) {
-        if (lastError) throw lastError;
-        payload = await gomangaApiRequest('/api/manga-list/1');
-        raw = Array.isArray(payload.data) ? payload.data : (Array.isArray(payload.manga) ? payload.manga : []);
-      }
-    }
-    if (!raw.length) throw new Error('GoManga returned no titles.');
+    const payload = feed === 'latest'
+      ? await gomangaApiRequest('/api/manga-list/1')
+      : await gomangaApiRequest('/api/genre/top%20read/1');
+    raw = Array.isArray(payload.data) ? payload.data : (Array.isArray(payload.manga) ? payload.manga : []);
+    if (!raw.length) throw new Error('GoManga returned no titles for its ' + (feed === 'latest' ? 'latest' : 'Top read') + ' feed.');
   }
   const normalized = (Array.isArray(raw) ? raw : [])
     .slice(0, 24)
