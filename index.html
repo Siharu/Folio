@@ -879,6 +879,8 @@ h1,h2,h3,.workspace-head h1,.catalog-heading h2,.showcase-copy h2{font-family:va
 
   renderLocalAnime();renderMangaLibrary();renderSources();loadPublicCatalog();
 })();
+</script>
+
 <script>
 /* Local inline SVG icon set and range progress; no external icon dependency. */
 (function(){
@@ -900,7 +902,6 @@ document.querySelectorAll('.showcase-arrow,.rail-arrow').forEach(el=>{const dir=
 function rangeProgress(el){const min=Number(el.min||0),max=Number(el.max||100),v=Number(el.value||0);el.style.setProperty('--range-progress',Math.max(0,Math.min(100,(v-min)/(max-min||1)*100))+'%');}
 document.querySelectorAll('input[type="range"]').forEach(el=>{rangeProgress(el);el.addEventListener('input',()=>rangeProgress(el));});
 })();
-</script>
 </script>
 
 <script>
