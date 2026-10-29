@@ -745,9 +745,56 @@ body[data-page="manga"] #mangaView{display:block!important}
   const routePathForMode={home:'/',discover:'/discover',mal:'/anime',manga:'/manga'};
   function currentPageFromPath(){let p=window.location.pathname;while(p.length>1&&p.endsWith('/'))p=p.slice(0,-1);return ({'/':'home','/discover':'discover','/anime':'mal','/manga':'manga'})[p]||'home';}
   function setBrandMode(mode){const mark=$('.brandmark');if(!mark)return;const visualMode=mode==='manga'?'manga':mode==='anime'?'anime':'dual';mark.dataset.media=visualMode;mark.setAttribute('aria-label',visualMode==='dual'?'Hekomi — One Identity, Two Worlds':visualMode==='manga'?'Hekomi Manga':'Hekomi Anime');}
-  function renderPage(page){const visualPage=page==='mal'?'anime':page==='manga'?'manga':page;document.body.dataset.page=visualPage;setBrandMode(page==='manga'?'manga':page==='mal'?'anime':'dual');$('#landing').classList.toggle('hidden',!['home','discover'].includes(page));$('#malView').classList.toggle('hidden',page!=='mal');$('#mangaView').classList.toggle('hidden',page!=='manga');$('#app').classList.toggle('manga-mode',page==='manga');const activePath=routePathForMode[page]||'/';$$('.primary-nav [data-route-link]').forEach(a=>{if(a.getAttribute('href')===activePath)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});if(page==='mal'){renderLocalAnime();if(remoteReady)renderRemoteList();}if(page==='manga'){renderMangaLibrary();renderSources();}}
+  function animateBrandMode(mode){
+    const mark=$('.brandmark');
+    const target=mode==='manga'?'manga':mode==='anime'?'anime':'dual';
+    if(!mark)return Promise.resolve();
+    const current=mark.dataset.media||'dual';
+    const layers={dual:$('.mark-dual'),anime:$('.mark-anime'),manga:$('.mark-manga')};
+    const outgoing=layers[current],incoming=layers[target];
+    if(current===target){setBrandMode(target);return Promise.resolve();}
+    if(!outgoing||!incoming||typeof outgoing.animate!=='function'){setBrandMode(target);return Promise.resolve();}
+    // Explicit Web Animations API avoids CSS reduced-motion / transition cascade rules
+    // accidentally collapsing this small brand transition to an instant state change.
+    const reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const duration=reduced?220:560;
+    const easing='cubic-bezier(.22,1,.36,1)';
+    const exitAngle=current==='dual'?-72:72;
+    const enterAngle=target==='dual'?-72:72;
+    const running=[outgoing,incoming];
+    running.forEach(el=>{if(el.getAnimations)el.getAnimations().forEach(a=>a.cancel());});
+    setBrandMode(target);
+    const leave=outgoing.animate([
+      {opacity:1,transform:'rotateY(0deg) scale(1)',filter:'blur(0px)'},
+      {opacity:0,transform:'rotateY('+exitAngle+'deg) scale(.78)',filter:'blur(2px)'}
+    ],{duration,easing,fill:'both'});
+    const arrive=incoming.animate([
+      {opacity:0,transform:'rotateY('+enterAngle+'deg) scale(.78)',filter:'blur(2px)'},
+      {opacity:1,transform:'rotateY(0deg) scale(1)',filter:'blur(0px)'}
+    ],{duration,easing,fill:'both'});
+    return Promise.all([leave.finished,arrive.finished]).then(()=>{
+      leave.cancel();arrive.cancel();
+      // The data-media CSS state now owns the settled appearance.
+    }).catch(()=>{});
+  }
+  function renderPage(page){const visualPage=page==='mal'?'anime':page==='manga'?'manga':page;document.body.dataset.page=visualPage;setBrandMode(page==='manga'?'manga':page==='mal'?'anime':'dual');$('#landing').classList.toggle('hidden',!['home','discover'].includes(page));$('#malView').classList.toggle('hidden',page!=='mal');$('#mangaView').classList.toggle('hidden',page!=='manga');$('#app').classList.toggle('manga-mode',page==='manga');const activePath=routePathForMode[page]||'/';$('.primary-nav [data-route-link]').forEach(a=>{if(a.getAttribute('href')===activePath)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});if(page==='mal'){renderLocalAnime();if(remoteReady)renderRemoteList();}if(page==='manga'){renderMangaLibrary();renderSources();}}
   let modeNavigationPending=false;
-  function setMode(mode){const page=mode==='mal'?'mal':mode==='manga'?'manga':'home';const path=routePathForMode[page];if(window.location.pathname!==path){if(modeNavigationPending)return;modeNavigationPending=true;setBrandMode(page==='manga'?'manga':page==='mal'?'anime':'dual');const reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches;window.setTimeout(()=>{window.location.href=path;},reduced?0:370);return;}renderPage(page);window.scrollTo({top:0,behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});}
+  function setMode(mode){
+    const page=mode==='mal'?'mal':mode==='manga'?'manga':'home';
+    const path=routePathForMode[page];
+    const target=page==='manga'?'manga':page==='mal'?'anime':'dual';
+    const destinationIsDifferent=window.location.pathname!==path;
+    if(destinationIsDifferent){
+      if(modeNavigationPending)return;
+      modeNavigationPending=true;
+      animateBrandMode(target).then(()=>{window.location.href=path;});
+      return;
+    }
+    if($('.brandmark')?.dataset.media!==target){
+      animateBrandMode(target).then(()=>renderPage(page));
+    }else renderPage(page);
+    window.scrollTo({top:0,behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
+  }
   document.addEventListener('click',event=>{const a=event.target.closest('a[href]');if(!a||event.defaultPrevented||a.target==='_blank'||event.metaKey||event.ctrlKey||event.shiftKey||event.altKey)return;let destination;try{destination=new URL(a.href,window.location.href);}catch{return;}if(destination.origin!==window.location.origin)return;const route=(destination.pathname!=='/'&&destination.pathname.endsWith('/')?destination.pathname.slice(0,-1):destination.pathname)||'/';if(route==='/anime'||route==='/manga'){event.preventDefault();setMode(route==='/manga'?'manga':'mal');}});
   $$('[data-enter]').forEach(el=>{el.addEventListener('click',()=>setMode(el.dataset.enter));el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();setMode(el.dataset.enter);}})});$('#headerHome').addEventListener('click',()=>setMode(null));$('#themeSettingsBtn').addEventListener('click',openThemeSettings);
   renderPage(currentPageFromPath());
