@@ -5,12 +5,30 @@ import path from 'node:path';
 import dns from 'node:dns/promises';
 import net from 'node:net';
 import { fileURLToPath } from 'node:url';
+import { createRequire } from 'node:module';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = Number(process.env.PORT || 4173);
 const USER_AGENT = 'Hekomi/1.0 (personal manga discovery; respects robots.txt)';
 const MIME = { '.html':'text/html; charset=utf-8', '.css':'text/css; charset=utf-8', '.js':'text/javascript; charset=utf-8', '.json':'application/json; charset=utf-8', '.svg':'image/svg+xml', '.ico':'image/png', '.webmanifest':'application/manifest+json; charset=utf-8' };
 const rate = new Map();
+const require = createRequire(import.meta.url);
+const axios = require('axios');
+const { Batoto, MangaBuddy, Mangakakalot } = require('mangascrape');
+axios.defaults.headers.common['User-Agent'] = USER_AGENT;
+axios.defaults.headers.common['Accept'] = 'text/html,application/xhtml+xml;q=0.9,*/*;q=0.5';
+const mangaScrapeAdapters = {
+  batoto: new Batoto({ baseUrl:'https://fto.to', cache:false }),
+  mangabuddy: new MangaBuddy({ cache:false }),
+  mangakakalot: new Mangakakalot({ cache:false })
+};
+const mangaScrapeRobotsCache = new Map();
+const mangaScrapeLastRequest = new Map();
+const MANGASCRAPE_SOURCES = {
+  batoto: { label:'Bato network', origin:'https://fto.to', allowedHosts:['fto.to'] },
+  mangabuddy: { label:'MangaBuddy', origin:'https://mangabuddy.com', allowedHosts:['mangabuddy.com'] },
+  mangakakalot: { label:'Mangakakalot', origin:'https://mangakakalot.com', allowedHosts:['mangakakalot.com','chapmanganato.to'] }
+};
 
 function send(res, status, payload, headers={}) {
   const body = typeof payload === 'string' ? payload : JSON.stringify(payload);
@@ -100,6 +118,159 @@ function robotsAllowed(url, robotsText) {
   const matches=best.rules.filter(r=>pathToTest.startsWith(r.path)).sort((a,b)=>b.path.length-a.path.length);
   if(!matches.length) return {allowed:true, delay:best.delay||0};
   return {allowed:matches[0].allow, delay:best.delay||0};
+}
+function mangaScrapeProvider(raw) {
+  const key = String(raw || '').trim().toLowerCase();
+  const source = MANGASCRAPE_SOURCES[key];
+  const adapter = mangaScrapeAdapters[key];
+  if (!source || !adapter) throw new Error('Choose one of the supported MangaScrape sources.');
+  return { key, source, adapter };
+}
+function mangaScrapeQuery(raw) {
+  const query = String(raw || '').normalize('NFKC')
+    .replace(/[\u0000-\u001f\u007f]/g, ' ')
+    .replace(/[?#&=]/g, ' ')
+    .replace(/\s+/g, ' ').trim().slice(0, 100);
+  if (query.length < 2) throw new Error('Enter a manga title with at least two characters.');
+  return query;
+}
+function mangaScrapeId(raw) {
+  const id = String(raw || '').trim();
+  if (!id || id.length > 180 || !/^[\p{L}\p{N}_-]+$/u.test(id)) {
+    throw new Error('The source returned an invalid manga ID.');
+  }
+  return id;
+}
+function mangaScrapeSourceKind(provider, raw) {
+  if (provider !== 'mangakakalot') return '';
+  return raw === 'chapmanganato' ? 'chapmanganato' : 'mangakakalot';
+}
+function mangaScrapeSearchUrl(provider, query) {
+  if (provider === 'batoto') return 'https://fto.to/v3x-search?word=' + encodeURIComponent(query);
+  if (provider === 'mangabuddy') return 'https://mangabuddy.com/search?q=' + encodeURIComponent(query);
+  if (provider === 'mangakakalot') {
+    const pathQuery = query.replace(/[^a-zA-Z0-9]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '');
+    if (!pathQuery) throw new Error('Use an English or numeric title for this provider search.');
+    return 'https://mangakakalot.com/search/story/' + pathQuery;
+  }
+  throw new Error('This provider does not have a working search adapter.');
+}
+function mangaScrapeTitleUrl(provider, id, rawSourceKind) {
+  const safeId = mangaScrapeId(id);
+  const sourceKind = mangaScrapeSourceKind(provider, rawSourceKind);
+  if (provider === 'batoto') return 'https://fto.to/title/' + safeId;
+  if (provider === 'mangabuddy') return 'https://mangabuddy.com/' + safeId;
+  if (sourceKind === 'chapmanganato') return 'https://chapmanganato.to/manga-' + safeId;
+  if (provider === 'mangakakalot') return 'https://mangakakalot.com/manga/' + safeId;
+  throw new Error('Choose a supported MangaScrape source.');
+}
+function mangaScrapeChapterUrl(provider, mangaId, chapterId, rawSourceKind) {
+  const safeMangaId = mangaScrapeId(mangaId);
+  const safeChapterId = mangaScrapeId(chapterId);
+  const sourceKind = mangaScrapeSourceKind(provider, rawSourceKind);
+  if (provider === 'batoto') return 'https://fto.to/title/' + safeMangaId + '/' + safeChapterId;
+  if (provider === 'mangabuddy') return 'https://mangabuddy.com/' + safeMangaId + '/' + safeChapterId;
+  if (sourceKind === 'chapmanganato') return 'https://chapmanganato.to/manga-' + safeMangaId + '/' + safeChapterId;
+  if (provider === 'mangakakalot') return 'https://mangakakalot.com/chapter/' + safeMangaId + '/' + safeChapterId;
+  throw new Error('This provider does not expose a supported chapter URL.');
+}
+async function assertMangaScrapeAllowed(rawUrl) {
+  const url = await validatePublicUrl(rawUrl);
+  const now = Date.now();
+  const last = mangaScrapeLastRequest.get(url.origin) || 0;
+  if (now - last < 1400) throw new Error('Please wait a moment before requesting another page from this source.');
+  let cached = mangaScrapeRobotsCache.get(url.origin);
+  if (!cached || now - cached.checkedAt > 10 * 60 * 1000) {
+    let robots = '';
+    try {
+      const response = await fetch(new URL('/robots.txt', url.origin), {
+        redirect:'manual', signal:AbortSignal.timeout(5000),
+        headers:{'User-Agent':USER_AGENT,'Accept':'text/plain'}
+      });
+      if (response.ok) robots = (await response.text()).slice(0, 200000);
+      else if (response.status !== 404 && response.status !== 410) {
+        throw new Error('robots.txt could not be checked (HTTP ' + response.status + '); this source was not requested.');
+      }
+      cached = { text:robots, checkedAt:Date.now() };
+      mangaScrapeRobotsCache.set(url.origin, cached);
+    } catch (error) {
+      if (error && error.message && error.message.includes('robots.txt could not be checked')) throw error;
+      throw new Error('Could not verify robots.txt for this source, so the request was stopped.');
+    }
+  }
+  const rule = robotsAllowed(url, cached.text);
+  if (!rule.allowed) throw new Error('This page is disallowed by the source robots.txt rules.');
+  if (rule.delay > 0) await new Promise(resolve => setTimeout(resolve, Math.min(rule.delay, 10) * 1000));
+  mangaScrapeLastRequest.set(url.origin, Date.now());
+  return url;
+}
+function mangaScrapeSafeAsset(raw) {
+  try {
+    const url = new URL(String(raw || ''));
+    return ['https:','http:'].includes(url.protocol) && !url.username && !url.password ? url.href : '';
+  } catch { return ''; }
+}
+function mangaScrapeTextList(value) {
+  if (!Array.isArray(value)) return [];
+  return value.map(item => typeof item === 'string' ? item : String(item && item.name || '')).map(item => item.trim()).filter(Boolean).slice(0, 30);
+}
+function mangaScrapeTitleText(value) {
+  if (typeof value === 'string') return value.trim();
+  if (value && typeof value === 'object') return String(value.original || value.english || value.romaji || value.title || '').trim();
+  return '';
+}
+function mangaScrapeNormalizeSearch(provider, item) {
+  if (!item || typeof item !== 'object') return null;
+  let id;
+  try { id = mangaScrapeId(item.id); } catch { return null; }
+  const sourceKind = mangaScrapeSourceKind(provider, item.source);
+  const title = mangaScrapeTitleText(item.title) || 'Untitled manga';
+  const chapter = item.lastChapter || (Array.isArray(item.lastChapters) ? item.lastChapters[0] : null) || {};
+  return {
+    id, provider, sourceKind, title,
+    url: mangaScrapeTitleUrl(provider, id, sourceKind),
+    cover: mangaScrapeSafeAsset(item.poster || item.cover || item.image || ''),
+    description: String(item.description || item.summary || '').replace(/\s+/g, ' ').trim().slice(0, 1400),
+    genres: mangaScrapeTextList(item.genres),
+    authors: mangaScrapeTextList(item.authors),
+    status: String(item.status || ''),
+    score: Number(item.score || item.rating) || 0,
+    mature: Boolean(item.mature),
+    lastUpdate: String(item.lastUpdate || item.update || ''),
+    latestChapter: String(chapter.title || chapter.name || ''),
+    latestChapterId: String(chapter.id || ''),
+    source: String(provider)
+  };
+}
+function mangaScrapeNormalizeDetails(provider, id, rawSourceKind, item) {
+  if (!item || typeof item !== 'object') throw new Error('The provider did not return manga details.');
+  const safeId = mangaScrapeId(item.id || id);
+  const sourceKind = mangaScrapeSourceKind(provider, rawSourceKind || item.source);
+  const title = mangaScrapeTitleText(item.title) || 'Untitled manga';
+  const chapters = (Array.isArray(item.chapters) ? item.chapters : []).slice(0, 300).map(chapter => {
+    let chapterId = '';
+    try { chapterId = mangaScrapeId(chapter && chapter.id); } catch { return null; }
+    return {
+      id: chapterId,
+      title: String(chapter.title || chapter.name || ('Chapter ' + chapterId)).replace(/\s+/g, ' ').trim().slice(0, 240),
+      url: mangaScrapeChapterUrl(provider, safeId, chapterId, sourceKind),
+      update: String(chapter.update || chapter.date || (chapter.timestamp ? new Date(Number(chapter.timestamp)).toISOString() : '') || ''),
+      views: String(chapter.views || '')
+    };
+  }).filter(Boolean);
+  return {
+    id: safeId, provider, sourceKind, providerLabel: MANGASCRAPE_SOURCES[provider].label,
+    title, url: mangaScrapeTitleUrl(provider, safeId, sourceKind),
+    cover: mangaScrapeSafeAsset(item.poster || item.cover || item.image || ''),
+    description: String(item.description || item.summary || '').replace(/\s+/g, ' ').trim().slice(0, 12000),
+    genres: mangaScrapeTextList(item.genres),
+    authors: mangaScrapeTextList(item.authors),
+    artists: mangaScrapeTextList(item.artists),
+    status: String(item.status || ''),
+    score: Number((item.rating && item.rating.average) || item.rating || item.score) || 0,
+    lastUpdate: String(item.lastUpdate || item.update || ''),
+    chapters
+  };
 }
 async function inspectWebsite(rawUrl) {
   const url=await validatePublicUrl(rawUrl);
@@ -708,6 +879,54 @@ const server=http.createServer(async(req,res)=>{
     }
   }
 
+if(req.method==='GET' && url.pathname==='/api/mangascrape/providers') {
+    return send(res,200,{providers:Object.entries(MANGASCRAPE_SOURCES).map(([id,source])=>({id,label:source.label,origin:source.origin}))});
+  }
+  if(req.method==='POST' && url.pathname==='/api/mangascrape/search') {
+    try {
+      const data=await readBody(req);
+      const selected=mangaScrapeProvider(data.provider);
+      const query=mangaScrapeQuery(data.query);
+      const target=mangaScrapeSearchUrl(selected.key,query);
+      await assertMangaScrapeAllowed(target);
+      let raw;
+      if(selected.key==='batoto') {
+        const result=await selected.adapter.search({query});
+        raw=result && Array.isArray(result.results)?result.results:[];
+      } else if(selected.key==='mangabuddy') {
+        raw=await selected.adapter.search(encodeURIComponent(query));
+      } else {
+        raw=await selected.adapter.search(query);
+      }
+      const items=Array.isArray(raw)?raw:[];
+      const results=items.slice(0,30).map(item=>mangaScrapeNormalizeSearch(selected.key,item)).filter(Boolean);
+      return send(res,200,{provider:selected.key,providerLabel:selected.source.label,query,results,notice:'Results are metadata from the selected source. Open chapters on their original website; availability depends on the source rules and uptime.'});
+    } catch(error) {
+      const message=String(error && error.message || 'Manga source search failed.');
+      const status=/wait a moment/i.test(message)?429:/temporarily unavailable|could not verify robots|robots\.txt could not be checked/i.test(message)?503:400;
+      return send(res,status,{error:message});
+    }
+  }
+  if(req.method==='POST' && url.pathname==='/api/mangascrape/details') {
+    try {
+      const data=await readBody(req);
+      const selected=mangaScrapeProvider(data.provider);
+      const id=mangaScrapeId(data.id);
+      const sourceKind=mangaScrapeSourceKind(selected.key,data.sourceKind);
+      const target=mangaScrapeTitleUrl(selected.key,id,sourceKind);
+      await assertMangaScrapeAllowed(target);
+      let item;
+      if(selected.key==='batoto') item=await selected.adapter.id(id);
+      else if(selected.key==='mangabuddy') item=await selected.adapter.id(id);
+      else item=await selected.adapter.id(id,sourceKind);
+      const detail=mangaScrapeNormalizeDetails(selected.key,id,sourceKind,item);
+      return send(res,200,detail);
+    } catch(error) {
+      const message=String(error && error.message || 'Manga details could not be loaded.');
+      const status=/wait a moment/i.test(message)?429:/temporarily unavailable|could not verify robots|robots\.txt could not be checked/i.test(message)?503:400;
+      return send(res,status,{error:message});
+    }
+  }
   if(req.method==='POST' && url.pathname==='/api/search-manga-sites') {
     try { const data=await readBody(req); return send(res,200,await searchMangaWebsites(data.query)); } catch(e) { return send(res,400,{error:e.message||'Manga website search failed.'}); }
   }
