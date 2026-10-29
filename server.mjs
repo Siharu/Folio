@@ -1021,7 +1021,7 @@ if(req.method==='POST' && url.pathname==='/api/mangascrape/discover') {
   if(req.method!=='GET' && req.method!=='HEAD') return send(res,405,{error:'Method not allowed.'});
   const normalizedPath=decodeURIComponent(url.pathname).replace(/\/+$/,'')||'/';
   const appPath=normalizedPath==='/index.html'?'/':normalizedPath;
-  const pageRoutes=new Set(['/','/discover','/anime','/manga']);
+  const pageRoutes=new Set(['/','/discover','/anime','/manga','/profile']);
   const isAppPage=pageRoutes.has(appPath);
   let filePath=path.resolve(__dirname, '.'+(isAppPage?'/index.html':normalizedPath));
   if(!filePath.startsWith(__dirname+path.sep) && filePath!==path.join(__dirname,'index.html')) return send(res,403,'Forbidden');
@@ -1035,7 +1035,8 @@ if(req.method==='POST' && url.pathname==='/api/mangascrape/discover') {
         home:'Hekomi — Anime &amp; Manga Discovery, Tracking &amp; Reading',
         discover:'Discover Anime &amp; Manga — Hekomi',
         anime:'Anime List &amp; MyAnimeList Tracker — Hekomi',
-        manga:'Manga Library &amp; Website Discovery — Hekomi'
+        manga:'Manga Library &amp; Website Discovery — Hekomi',
+        profile:'Your Hekomi Profile &amp; Settings'
       };
       const canonicalPath=appPath==='/'?'/':appPath;
       body=Buffer.from(data.toString('utf8')
