@@ -194,7 +194,17 @@ async function mangaHookApiRequest(path) {
   if (typeof path !== 'string' || !path.startsWith('/api/')) throw new Error('Invalid Manga Hook API path.');
   const target = new URL(path, MANGAHOOK_API_BASE);
   if (target.origin !== MANGAHOOK_API_BASE) throw new Error('Invalid Manga Hook API host.');
-  await assertMangaScrapeAllowed(target.href);
+
+  // Manga Hook is a documented public JSON API, not a page Hekomi is crawling.
+  // Validate the fixed public endpoint and throttle requests, but do not reject API
+  // calls just because the separate robots.txt URL is unavailable/redirected at Vercel.
+  await validatePublicUrl(target.href);
+  const now = Date.now();
+  const last = mangaScrapeLastRequest.get(target.origin) || 0;
+  const waitMs = 1400 - (now - last);
+  if (waitMs > 0) await new Promise(resolve => setTimeout(resolve, waitMs));
+  mangaScrapeLastRequest.set(target.origin, Date.now());
+
   let response;
   try {
     response = await fetch(target.href, {
