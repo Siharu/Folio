@@ -991,7 +991,7 @@ async function malRequest(req, res, pathname, query) {
   if (pathname === '/search') apiPath='/anime?q='+encodeURIComponent(query.get('q')||'')+'&limit=10&fields='+animeFields;
   if (pathname === '/details') { const id=Number(query.get('id')); if(!Number.isSafeInteger(id)||id<1)return send(res,400,{error:'A valid anime ID is required.'}); apiPath='/anime/'+id+'?fields='+animeFields; }
   if (pathname === '/me') apiPath='/users/@me';
-  if (pathname === '/list') apiPath='/users/@me/animelist?limit=100&fields=list_status,alternative_titles,synopsis,mean,rank,popularity,num_list_users,num_scoring_users,genres,num_episodes,media_type,main_picture,start_date,end_date,status,start_season,broadcast,source,average_episode_duration,rating,studios,updated_at';
+  if (pathname === '/list') apiPath='/users/@me/animelist?limit=100&fields=list_status,updated_at,alternative_titles,synopsis,mean,rank,popularity,num_list_users,num_scoring_users,genres,num_episodes,media_type,main_picture,start_date,end_date,status,start_season,broadcast,source,average_episode_duration,rating,studios,updated_at';
   if (pathname === '/update') {
     const data = await readBody(req);
     if (!Number.isInteger(Number(data.id))) return send(res,400,{error:'A valid anime ID is required.'});
@@ -1024,6 +1024,7 @@ const seasonCatalogCache = new Map();
 const CATALOG_SEARCH_QUERY = 'query HekomiCatalogSearch($search:String!,$page:Int!) { anime: Page(page:$page,perPage:24) { pageInfo { currentPage hasNextPage } media(search:$search,type:ANIME,sort:[SEARCH_MATCH],isAdult:false) { ' + MEDIA_CATALOG_FIELDS + ' } } manga: Page(page:$page,perPage:24) { pageInfo { currentPage hasNextPage } media(search:$search,type:MANGA,sort:[SEARCH_MATCH],isAdult:false) { ' + MEDIA_CATALOG_FIELDS + ' } } }';
 const MEDIA_DETAIL_QUERY = 'query HekomiMediaDetail($id:Int!) { Media(id:$id) { ' + MEDIA_CATALOG_FIELDS + ' } }';
 const MEDIA_MAL_DETAIL_QUERY = 'query HekomiMalMediaDetail($idMal:Int!) { Media(idMal:$idMal,type:ANIME) { ' + MEDIA_CATALOG_FIELDS + ' } }';
+const MEDIA_RECOMMENDATIONS_QUERY = 'query HekomiRecommendations($idMal:Int!) { Media(idMal:$idMal,type:ANIME) { recommendations(page:1,perPage:20,sort:[RATING_DESC]) { nodes { rating mediaRecommendation { ' + MEDIA_CATALOG_FIELDS + ' } } } } }';
 const publicCatalogCache = { data:null, expiresAt:0 };
 const publicCatalogSearchCache = new Map();
 const mediaDetailCache = new Map();
@@ -1316,6 +1317,29 @@ const server=http.createServer(async(req,res)=>{
     if(!Number.isSafeInteger(idMal)||idMal<1)return send(res,400,{error:'Provide a valid MyAnimeList ID.'});
     try { const media=await getMediaByMalId(idMal);if(!media)return send(res,404,{error:'No AniList airing record is linked to this MAL title.'});return send(res,200,media,{'Cache-Control':'public, max-age=600, stale-while-revalidate=3600'}); }
     catch(e) { return send(res,502,{error:'Airing information is temporarily unavailable. '+(e.message||'')}); }
+  }
+  if(req.method==='GET' && url.pathname==='/api/catalog/recommendations') {
+    const ids=[...new Set(String(url.searchParams.get('ids')||'').split(',').map(Number).filter(id=>Number.isSafeInteger(id)&&id>0))].slice(0,6);
+    const listIds=new Set(String(url.searchParams.get('list')||'').split(',').map(Number).filter(id=>Number.isSafeInteger(id)&&id>0));
+    if(!ids.length)return send(res,400,{error:'Sync your anime list to generate recommendations.'});
+    try {
+      const responses=await Promise.all(ids.map(async id=>{
+        const payload=await requestAniList(MEDIA_RECOMMENDATIONS_QUERY,{idMal:id});
+        return {id,items:payload.Media&&payload.Media.recommendations&&payload.Media.recommendations.nodes||[]};
+      }));
+      const merged=new Map();
+      for(const group of responses)for(const entry of group.items){
+        const media=packMedia(entry&&entry.mediaRecommendation);if(!media||!media.idMal||ids.includes(Number(media.idMal)))continue;
+        const key=String(media.idMal),record=merged.get(key)||{media,ratings:[],seeds:[]};
+        record.ratings.push(Number(entry.rating)||0);record.seeds.push(group.id);merged.set(key,record);
+      }
+      const results=[...merged.values()].map(record=>{
+        const rating=record.ratings.length?record.ratings.reduce((a,b)=>a+b,0)/record.ratings.length:0;
+        const score=Math.min(99,Math.round(48+rating/10+Math.min(3,record.seeds.length-1)*7));
+        return {...record.media,similarity:score,matchedSeeds:record.seeds.length,inList:listIds.has(Number(record.media.idMal))};
+      }).sort((a,b)=>b.similarity-a.similarity||b.popularity-a.popularity);
+      return send(res,200,{recommendations:results,seedCount:ids.length,source:'AniList community recommendations',updatedAt:new Date().toISOString()},{'Cache-Control':'private, max-age=300'});
+    } catch(e) { return send(res,502,{error:'Recommendations could not be generated right now. '+(e.message||'')}); }
   }
   if(req.method==='GET' && url.pathname==='/api/catalog/season') {
     try { return send(res,200,await getSeasonCatalog(url.searchParams.get('season'),url.searchParams.get('year')) ,{'Cache-Control':'public, max-age=1800'}); }
