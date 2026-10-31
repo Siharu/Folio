@@ -554,7 +554,7 @@ body[data-page="manga"] #mangaView{display:block!important}
 
 <section class="catalog-discovery" id="discoverCatalog" aria-labelledby="catalogTitle">
   <div class="catalog-heading"><div><span class="eyebrow">THE HEKOMI CATALOG</span><h2 id="catalogTitle">Find your next world.</h2><p>Explore real anime and manga titles with cover art, synopses, genres, scores, and dedicated details pages.</p></div>
-    <form id="catalogSearchForm" class="catalog-search" role="search" aria-label="Search anime and manga catalog"><label class="sr-only" for="catalogSearchInput">Search anime and manga</label><input id="catalogSearchInput" class="input" type="search" minlength="2" maxlength="100" placeholder="Search a title…" autocomplete="off" list="catalogSearchSuggestions"><datalist id="catalogSearchSuggestions"></datalist><button class="btn-primary" type="submit" id="catalogSearchButton">Search</button></form>
+    <form id="catalogSearchForm" class="catalog-search" role="search" aria-label="Search anime and manga catalog"><label class="sr-only" for="catalogSearchInput">Search anime and manga</label><input id="catalogSearchInput" class="input" type="search" maxlength="100" placeholder="Optional title — browse by filters without one…" autocomplete="off" list="catalogSearchSuggestions"><datalist id="catalogSearchSuggestions"></datalist><button class="btn-primary" type="submit" id="catalogSearchButton">Search</button></form>
   </div>
   <div id="catalogSearchStatus" class="small muted catalog-status" role="status" aria-live="polite"></div>
   <section class="advanced-search" id="advancedCatalogFilters" aria-label="Advanced catalog filters">
@@ -569,7 +569,7 @@ body[data-page="manga"] #mangaView{display:block!important}
         <label class="advanced-field"><span>Sort results</span><select id="filterSort" class="input"><option value="match">Best match</option><option value="score">Highest score</option><option value="popular">Most popular</option><option value="title">Title A–Z</option><option value="newest">Newest first</option></select></label>
         <label class="advanced-field advanced-score-field"><span>Minimum score <strong id="filterScoreValue">0/10</strong></span><input id="filterMinScore" type="range" min="0" max="10" step="0.5" value="0" aria-label="Minimum score out of ten"><small>Hide titles rated below your threshold</small></label>
       </div>
-      <div id="genreQuickChips" class="genre-quick-chips" aria-label="Quick genre filters"></div><div class="advanced-filter-actions"><span id="filterResultCount" class="small muted">Search a title to use filters.</span><button type="button" class="btn-secondary" id="clearCatalogFilters">Clear filters</button></div>
+      <div id="genreQuickChips" class="genre-quick-chips" aria-label="Quick genre filters"></div><div class="advanced-filter-actions"><span id="filterResultCount" class="small muted">Choose filters or discover popular titles without a title.</span><div class="head-actions"><button type="button" class="btn-primary" id="catalogDiscoverButton">Discover titles ↗</button><button type="button" class="btn-secondary" id="clearCatalogFilters">Clear filters</button></div></div>
     </div>
   </section>
   <div id="catalogSearchResults" class="catalog-grid hidden" aria-label="Catalog search results"></div><div id="catalogLoadMoreWrap" class="catalog-load-more hidden"><button type="button" class="btn-secondary" id="catalogLoadMore">Load more results</button></div>
@@ -758,8 +758,22 @@ body[data-page="manga"] #mangaView{display:block!important}
   }
   let lastCatalogSearchItems=[],lastCatalogSearchQuery='',catalogServerPage=1,catalogHasNextPage=false,catalogPageLoading=false;
   const recentCatalogQueries=[];
-  function rememberCatalogQuery(query){const q=String(query||'').trim();if(q.length<2)return;const next=[q,...recentCatalogQueries.filter(item=>item.toLowerCase()!==q.toLowerCase())].slice(0,8);recentCatalogQueries.splice(0,recentCatalogQueries.length,...next);$('#catalogSearchSuggestions').innerHTML=recentCatalogQueries.map(item=>'<option value="'+esc(item)+'"></option>').join('');}
-  const catalogFilterIds=['filterMediaType','filterGenre','filterFormat','filterStatus','filterYear','filterSeason','filterMinScore','filterSort'];const catalogPageSize=12;let catalogVisibleCount=12,catalogFilteredItems=[];
+  const catalogFilterIds=['filterMediaType','filterGenre','filterFormat','filterStatus','filterYear','filterSeason','filterMinScore','filterSort'];
+  const catalogPageSize=12;
+  let catalogVisibleCount=12,catalogFilteredItems=[],catalogDiscoveryTimer=null;
+  const catalogGenreOptions=['Action','Adventure','Comedy','Drama','Ecchi','Fantasy','Horror','Mahou Shoujo','Mecha','Music','Mystery','Psychological','Romance','Sci-Fi','Slice of Life','Sports','Supernatural','Thriller'];
+  function renderCatalogGenreControls(){
+    const select=$('#filterGenre');
+    select.innerHTML='<option value="">All genres</option>'+catalogGenreOptions.map(g=>'<option value="'+esc(g)+'">'+esc(g)+'</option>').join('');
+    $('#genreQuickChips').innerHTML=catalogGenreOptions.map(g=>'<button type="button" class="genre-chip" data-genre-chip="'+esc(g)+'" aria-pressed="false">'+esc(g)+'</button>').join('');
+  }
+  renderCatalogGenreControls();
+  function rememberCatalogQuery(query){
+    const q=String(query||'').trim();if(q.length<2)return;
+    const next=[q,...recentCatalogQueries.filter(item=>item.toLowerCase()!==q.toLowerCase())].slice(0,8);
+    recentCatalogQueries.splice(0,recentCatalogQueries.length,...next);
+    $('#catalogSearchSuggestions').innerHTML=recentCatalogQueries.map(item=>'<option value="'+esc(item)+'"></option>').join('');
+  }
   function catalogFilterValues(){
     return {type:$('#filterMediaType').value,genre:$('#filterGenre').value,format:$('#filterFormat').value,status:$('#filterStatus').value,year:$('#filterYear').value,season:$('#filterSeason').value,score:Number($('#filterMinScore').value||0),sort:$('#filterSort').value};
   }
@@ -769,63 +783,121 @@ body[data-page="manga"] #mangaView{display:block!important}
     const active=[f.type!=='all',!!f.genre,!!f.format,!!f.status,!!f.year,!!f.season,f.score>0,f.sort!=='match'].filter(Boolean).length;
     $('#activeFilterCount').textContent=active+' active';
     $('#filterMinScore').style.setProperty('--range-progress',(f.score/10*100)+'%');
+    $$('[data-genre-chip]').forEach(chip=>chip.setAttribute('aria-pressed',String(chip.dataset.genreChip===f.genre)));
   }
   function renderFilteredCatalogResults(){
     updateCatalogFilterChrome();
-    if(!lastCatalogSearchItems.length){$('#filterResultCount').textContent='Search a title to use filters.';return;}
     const f=catalogFilterValues();
+    if(!lastCatalogSearchItems.length){$('#filterResultCount').textContent='No results loaded yet.';$('#catalogLoadMoreWrap').classList.add('hidden');return;}
     let list=lastCatalogSearchItems.filter(m=>{
       if(f.type!=='all'&&m._catalogKind!==f.type)return false;
       if(f.genre&&!(m.genres||[]).includes(f.genre))return false;
       if(f.format&&m.format!==f.format)return false;
       if(f.status&&m.status!==f.status)return false;
-      if(f.year&&Number(m.seasonYear)!==Number(f.year))return false;
-      const month=Number(m.startDate&&m.startDate.month||0);
-      const season=month>=1&&month<=3?'WINTER':month>=4&&month<=6?'SPRING':month>=7&&month<=9?'SUMMER':month>=10&&month<=12?'FALL':'';
-      if(f.season&&season!==f.season)return false;
+      const releaseYear=Number(m.startDate&&m.startDate.year||m.seasonYear||0);
+      if(f.year&&releaseYear!==Number(f.year))return false;
+      if(f.season){
+        if(m._catalogKind!=='ANIME')return false;
+        const month=Number(m.startDate&&m.startDate.month||0);
+        const season=month>=1&&month<=3?'WINTER':month>=4&&month<=6?'SPRING':month>=7&&month<=9?'SUMMER':month>=10&&month<=12?'FALL':'';
+        if(season!==f.season)return false;
+      }
       if(Number(m.averageScore||0)<f.score*10)return false;
       return true;
     });
     if(f.sort==='score')list.sort((a,b)=>(b.averageScore||0)-(a.averageScore||0));
     else if(f.sort==='popular')list.sort((a,b)=>(b.popularity||0)-(a.popularity||0));
-    else if(f.sort==='title')list.sort((a,b)=>(a.title||'').localeCompare(b.title||''));
-    else if(f.sort==='newest')list.sort((a,b)=>(b.seasonYear||0)-(a.seasonYear||0));
+    else if(f.sort==='title')list.sort((a,b)=>(catalogTitle(a)||'').localeCompare(catalogTitle(b)||''));
+    else if(f.sort==='newest')list.sort((a,b)=>(Number(b.startDate&&b.startDate.year||b.seasonYear)||0)-(Number(a.startDate&&a.startDate.year||a.seasonYear)||0));
     catalogFilteredItems=list;catalogVisibleCount=Math.min(catalogVisibleCount,list.length);
-    $('#filterResultCount').textContent=list.length+' of '+lastCatalogSearchItems.length+' results';
-    $('#catalogSearchResults').innerHTML=list.length?list.slice(0,catalogVisibleCount).map(m=>catalogCardMarkup(m,m._catalogKind)).join(''):'<div class="catalog-loading">No titles match these filters. Try lowering the score or clearing a filter.</div>';
+    $('#filterResultCount').textContent=list.length+' matching titles loaded'+(catalogHasNextPage?' · more available':'');
+    $('#catalogSearchResults').innerHTML=list.length?list.slice(0,catalogVisibleCount).map(m=>catalogCardMarkup(m,m._catalogKind)).join(''):'<div class="catalog-loading">No titles match these filters. Try changing a filter or clearing the score threshold.</div>';
     $('#catalogLoadMoreWrap').classList.toggle('hidden',!(catalogVisibleCount<list.length||catalogHasNextPage));
-    const localRemaining=Math.max(0,list.length-catalogVisibleCount);
-    $('#catalogLoadMore').textContent=localRemaining?'Load more results ('+localRemaining+' left)':(catalogHasNextPage?'Load next page':'Load more results');
-    $('#catalogSearchStatus').textContent=list.length+' filtered result'+(list.length===1?'':'s')+' for “'+lastCatalogSearchQuery+'”.';
-    const genres=[...new Set(lastCatalogSearchItems.flatMap(m=>m.genres||[]))].sort((a,b)=>a.localeCompare(b));
-    $('#genreQuickChips').innerHTML=genres.slice(0,10).map(g=>'<button type="button" class="genre-chip" data-genre-chip="'+esc(g)+'" aria-pressed="'+String(g===f.genre)+'">'+esc(g)+'</button>').join('');
+    const remaining=Math.max(0,list.length-catalogVisibleCount);
+    $('#catalogLoadMore').textContent=remaining?'Load more results ('+remaining+' left)':(catalogHasNextPage?'Load next page':'Load more results');
+    const description=lastCatalogSearchQuery?' for “'+lastCatalogSearchQuery+'”':' from your discovery filters';
+    $('#catalogSearchStatus').textContent=list.length+' matching result'+(list.length===1?'':'s')+description+'.';
   }
-  async function searchPublicCatalog(event){
-    event.preventDefault();const query=$('#catalogSearchInput').value.trim();
-    if(query.length<2){$('#catalogSearchStatus').textContent='Enter at least two characters to search the catalog.';return;}
-    const button=$('#catalogSearchButton');button.disabled=true;button.textContent='Searching…';
-    $('#catalogSearchResults').classList.remove('hidden');$('#catalogSearchResults').innerHTML=catalogLoadingMarkup(6);
+  function catalogDiscoveryUrl(page){
+    const f=catalogFilterValues(),params=new URLSearchParams(),query=$('#catalogSearchInput').value.trim();
+    if(query)params.set('q',query);
+    params.set('page',String(page));params.set('type',f.type);
+    if(f.genre)params.set('genre',f.genre);
+    if(f.format)params.set('format',f.format);
+    if(f.status)params.set('status',f.status);
+    if(f.year)params.set('year',f.year);
+    if(f.season)params.set('season',f.season);
+    if(f.score>0)params.set('minScore',String(f.score));
+    if(f.sort)params.set('sort',f.sort);
+    return '/api/catalog/search?'+params.toString();
+  }
+  async function runCatalogDiscovery(append=false){
+    if(catalogPageLoading)return;
+    const query=$('#catalogSearchInput').value.trim();
+    if(query&&query.length<2){$('#catalogSearchStatus').textContent='Enter at least two characters, or clear the title to browse using filters.';return;}
+    const button=$('#catalogDiscoverButton'),searchButton=$('#catalogSearchButton');
+    catalogPageLoading=true;
+    if(!append){
+      lastCatalogSearchItems=[];catalogServerPage=1;catalogHasNextPage=false;catalogVisibleCount=catalogPageSize;
+      $('#catalogSearchResults').classList.remove('hidden');$('#catalogSearchResults').innerHTML=catalogLoadingMarkup(6);
+      button.disabled=true;button.textContent='Discovering…';
+      if(query){searchButton.disabled=true;searchButton.textContent='Searching…';}
+    }else{$('#catalogLoadMore').disabled=true;$('#catalogLoadMore').textContent='Loading more…';}
     try{
-      const data=await api('/api/catalog/search?q='+encodeURIComponent(query));
-      lastCatalogSearchItems=[...(data.anime||[]).map(m=>Object.assign({},m,{_catalogKind:'ANIME'})),...(data.manga||[]).map(m=>Object.assign({},m,{_catalogKind:'MANGA'}))];
-      catalogServerPage=Number(data.page)||1;catalogHasNextPage=!!data.hasNextPage;catalogPageLoading=false;
-      lastCatalogSearchQuery=query;catalogVisibleCount=catalogPageSize;rememberCatalogQuery(query);
-      const genres=[...new Set(lastCatalogSearchItems.flatMap(m=>m.genres||[]))].sort((a,b)=>a.localeCompare(b));
-      const genreSelect=$('#filterGenre'),selectedGenre=genreSelect.value;
-      genreSelect.innerHTML='<option value="">All genres</option>'+genres.map(g=>'<option value="'+esc(g)+'">'+esc(g)+'</option>').join('');
-      if(genres.includes(selectedGenre))genreSelect.value=selectedGenre;
+      const requestedPage=append?catalogServerPage+1:1;
+      const data=await api(catalogDiscoveryUrl(requestedPage));
+      const incoming=[...(data.anime||[]).map(m=>Object.assign({},m,{_catalogKind:'ANIME'})),...(data.manga||[]).map(m=>Object.assign({},m,{_catalogKind:'MANGA'}))];
+      if(append){
+        const seen=new Set(lastCatalogSearchItems.map(m=>m._catalogKind+':'+m.id));
+        lastCatalogSearchItems.push(...incoming.filter(m=>!seen.has(m._catalogKind+':'+m.id)));
+        catalogVisibleCount+=catalogPageSize;
+      }else{
+        lastCatalogSearchItems=incoming;lastCatalogSearchQuery=query;catalogVisibleCount=catalogPageSize;
+        if(query)rememberCatalogQuery(query);
+      }
+      catalogServerPage=Number(data.page)||requestedPage;catalogHasNextPage=!!data.hasNextPage;
       renderFilteredCatalogResults();
-      if(!lastCatalogSearchItems.length){$('#catalogSearchResults').innerHTML='<div class="catalog-loading">No matching titles. Try the original title or an alternate spelling.</div>';$('#filterResultCount').textContent='0 results';}
-    }catch(e){$('#catalogSearchResults').innerHTML='<div class="catalog-loading">Search failed. '+esc(e.message)+'</div>';$('#catalogSearchStatus').textContent='The catalog search is temporarily unavailable.';}
-    finally{button.disabled=false;button.textContent='Search';}
+      if(!lastCatalogSearchItems.length){
+        $('#catalogSearchResults').innerHTML='<div class="catalog-loading">No titles matched. Try a different genre, format, status, or release year.</div>';
+        $('#filterResultCount').textContent='0 matching titles';$('#catalogSearchStatus').textContent='No catalog titles matched the selected filters.';
+      }
+    }catch(e){
+      if(!append)$('#catalogSearchResults').innerHTML='<div class="catalog-loading">Discovery failed. '+esc(e.message)+'</div>';
+      $('#catalogSearchStatus').textContent='The catalog could not complete this discovery request: '+e.message;
+    }finally{
+      catalogPageLoading=false;button.disabled=false;button.textContent='Discover titles ↗';
+      searchButton.disabled=false;searchButton.textContent='Search';$('#catalogLoadMore').disabled=false;
+    }
   }
-  catalogFilterIds.forEach(id=>$('#'+id).addEventListener('input',()=>{catalogVisibleCount=catalogPageSize;if(lastCatalogSearchItems.length)renderFilteredCatalogResults();else updateCatalogFilterChrome();}));
-  $('#clearCatalogFilters').addEventListener('click',()=>{
-    $('#filterMediaType').value='all';$('#filterGenre').value='';$('#filterFormat').value='';$('#filterStatus').value='';$('#filterYear').value='';$('#filterSeason').value='';$('#filterMinScore').value='0';$('#filterSort').value='match';catalogVisibleCount=catalogPageSize;
-    if(lastCatalogSearchItems.length)renderFilteredCatalogResults();else updateCatalogFilterChrome();
+  function scheduleCatalogDiscovery(){
+    updateCatalogFilterChrome();
+    if(catalogDiscoveryTimer)clearTimeout(catalogDiscoveryTimer);
+    catalogDiscoveryTimer=setTimeout(()=>{catalogDiscoveryTimer=null;runCatalogDiscovery(false);},420);
+  }
+  catalogFilterIds.forEach(id=>{
+    const control=$('#'+id);
+    control.addEventListener(control.tagName==='SELECT'?'change':'input',scheduleCatalogDiscovery);
   });
-  $('#genreQuickChips').addEventListener('click',event=>{const chip=event.target.closest('[data-genre-chip]');if(!chip)return;const g=chip.getAttribute('data-genre-chip');$('#filterGenre').value=$('#filterGenre').value===g?'':g;catalogVisibleCount=catalogPageSize;if(lastCatalogSearchItems.length)renderFilteredCatalogResults();});
-  $('#catalogLoadMore').addEventListener('click',async()=>{if(catalogVisibleCount<catalogFilteredItems.length){catalogVisibleCount=Math.min(catalogVisibleCount+catalogPageSize,catalogFilteredItems.length);renderFilteredCatalogResults();return;}if(!catalogHasNextPage||catalogPageLoading)return;catalogPageLoading=true;const button=$('#catalogLoadMore');button.disabled=true;button.textContent='Loading more…';try{const data=await api('/api/catalog/search?q='+encodeURIComponent(lastCatalogSearchQuery)+'&page='+(catalogServerPage+1));const incoming=[...(data.anime||[]).map(m=>Object.assign({},m,{_catalogKind:'ANIME'})),...(data.manga||[]).map(m=>Object.assign({},m,{_catalogKind:'MANGA'}))];const seen=new Set(lastCatalogSearchItems.map(m=>m._catalogKind+':'+m.id));lastCatalogSearchItems.push(...incoming.filter(m=>!seen.has(m._catalogKind+':'+m.id)));catalogServerPage=Number(data.page)||catalogServerPage+1;catalogHasNextPage=!!data.hasNextPage;catalogVisibleCount=Math.min(catalogVisibleCount+catalogPageSize,catalogFilteredItems.length+incoming.length);const genres=[...new Set(lastCatalogSearchItems.flatMap(m=>m.genres||[]))].sort((a,b)=>a.localeCompare(b));const genreSelect=$('#filterGenre'),selectedGenre=genreSelect.value;genreSelect.innerHTML='<option value="">All genres</option>'+genres.map(g=>'<option value="'+esc(g)+'">'+esc(g)+'</option>').join('');if(genres.includes(selectedGenre))genreSelect.value=selectedGenre;renderFilteredCatalogResults();}catch(e){$('#catalogSearchStatus').textContent='Could not load the next page: '+e.message;}finally{catalogPageLoading=false;button.disabled=false;}});
+  $('#clearCatalogFilters').addEventListener('click',()=>{
+    $('#filterMediaType').value='all';$('#filterGenre').value='';$('#filterFormat').value='';$('#filterStatus').value='';
+    $('#filterYear').value='';$('#filterSeason').value='';$('#filterMinScore').value='0';$('#filterSort').value='match';
+    scheduleCatalogDiscovery();
+  });
+  $('#genreQuickChips').addEventListener('click',event=>{
+    const chip=event.target.closest('[data-genre-chip]');if(!chip)return;
+    const genre=chip.getAttribute('data-genre-chip');
+    $('#filterGenre').value=$('#filterGenre').value===genre?'':genre;scheduleCatalogDiscovery();
+  });
+  $('#catalogDiscoverButton').addEventListener('click',()=>runCatalogDiscovery(false));
+  $('#catalogSearchForm').addEventListener('submit',event=>{event.preventDefault();runCatalogDiscovery(false);});
+  $('#catalogLoadMore').addEventListener('click',()=>{
+    if(catalogPageLoading)return;
+    if(catalogVisibleCount<catalogFilteredItems.length){
+      catalogVisibleCount=Math.min(catalogVisibleCount+catalogPageSize,catalogFilteredItems.length);
+      renderFilteredCatalogResults();return;
+    }
+    if(catalogHasNextPage)runCatalogDiscovery(true);
+  });
   const homeChooseMode=$('#homeChooseMode');if(homeChooseMode)homeChooseMode.addEventListener('click',()=>$('#homeModeHeading').scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'}));
   $('#advancedFiltersToggle').addEventListener('click',()=>{
     const toggle=$('#advancedFiltersToggle'),body=$('#advancedFilterBody'),expanded=toggle.getAttribute('aria-expanded')==='true';

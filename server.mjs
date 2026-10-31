@@ -1077,7 +1077,7 @@ function packMedia(item) {
     titleRomaji:item.title && item.title.romaji || '',
     titleNative:item.title && item.title.native || '',
     cover:cover, bannerImage:item.bannerImage || '',
-    description:cleanText(item.description || '').slice(0,3500),
+    description:cleanText(item.description || ''),
     genres:Array.isArray(item.genres)?item.genres.slice(0,8):[],
     averageScore:Number(item.averageScore)||0,popularity:Number(item.popularity)||0,
     favourites:Number(item.favourites)||0,
@@ -1128,16 +1128,43 @@ async function getSeasonCatalog(rawSeason,rawYear) {
   return data;
 }
 
-async function searchPublicCatalog(rawQuery, rawPage=1) {
+async function searchPublicCatalog(rawQuery, rawPage=1, rawFilters={}) {
   const query = String(rawQuery || '').trim().replace(/\s+/g,' ').slice(0,100);
-  if (query.length < 2) throw new Error('Enter at least two characters to search.');
+  if (query && query.length < 2) throw new Error('Enter at least two characters, or leave the title empty to discover by filters.');
   const page = Math.max(1,Math.min(50,Math.floor(Number(rawPage)||1)));
-  const key = query.toLowerCase() + ':' + page;
+  const typeValue = String(rawFilters.type || 'all').toUpperCase();
+  const type = ['ANIME','MANGA'].includes(typeValue) ? typeValue : 'all';
+  const genre = String(rawFilters.genre || '').trim().slice(0,60);
+  const formats = ['TV','TV_SHORT','MOVIE','SPECIAL','OVA','ONA','MUSIC','MANGA','NOVEL','ONE_SHOT'];
+  const statuses = ['RELEASING','FINISHED','NOT_YET_RELEASED','CANCELLED','HIATUS'];
+  const seasons = ['WINTER','SPRING','SUMMER','FALL'];
+  const format = formats.includes(String(rawFilters.format || '').toUpperCase()) ? String(rawFilters.format).toUpperCase() : null;
+  const status = statuses.includes(String(rawFilters.status || '').toUpperCase()) ? String(rawFilters.status).toUpperCase() : null;
+  const season = seasons.includes(String(rawFilters.season || '').toUpperCase()) ? String(rawFilters.season).toUpperCase() : null;
+  const yearNumber = Math.floor(Number(rawFilters.year));
+  const year = yearNumber >= 1940 && yearNumber <= 2100 ? yearNumber : null;
+  const scoreNumber = Math.max(0,Math.min(10,Number(rawFilters.minScore)||0));
+  const minScore = scoreNumber > 0 ? Math.max(0,Math.ceil(scoreNumber*10)-1) : null;
+  const sortKey = String(rawFilters.sort || 'match');
+  const sortMap = {match:query ? ['SEARCH_MATCH'] : ['TRENDING_DESC','POPULARITY_DESC'],score:['SCORE_DESC'],popular:['POPULARITY_DESC'],title:['TITLE_ROMAJI'],newest:['START_DATE_DESC']};
+  const sort = sortMap[sortKey] || sortMap.match;
+  const typeFilters = type === 'all' ? (season ? ['ANIME'] : ['ANIME','MANGA']) : [type];
+  const filters = {type,genre,format,status,season,year,score:scoreNumber,sort:sortKey};
+  const key = JSON.stringify({query,page,filters});
   const cached = publicCatalogSearchCache.get(key);
   if (cached && Date.now() - cached.at < 10*60*1000) return cached.value;
-  const data = await requestAniList(CATALOG_SEARCH_QUERY,{search:query,page});
+  const pageFields = typeFilters.map(mediaType => {
+    const alias = mediaType.toLowerCase();
+    const animeSeasonArgs = mediaType === 'ANIME' ? ',season:$season,seasonYear:$seasonYear' : '';
+    return alias + ': Page(page:$page,perPage:24) { pageInfo { currentPage hasNextPage } media(type:' + mediaType +
+      ',search:$search,genre_in:$genreIn,format:$format,status:$status' + animeSeasonArgs +
+      ',startDate_like:$startDateLike,averageScore_greater:$minScore,sort:$sort,isAdult:false) { ' + MEDIA_CATALOG_FIELDS + ' } }';
+  }).join(' ');
+  const discoveryQuery = 'query HekomiCatalogDiscovery($search:String,$page:Int!,$genreIn:[String],$format:MediaFormat,$status:MediaStatus,$season:MediaSeason,$seasonYear:Int,$startDateLike:String,$minScore:Int,$sort:[MediaSort]) { ' + pageFields + ' }';
+  const variables = {search:query || null,page,genreIn:genre ? [genre] : null,format,status,season,seasonYear:season ? (year || null) : null,startDateLike:year ? String(year)+'%' : null,minScore,sort};
+  const data = await requestAniList(discoveryQuery,variables);
   const animePage=data.anime||{},mangaPage=data.manga||{};
-  const result = { anime:(animePage.media||[]).map(packMedia).filter(Boolean), manga:(mangaPage.media||[]).map(packMedia).filter(Boolean), page, hasNextPage:!!((animePage.pageInfo&&animePage.pageInfo.hasNextPage)||(mangaPage.pageInfo&&mangaPage.pageInfo.hasNextPage)), source:'AniList',updatedAt:new Date().toISOString() };
+  const result = {anime:(animePage.media||[]).map(packMedia).filter(Boolean),manga:(mangaPage.media||[]).map(packMedia).filter(Boolean),page,hasNextPage:!!((animePage.pageInfo&&animePage.pageInfo.hasNextPage)||(mangaPage.pageInfo&&mangaPage.pageInfo.hasNextPage)),source:'AniList',updatedAt:new Date().toISOString(),filters};
   publicCatalogSearchCache.set(key,{at:Date.now(),value:result});
   if (publicCatalogSearchCache.size > 160) publicCatalogSearchCache.delete(publicCatalogSearchCache.keys().next().value);
   return result;
@@ -1275,7 +1302,8 @@ const server=http.createServer(async(req,res)=>{
     catch(e) { return send(res,400,{error:e.message||'Seasonal catalog could not be loaded.'}); }
   }
   if(req.method==='GET' && url.pathname==='/api/catalog/search') {
-    try { return send(res,200,await searchPublicCatalog(url.searchParams.get('q'),url.searchParams.get('page')),{'Cache-Control':'public, max-age=300'}); }
+    const filters = {type:url.searchParams.get('type'),genre:url.searchParams.get('genre'),format:url.searchParams.get('format'),status:url.searchParams.get('status'),year:url.searchParams.get('year'),season:url.searchParams.get('season'),minScore:url.searchParams.get('minScore'),sort:url.searchParams.get('sort')};
+    try { return send(res,200,await searchPublicCatalog(url.searchParams.get('q'),url.searchParams.get('page'),filters),{'Cache-Control':'public, max-age=300'}); }
     catch(e) { return send(res,400,{error:e.message||'Catalog search failed.'}); }
   }
   const seriesRoute=url.pathname.match(/^\/series\/(anime|manga)\/(\d+)(?:-[a-z0-9-]*)?\/?$/i);
