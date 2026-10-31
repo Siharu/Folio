@@ -765,7 +765,7 @@ body[data-page="manga"] #mangaView .filter{border-radius:3px 10px 3px 10px}
       <div class="workspace-head"><div><span class="mode-label">YOUR SPACE · LOCAL PROFILE</span><h1>Make Hekomi yours.</h1><p>Your profile, reading habits, and preferences — saved privately in this browser.</p></div><div class="head-actions"><button class="btn-secondary" type="button" id="profileAppearanceBtn">◐ Appearance</button></div></div>
       <nav class="subnav" id="profileTabs"><button class="active" data-profile-tab="overview">Profile</button><button data-profile-tab="settings">Settings</button><button data-profile-tab="privacy">Data &amp; privacy</button></nav>
       <div id="profileOverviewTab">
-        <div class="profile-hero panel"><div class="profile-avatar" id="profileAvatarPreview" aria-hidden="true">H</div><div class="profile-identity"><span class="eyebrow">AFTER HOURS MEMBER</span><h2 id="profileDisplayName">Hekomi reader</h2><p id="profileHandleLabel" class="muted small">@reader</p><p id="profileBioLabel">A little corner for the stories that stay with you.</p><span class="profile-local-badge"><i></i> Local profile · This device only</span></div></div>
+        <div class="profile-hero panel"><div class="profile-avatar" id="profileAvatarPreview" aria-hidden="true">H</div><div class="profile-identity"><span class="eyebrow" id="profileIdentitySource">AFTER HOURS MEMBER</span><h2 id="profileDisplayName">Hekomi reader</h2><p id="profileHandleLabel" class="muted small">@reader</p><p id="profileBioLabel">A little corner for the stories that stay with you.</p><span class="profile-local-badge"><i></i> Profile saved on this device</span></div></div>
         <section class="panel profile-mal-card" aria-label="MyAnimeList connection">
           <div class="profile-mal-main"><div><strong>MyAnimeList</strong><p class="muted small" id="profileMalStatus">Checking connection…</p></div><span class="pill-label" id="profileMalBadge">MAL</span></div>
           <div class="profile-mal-actions"><button class="btn-primary" id="malSignInBtn">Sign in with MAL ↗</button><button class="btn-secondary hidden" id="malLogoutBtn">Sign out</button><button class="btn-secondary" id="profileMalSyncBtn" type="button">↻ Sync list</button></div>
@@ -793,7 +793,7 @@ body[data-page="manga"] #mangaView .filter{border-radius:3px 10px 3px 10px}
             <form id="profileForm" class="formstack">
               <label><span class="small-label">Display name</span><input id="profileNameInput" class="input" maxlength="48" placeholder="What should Hekomi call you?"></label>
               <label><span class="small-label">Handle</span><input id="profileHandleInput" class="input" maxlength="24" placeholder="reader_001" autocomplete="nickname"></label>
-              <label><span class="small-label">Avatar image URL (optional)</span><input id="profileAvatarInput" class="input" type="url" placeholder="https://…"></label>
+              <label><span class="small-label">Avatar image URL (optional)</span><input id="profileAvatarInput" class="input" type="url" placeholder="https://…"></label>\n              <label><span class="small-label">Custom profile picture</span><input id="profileAvatarFile" class="input" type="file" accept="image/*"><small class="muted">Stored locally in this browser. A custom picture takes priority over your MAL avatar.</small></label><button class="btn-secondary" type="button" id="profileAvatarClear">Use MyAnimeList picture</button>
               <label><span class="small-label">Bio</span><textarea id="profileBioInput" class="input" rows="3" maxlength="220" placeholder="Favourite genres, current obsession, or whatever feels like you."></textarea></label>
               <button class="btn-primary" type="submit">Save profile</button>
             </form>
@@ -1322,6 +1322,16 @@ function showProfileTab(tab){activeProfileTab=tab;$$('#profileTabs button').forE
       malConfigured=!!data.configured;malConnected=!!data.connected;malUsername=data.username||'';
       $('#malSetupStatus').textContent=!malConfigured?'Hekomi owner setup needed: configure MAL_CLIENT_ID, MAL_CLIENT_SECRET, and FOLIO_SESSION_SECRET on the host.':malConnected?'Connected as '+(malUsername||'your MyAnimeList account')+'. Your session is private to this browser.':'Not connected. Sign in with MyAnimeList to sync your account.';
       $('#profileMalStatus').textContent=!malConfigured?'Sign-in unavailable':malConnected?'Connected as '+(malUsername||'your MAL account'):'Not connected';$('#profileMalBadge').textContent=malConnected?'CONNECTED':'NOT CONNECTED';$('#profileMalBadge').classList.toggle('active',malConnected);
+      if(malConnected){
+        try{const me=await api('/api/mal/me');const malName=String(me.name||malUsername||'').trim();const malPicture=String(me.picture||'').trim();
+          profileData.malDisplayName=malName||profileData.malDisplayName||'';
+          profileData.malUsername=malName||profileData.malUsername||'';
+          if(malPicture)profileData.malAvatarUrl=malPicture;
+          if((!profileData.displayName||profileData.displayName==='Hekomi reader')&&malName)profileData.displayName=malName;
+          if(!profileData.handle||profileData.handle==='reader')profileData.handle=(malName||'reader').toLowerCase().replace(/[^a-z0-9_-]/g,'').slice(0,24)||'reader';
+          write('hekomi_profile_v1',profileData);renderProfileOverview();syncProfileForms();
+        }catch(error){/* MAL profile details can be retried on the next profile visit. */}
+      }
       $('#malSignInBtn').disabled=!malConfigured;
       $('#malSignInBtn').classList.toggle('hidden',malConnected);$('#malLogoutBtn').classList.toggle('hidden',!malConnected);$('#malConnectionNudge').classList.toggle('hidden',malConnected);
       if(malConnected&&['mal','profile'].includes(currentPageFromPath())&&!remoteReady)await loadRemoteList();
@@ -2007,13 +2017,15 @@ function mangaFeedCardMarkup(item,index){
     if(!$('#profileView'))return;
     renderProfileWatchTables();
     renderProfileRecommendations();
-    const name=String(profileData.displayName||'Hekomi reader').trim()||'Hekomi reader';
-    const handle=String(profileData.handle||'reader').trim().replace(/^@/,'')||'reader';
+    const malName=String(profileData.malDisplayName||'').trim();
+    const name=String(profileData.displayName||malName||'Hekomi reader').trim()||'Hekomi reader';
+    const handle=String(profileData.handle||profileData.malUsername||'reader').trim().replace(/^@/,'')||'reader';
     const bio=String(profileData.bio||'').trim()||'A little corner for the stories that stay with you.';
-    const avatar=safeImageUrl(profileData.avatarUrl||'');
+    const avatar=profileData.customAvatarData||safeImageUrl(profileData.malAvatarUrl||'')||safeImageUrl(profileData.avatarUrl||'');
     $('#profileDisplayName').textContent=name;
     $('#profileHandleLabel').textContent='@'+handle;
     $('#profileBioLabel').textContent=bio;
+    $('#profileIdentitySource').textContent=profileData.customAvatarData?'YOUR HEKOMI PROFILE':malName?'MYANIMELIST MEMBER':'AFTER HOURS MEMBER';
     const avatarRoot=$('#profileAvatarPreview');
     avatarRoot.innerHTML=avatar?'<img src="'+esc(avatar)+'" alt="" referrerpolicy="no-referrer" onerror="this.remove()">':esc(name.split(/\s+/).map(part=>part[0]||'').join('').slice(0,2).toUpperCase()||'H');
     $('#profileMangaCount').textContent=mangaLibrary.length.toLocaleString();
@@ -2036,6 +2048,26 @@ function mangaFeedCardMarkup(item,index){
     $('#profileDefaultProvider').value=['mangahook','gomanga','mangadex','all','batoto','mangabuddy','mangakakalot'].includes(mangaPreferences.defaultProvider)?mangaPreferences.defaultProvider:'mangahook';
     $('#profileCompactCards').checked=!!mangaPreferences.compactCards;
   }
+  $('#profileAvatarFile').addEventListener('change',async event=>{
+    const file=event.target.files&&event.target.files[0];if(!file)return;
+    if(!file.type.startsWith('image/')){notify('Choose an image file.');event.target.value='';return;}
+    if(file.size>12*1024*1024){notify('Choose an image smaller than 12 MB.');event.target.value='';return;}
+    try{
+      const source=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(new Error('Could not read image.'));reader.readAsDataURL(file);});
+      const image=await new Promise((resolve,reject)=>{const img=new Image();img.onload=()=>resolve(img);img.onerror=()=>reject(new Error('Could not open image.'));img.src=source;});
+      const canvas=document.createElement('canvas'),side=512,scale=Math.min(1,side/Math.max(image.width,image.height));canvas.width=Math.max(1,Math.round(image.width*scale));canvas.height=Math.max(1,Math.round(image.height*scale));
+      canvas.getContext('2d').drawImage(image,0,0,canvas.width,canvas.height);
+      const data=canvas.toDataURL('image/jpeg',.82);profileData.customAvatarData=data;
+      if(!write('hekomi_profile_v1',profileData))throw new Error('Browser storage is full. Remove the current picture or choose a smaller image.');
+      renderProfileOverview();notify('Custom profile picture saved on this device.');
+    }catch(error){notify(error.message||'Could not save that picture.');}
+    event.target.value='';
+  });
+  $('#profileAvatarClear').addEventListener('click',()=>{
+    delete profileData.customAvatarData;
+    if(!write('hekomi_profile_v1',profileData)){notify('Could not update local profile storage.');return;}
+    renderProfileOverview();notify(profileData.malAvatarUrl?'Showing your MyAnimeList picture.':'Custom picture removed.');
+  });
   $('#profileForm').addEventListener('submit',event=>{
     event.preventDefault();
     const displayName=$('#profileNameInput').value.trim();
