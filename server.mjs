@@ -990,7 +990,7 @@ async function malRequest(req, res, pathname, query) {
   const animeFields='alternative_titles,synopsis,mean,rank,popularity,num_list_users,num_scoring_users,genres,num_episodes,media_type,main_picture,start_date,end_date,status,start_season,broadcast,source,average_episode_duration,rating,studios,updated_at';
   if (pathname === '/search') apiPath='/anime?q='+encodeURIComponent(query.get('q')||'')+'&limit=10&fields='+animeFields;
   if (pathname === '/details') { const id=Number(query.get('id')); if(!Number.isSafeInteger(id)||id<1)return send(res,400,{error:'A valid anime ID is required.'}); apiPath='/anime/'+id+'?fields='+animeFields; }
-  if (pathname === '/me') apiPath='/users/@me';
+  if (pathname === '/me') apiPath='/users/@me?fields=name,picture';
   if (pathname === '/list') apiPath='/users/@me/animelist?limit=100&fields=list_status,updated_at,alternative_titles,synopsis,mean,rank,popularity,num_list_users,num_scoring_users,genres,num_episodes,media_type,main_picture,start_date,end_date,status,start_season,broadcast,source,average_episode_duration,rating,studios,updated_at';
   if (pathname === '/update') {
     const data = await readBody(req);
