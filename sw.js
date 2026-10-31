@@ -1,4 +1,4 @@
-const CACHE = 'hekomi-shell-v14-roaming-companion';
+const CACHE = 'hekomi-shell-v15-complete-mal-mobile-pwa';
 const SHELL = ['/', '/index.html', '/manifest.webmanifest', '/icon.svg', '/Anime%20Manga%20Duality%20Emblem.ico', '/assets/folio-night-scene.svg', '/assets/hekomi-social.svg', '/assets/hekomi-manga-mark.svg', '/assets/hekomi-anime-mark.svg', '/assets/hekomi-dual-mark.svg', '/assets/hekomi-chan.js'];
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(SHELL)).then(() => self.skipWaiting()));

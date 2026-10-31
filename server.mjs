@@ -1004,13 +1004,31 @@ async function malRequest(req, res, pathname, query) {
   if (session) headers.Authorization = 'Bearer ' + session.accessToken;
   if (body) headers['Content-Type'] = 'application/x-www-form-urlencoded';
   try {
-    const r = await fetch('https://api.myanimelist.net/v2' + apiPath, { method, headers, body, signal: AbortSignal.timeout(12000) });
-    const txt = await r.text();
-    let data;
-    try { data = JSON.parse(txt); } catch { data = { message: txt.slice(0, 500) }; }
-    return send(res, r.status, data);
+    const requestMalPage = async (url) => {
+      const r = await fetch(url, { method, headers, body, signal: AbortSignal.timeout(15000) });
+      const txt = await r.text();
+      let data;
+      try { data = JSON.parse(txt); } catch { data = { message: txt.slice(0, 500) }; }
+      return { response:r, data };
+    };
+    const first = await requestMalPage('https://api.myanimelist.net/v2' + apiPath);
+    if (pathname !== '/list' || !first.response.ok) return send(res, first.response.status, first.data);
+    const entries = Array.isArray(first.data.data) ? first.data.data.slice() : [];
+    let next = first.data.paging && first.data.paging.next || null;
+    let pages = 1;
+    while (next && pages < 100) {
+      const nextUrl = new URL(next);
+      if (nextUrl.origin !== 'https://api.myanimelist.net' || !nextUrl.pathname.startsWith('/v2/users/@me/animelist')) return send(res,502,{error:'MyAnimeList returned an invalid list pagination link. Your list was not partially loaded.'});
+      const page = await requestMalPage(nextUrl.toString());
+      if (!page.response.ok) return send(res,page.response.status,page.data);
+      if (Array.isArray(page.data.data)) entries.push(...page.data.data);
+      next = page.data.paging && page.data.paging.next || null;
+      pages++;
+    }
+    if (next) return send(res,502,{error:'Your MyAnimeList list exceeds the current safe pagination limit. No partial list was loaded.'});
+    return send(res,200,{...first.data,data:entries,paging:{...(first.data.paging||{}),next:null},hekomi:{complete:true,pages,total:entries.length}});
   } catch (e) {
-    return send(res, 502, { error: 'Could not reach the MyAnimeList API: ' + e.message });
+    return send(res,502,{error:'Could not reach the MyAnimeList API: '+e.message});
   }
 }
 
