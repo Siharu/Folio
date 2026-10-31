@@ -2133,6 +2133,52 @@ function showProfileTab(tab){activeProfileTab=tab;$$('#profileTabs button').forE
   }
   function openAnimeModal(){openModal(`<div class="modal-top"><div><h2>Add to local list</h2><p class="muted small">This list stays on this device.</p></div><button class="close" data-close>×</button></div><div class="formstack"><label><span class="small-label">Anime title</span><input class="input" id="newAnimeTitle" placeholder="Anime title"></label><div class="settings-grid"><label><span class="small-label">Status</span><select class="input" id="newAnimeStatus"><option value="watching">Watching</option><option value="completed">Completed</option><option value="on_hold">On hold</option><option value="dropped">Dropped</option><option value="plan_to_watch" selected>Plan to watch</option></select></label><label><span class="small-label">Total episodes watched</span><input class="input" id="newAnimeEpisodes" type="number" min="0" value="0"></label></div><label><span class="small-label">Score (0–10)</span><input class="input" id="newAnimeScore" type="number" min="0" max="10" value="0"></label><button class="btn-primary" id="saveNewAnime">Save anime</button></div>`);$('#saveNewAnime').onclick=()=>{const title=$('#newAnimeTitle').value.trim(),episodes=Number($('#newAnimeEpisodes').value),score=Number($('#newAnimeScore').value);if(!title){notify('Enter a title.');return;}if(!Number.isInteger(episodes)||episodes<0||!Number.isInteger(score)||score<0||score>10){notify('Check episodes and score.');return;}addLocalAnime({id:'local-'+Date.now(),title,status:$('#newAnimeStatus').value,episodes,score});closeModal();};}
   $('#addLocalAnimeBtn').onclick=openAnimeModal;$('#addLocalAnimeBtn2').onclick=openAnimeModal;
+  function editLocalAnime(id){
+    const entry=localAnime.find(item=>String(item.id)===String(id));
+    if(!entry){notify('This local anime entry could not be found.');return;}
+    const statuses=[
+      ['watching','Watching'],
+      ['completed','Completed'],
+      ['on_hold','On hold'],
+      ['dropped','Dropped'],
+      ['plan_to_watch','Plan to watch']
+    ];
+    const savedStatus=String(entry.status||'plan_to_watch');
+    const status=savedStatus;
+    const statusOptions=statuses.map(([value,label])=>'<option value="'+value+'"'+(status===value?' selected':'')+'>'+label+'</option>').join('');
+    const episodes=Math.max(0,Math.floor(Number(entry.episodes)||0));
+    const score=Math.max(0,Math.min(10,Number(entry.score)||0));
+    openModal('<div class="modal-top"><div><h2>Edit local anime</h2><p class="muted small">Update your watch progress. Your saved artwork and series metadata will be kept.</p></div><button class="close" data-close aria-label="Close edit dialog">×</button></div>'+
+      '<div class="formstack"><label><span class="small-label">Anime title</span><input class="input" id="editLocalAnimeTitle" value="'+esc(entry.title||'')+'" maxlength="240" autocomplete="off"></label>'+
+      '<div class="settings-grid"><label><span class="small-label">Watch status</span><select class="input" id="editLocalAnimeStatus">'+statusOptions+'</select></label>'+
+      '<label><span class="small-label">Episodes watched</span><input class="input" id="editLocalAnimeEpisodes" type="number" min="0" step="1" value="'+episodes+'"></label></div>'+
+      '<label><span class="small-label">Your score (0–10)</span><input class="input" id="editLocalAnimeScore" type="number" min="0" max="10" step="1" value="'+score+'"></label>'+
+      '<button class="btn-primary" id="saveLocalAnimeEdit" type="button">Save changes</button></div>');
+    $('#saveLocalAnimeEdit').onclick=()=>{
+      const title=$('#editLocalAnimeTitle').value.trim();
+      const episodesInput=$('#editLocalAnimeEpisodes').value.trim();
+      const scoreInput=$('#editLocalAnimeScore').value.trim();
+      const episodes=Number(episodesInput),score=Number(scoreInput);
+      if(!title){notify('Enter an anime title.');$('#editLocalAnimeTitle').focus();return;}
+      if(episodesInput===''||!Number.isSafeInteger(episodes)||episodes<0){notify('Episodes watched must be a whole number of 0 or more.');$('#editLocalAnimeEpisodes').focus();return;}
+      if(scoreInput===''||!Number.isInteger(score)||score<0||score>10){notify('Your score must be a whole number from 0 to 10.');$('#editLocalAnimeScore').focus();return;}
+      const previous={...entry};
+      Object.assign(entry,{
+        title,
+        status:$('#editLocalAnimeStatus').value,
+        episodes,
+        score
+      });
+      if(!write(key.anime,localAnime)){
+        Object.assign(entry,previous);
+        notify('Could not save this change. Check your browser storage settings.');
+        return;
+      }
+      closeModal();
+      renderLocalAnime();
+      notify('Local anime entry updated.');
+    };
+  }
   function localAnimeMarkup(a){
     const cover=animeCover(a);
     const watched=Number(a.episodes)||0,total=Number(a.totalEpisodes||a.num_episodes)||0;
