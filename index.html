@@ -640,7 +640,7 @@ body[data-page="manga"] #mangaView{display:block!important}
     </section>
 
     <section id="malView" class="view hidden">
-      <div class="workspace-head"><div><span class="mode-label">MODE 01 · MAL CLIENT</span><h1>Anime list manager</h1><p>Manage a local list or connect to MyAnimeList to load and update your actual account.</p></div><div class="head-actions"><button class="btn-secondary" id="malSettingsBtn">⚙ MAL connection</button><button class="btn-primary" id="malLoadBtn">↻ Sync my list</button></div></div>
+      <div class="workspace-head"><div><span class="mode-label">MODE 01 · MAL CLIENT</span><h1>Anime list manager</h1><p>Manage your local list or connect to MyAnimeList to load and update your actual account.</p></div></div>
       <div class="mode-banner"><strong>✦ YOUR ANIME ARCHIVE, IN ORBIT</strong><span>Track the stories that stay with you — one episode at a time.</span></div>
       <nav class="subnav" id="malTabs"><button class="active" data-tab="mylist">My list</button><button data-tab="search">Discover anime</button><button data-tab="local">Local list</button><button data-tab="about">Connection & help</button></nav>
       <div id="malMyListTab">
@@ -1281,7 +1281,6 @@ function showProfileTab(tab){activeProfileTab=tab;$$('#profileTabs button').forE
       if(malConnected&&['mal','profile'].includes(currentPageFromPath())&&!remoteReady)await loadRemoteList();
     }catch(e){$('#malSetupStatus').textContent='Could not check the MAL connection: '+e.message;}
   }
-  $('#malSettingsBtn').onclick=()=>{location.href='/profile';};
   if($('#profileMalSyncBtn'))$('#profileMalSyncBtn').onclick=()=>loadRemoteList();$('#malSignInBtn').onclick=beginMalLogin;$('#malLoadBtn').onclick=()=>loadRemoteList();
   if($('#malTestBtn'))$('#malTestBtn').onclick=async()=>{await refreshMalAuthStatus();if(!malConnected){notify(malConfigured?'Sign in with MyAnimeList first.':'Hekomi MAL sign-in is not configured yet.');return;}$('#malSetupStatus').textContent='Checking your MyAnimeList connection…';try{const me=await api('/api/mal/me');malUsername=me.name||malUsername;$('#malSetupStatus').textContent='Connected as '+(malUsername||'your MAL account')+'. Loading list…';await loadRemoteList();showMalTab('mylist');notify('MyAnimeList connection successful.');}catch(e){$('#malSetupStatus').textContent=e.message;notify(e.message);}};
   async function logoutMal(){try{await fetch('/api/mal/auth/logout',{method:'POST',credentials:'same-origin'});}catch{}malConnected=false;malUsername='';remoteReady=false;malRemote=[];profileRecommendationsLoaded=false;renderProfileWatchTables();renderProfileRecommendations();$('#malRemoteWrap').classList.add('hidden');$('#malConnectionNudge').classList.remove('hidden');$('#malSetupStatus').textContent='Signed out of MyAnimeList.';await refreshMalAuthStatus();notify('Signed out of MyAnimeList.');}
