@@ -145,7 +145,7 @@
     constructor(canvas,message){
       this.canvas=canvas;this.ctx=canvas.getContext('2d',{alpha:true});this.message=message;
       this.mood='idle';this.lockedMood=null;this.lastPaint=0;this.reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      this.ctx.imageSmoothingEnabled=false;this.canvas.width=W;this.canvas.height=H;this.canvas.style.imageRendering='pixelated';
+      this.canvas.width=W;this.canvas.height=H;this.ctx.imageSmoothingEnabled=false;this.canvas.style.imageRendering='pixelated';
       this.canvas.setAttribute('role','button');this.canvas.setAttribute('tabindex','0');
       this.canvas.setAttribute('aria-label','Hekomi-chan. Activate to change her expression.');this.canvas.title='Say hi to Hekomi-chan';
       this.canvas.addEventListener('pointerenter',()=>{
