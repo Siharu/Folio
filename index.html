@@ -1463,6 +1463,70 @@ body[data-page="home"] .home-hero .hero-copy{max-width:780px}
 #hkAuthBackdrop{display:none}
 #hkAuthBackdrop.open{display:grid}
 </style>
+
+<style id="hekomi-mobile-refinement">
+/* Mobile Hekomi: compact chrome, five destinations, calm reading surfaces. */
+@media (max-width:760px){
+  .app{padding-left:15px!important;padding-right:15px!important;padding-bottom:calc(104px + env(safe-area-inset-bottom))!important}
+  .topbar{min-height:64px;height:auto;flex-wrap:nowrap;gap:9px;padding-top:8px;padding-bottom:9px}
+  .brand{min-width:0;gap:8px}.brand small{font-size:8px;letter-spacing:.06em}
+  .brandmark{width:36px!important;height:36px!important;flex-basis:36px!important}
+  .top-actions{gap:5px;flex:0 0 auto}.top-actions .chip{display:none}
+  .top-actions .iconbtn{width:40px;height:40px;min-width:40px;min-height:40px}
+  .top-actions #headerHome{display:none!important}
+  .primary-nav{
+    position:fixed!important;z-index:1000!important;left:12px!important;right:12px!important;
+    bottom:calc(8px + env(safe-area-inset-bottom))!important;
+    order:initial!important;flex:initial!important;width:auto!important;margin:0!important;padding:7px!important;
+    display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr))!important;align-items:stretch;
+    gap:3px!important;overflow:visible!important;border:1px solid rgba(190,180,230,.19)!important;
+    border-radius:19px!important;background:rgba(15,16,23,.94)!important;
+    -webkit-backdrop-filter:blur(22px) saturate(145%);backdrop-filter:blur(22px) saturate(145%);
+    box-shadow:0 12px 36px rgba(0,0,0,.44)
+  }
+  .primary-nav a{
+    min-width:0;min-height:54px!important;padding:6px 2px!important;display:flex!important;
+    flex-direction:column;align-items:center;justify-content:center;gap:4px;
+    border:1px solid transparent;border-radius:12px;font-size:10px!important;line-height:1.1;
+    letter-spacing:0!important;white-space:nowrap;text-align:center
+  }
+  .primary-nav a svg{display:block;width:18px;height:18px;flex:0 0 18px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+  .primary-nav a span{display:block;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+  .primary-nav a[aria-current="page"]{
+    color:#f2edff!important;background:linear-gradient(145deg,rgba(185,166,255,.19),rgba(139,225,207,.08))!important;
+    border-color:rgba(185,166,255,.23)!important
+  }
+  body[data-page="manga"] .primary-nav a[aria-current="page"]{
+    color:#c2ffef!important;background:rgba(139,225,207,.12)!important;border-color:rgba(139,225,207,.23)!important
+  }
+  .view{padding-top:22px}
+  .workspace-head{gap:11px;margin:8px 0 16px}.workspace-head h1{font-size:clamp(26px,7vw,32px);line-height:1.12}
+  .head-actions{width:100%}.head-actions button{min-height:44px}
+  .subnav{display:flex;gap:9px!important;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;margin-right:-2px;padding-bottom:2px}
+  .subnav::-webkit-scrollbar{display:none}.subnav button{min-height:44px;flex:0 0 auto;padding:10px 12px}
+  .toolbar{gap:10px}.searchbox{width:100%;max-width:none;min-height:46px}
+  .filterrow{flex-wrap:nowrap;overflow-x:auto;overscroll-behavior-x:contain;padding-bottom:4px}
+  .filterrow .filter{flex:0 0 auto;min-height:38px}
+  .grid,.catalog-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .card,.catalog-card{border-radius:14px}.card-body,.catalog-card-body{padding:9px;gap:6px}
+  .btn,.btn-secondary,.btn-primary,.btn-mint,.iconbtn,.input,select.input{min-height:44px}
+  .anime-account-actions button{min-height:44px}#hekomiCompanion{z-index:66}
+}
+@media (max-width:390px){
+  .app{padding-left:12px!important;padding-right:12px!important}
+  .brand small{font-size:7px;letter-spacing:.025em}.top-actions{gap:3px}
+  .top-actions .iconbtn{width:37px;min-width:37px}
+  .primary-nav{left:8px!important;right:8px!important}.primary-nav a{font-size:9px!important;min-height:52px!important}
+  .primary-nav a svg{width:17px;height:17px;flex-basis:17px}
+}
+@media (min-width:761px){
+  .primary-nav a[data-route-link="profile"]{display:none}.primary-nav a svg{display:none}
+}
+@media (prefers-reduced-motion:reduce){
+  .primary-nav a,.subnav button{transition:none!important}html{scroll-behavior:auto}
+}
+</style>
+<script defer src="/assets/hekomi-chan.js"></script>
 </head>
 <body data-page="__HEKOMI_PAGE__">
 <div class="app-scroll-progress" aria-hidden="true"><span id="appScrollProgressBar"></span></div>
@@ -2737,191 +2801,7 @@ function showProfileTab(tab){activeProfileTab=tab;$$('#profileTabs button').forE
     const rows=localAnimeExportRows(),escapeHtml=value=>esc(value);
     const table=rows.map((x,i)=>'<tr><td>'+(i+1)+'</td><td>'+escapeHtml(x.title)+'</td><td>'+escapeHtml(x.status)+'</td><td>'+x.episodes+(x.total?' / '+x.total:'')+'</td><td>'+(x.score||'—')+'</td><td>'+(x.malId||'—')+'</td></tr>').join('');
     const win=window.open('','_blank');if(!win){notify('Allow pop-ups to create your PDF.');return;}
-    win.document.write('<!doctype html><html><head><meta charset="utf-8"><title>Hekomi Anime List</title><style>body{font:12px Arial,sans-serif;color:#20232a;padding:28px}h1{font-size:22px}p{color:#626875}table{width:100%;border-collapse:collapse;margin-top:20px}th,td{border:1px solid #d9dce2;padding:8px;text-align:left}th{background:#f0f1f4}tr{break-inside:avoid}@media print{body{padding:0}}
-/* Hekomi mobile refinement — bottom dock, quieter spacing, no desktop squeeze. */
-@media(max-width:760px){
-  :root{--mobile-gutter:16px}
-  html{scroll-padding-top:12px}
-  body{overflow-x:hidden}
-  .app{padding:0 var(--mobile-gutter) calc(96px + env(safe-area-inset-bottom))}
-  .topbar{min-height:64px;height:auto;flex-wrap:nowrap;gap:10px;padding:8px 0 10px}
-  .brand{gap:8px;min-width:0}
-  .brand>div:last-child{font-size:14px}
-  .brand small{font-size:9px;letter-spacing:.01em}
-  .brandmark{width:36px!important;height:36px!important;flex-basis:36px!important}
-  .top-actions{gap:6px;flex:0 0 auto}
-  .top-actions .chip{display:none}
-  .top-actions .iconbtn{width:40px;height:40px;min-width:40px;border-radius:13px}
-  .top-actions #headerHome{display:none}
-  .primary-nav{
-    position:fixed;z-index:1000;left:12px;right:12px;bottom:calc(10px + env(safe-area-inset-bottom));
-    order:initial;flex:initial;width:auto;margin:0;padding:7px;
-    display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;
-    border:1px solid rgba(190,180,230,.17);border-radius:20px;
-    background:rgba(15,16,23,.92);-webkit-backdrop-filter:blur(22px) saturate(145%);backdrop-filter:blur(22px) saturate(145%);
-    box-shadow:0 12px 36px rgba(0,0,0,.42);overflow:visible
-  }
-  .primary-nav a{min-width:0;min-height:46px;padding:8px 4px;border-radius:13px;font-size:11px;letter-spacing:-.01em}
-  .primary-nav a[aria-current="page"]{background:linear-gradient(145deg,rgba(185,166,255,.18),rgba(139,225,207,.08));border-color:rgba(185,166,255,.22);color:#f2edff}
-  body[data-page="manga"] .primary-nav a[aria-current="page"]{background:rgba(139,225,207,.12);border-color:rgba(139,225,207,.22);color:#c2ffef}
-  .home-hero{grid-template-columns:minmax(0,1fr);gap:22px;margin:30px auto 30px}
-  .home-hero .hero-kicker{font-size:9px;line-height:1.55}
-  .home-hero .eyebrow{margin-top:22px}
-  .home-hero h1{font-size:clamp(42px,12vw,60px);line-height:.99;margin:12px 0 15px;letter-spacing:-.07em}
-  .home-hero p{font-size:15px;line-height:1.65;max-width:38ch}
-  .home-hero-actions{display:grid;grid-template-columns:1fr;gap:9px;margin-top:20px}
-  .home-hero-actions a,.home-hero-actions button{width:100%;min-height:48px}
-  .home-visual{min-height:245px;border-radius:20px}
-  .anime-showcase{min-height:450px;margin:0 auto 24px;border-radius:21px}
-  .showcase-copy{max-width:none;padding:24px 20px 0}
-  .showcase-copy h2{font-size:clamp(25px,7vw,36px);line-height:1.08}
-  .showcase-copy p{max-width:31ch;font-size:13px;line-height:1.55}
-  .showcase-art{position:absolute;inset:150px 0 25px;transform:scale(.78);transform-origin:center top;pointer-events:none}
-  .showcase-controls{bottom:12px}
-  .showcase-index{display:none}
-  .home-section-heading{align-items:flex-start;gap:8px;flex-direction:column;margin:26px 0 15px}
-  .home-section-heading h2{font-size:24px;line-height:1.15}
-  .home-section-heading p{font-size:13px}
-  .choice-grid{grid-template-columns:1fr;gap:11px;margin:18px auto}
-  .choice{min-height:0;padding:19px;border-radius:19px}
-  .choice h2{font-size:21px;margin:15px 0 6px}
-  .choice p{font-size:13px;line-height:1.6}
-  .choice-foot{margin-top:14px}
-  .workspace-head{gap:12px;margin:8px 0 16px}
-  .workspace-head h1{font-size:clamp(25px,7vw,30px);line-height:1.12}
-  .workspace-head p{font-size:13px;line-height:1.55}
-  .subnav{gap:3px;margin:0 -2px 16px;padding-bottom:1px}
-  .subnav button{min-height:44px;padding:10px 12px;font-size:12px}
-  .toolbar{gap:10px;margin:12px 0 15px}
-  .searchbox{min-height:46px;border-radius:14px}
-  .filterrow{gap:7px}
-  .filter{min-height:36px;padding:8px 12px}
-  .grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
-  .card{border-radius:14px}
-  .cover{height:auto;aspect-ratio:2/3;max-height:270px}
-  .card-body{padding:10px}
-  .card-title{font-size:13px;line-height:1.35}
-  .card-sub{font-size:11px;margin-bottom:8px}
-  .panel{padding:15px;border-radius:16px}
-  .panel-head{gap:9px;flex-wrap:wrap}
-  .btn,.btn-secondary,.btn-primary,.btn-mint{min-height:42px}
-  .iconbtn{min-width:40px;min-height:40px}
-  .modal,.dialog{max-width:calc(100vw - 24px);max-height:calc(100dvh - 24px);overflow:auto}
-  img,video,canvas,svg{max-width:100%}
-}
-@media(max-width:390px){
-  .app{--mobile-gutter:13px}
-  .brand small{font-size:8px}
-  .top-actions{gap:4px}
-  .primary-nav{left:8px;right:8px;padding:6px}
-  .primary-nav a{font-size:10px}
-  .home-visual{min-height:220px}
-  .anime-showcase{min-height:420px}
-  .showcase-art{transform:scale(.68);transform-origin:center top}
-  .grid{gap:9px}
-}
-@media(prefers-reduced-motion:reduce){
-  .primary-nav a,.home-hero-actions a,.home-hero-actions button{transition:none!important}
-}
-
-</style><script defer src="/assets/hekomi-chan.js"></script>
-
-<style id="hekomi-mobile-refinement">
-/* Mobile Hekomi: one compact header, five clear destinations, comfortable reading. */
-@media (max-width:760px){
-  .app{
-    padding-left:15px!important;padding-right:15px!important;
-    padding-bottom:calc(104px + env(safe-area-inset-bottom))!important;
-  }
-  .topbar{
-    min-height:64px;height:auto;flex-wrap:nowrap;gap:9px;
-    padding-top:8px;padding-bottom:9px;
-  }
-  .brand{min-width:0;gap:8px}
-  .brand small{font-size:8px;letter-spacing:.06em}
-  .brandmark{width:36px!important;height:36px!important;flex-basis:36px!important}
-  .top-actions{gap:5px;flex:0 0 auto}
-  .top-actions .chip{display:none}
-  .top-actions .iconbtn{width:40px;height:40px;min-width:40px;min-height:40px}
-  .top-actions #headerHome{display:none!important}
-  .primary-nav{
-    position:fixed!important;z-index:1000!important;
-    left:12px!important;right:12px!important;
-    bottom:calc(8px + env(safe-area-inset-bottom))!important;
-    order:initial!important;flex:initial!important;width:auto!important;
-    margin:0!important;padding:7px!important;
-    display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr))!important;
-    align-items:stretch;gap:3px!important;overflow:visible!important;
-    border:1px solid rgba(190,180,230,.19)!important;border-radius:19px!important;
-    background:rgba(15,16,23,.94)!important;
-    -webkit-backdrop-filter:blur(22px) saturate(145%);
-    backdrop-filter:blur(22px) saturate(145%);
-    box-shadow:0 12px 36px rgba(0,0,0,.44);
-  }
-  .primary-nav a{
-    min-width:0;min-height:54px!important;padding:6px 2px!important;
-    display:flex!important;flex-direction:column;align-items:center;justify-content:center;
-    gap:4px;border:1px solid transparent;border-radius:12px;
-    font-size:10px!important;line-height:1.1;letter-spacing:0!important;
-    white-space:nowrap;text-align:center;
-  }
-  .primary-nav a svg{
-    display:block;width:18px;height:18px;flex:0 0 18px;
-    fill:none;stroke:currentColor;stroke-width:1.7;
-    stroke-linecap:round;stroke-linejoin:round;
-  }
-  .primary-nav a span{display:block;overflow:hidden;text-overflow:ellipsis;max-width:100%}
-  .primary-nav a[aria-current="page"]{
-    color:#f2edff!important;
-    background:linear-gradient(145deg,rgba(185,166,255,.19),rgba(139,225,207,.08))!important;
-    border-color:rgba(185,166,255,.23)!important;
-  }
-  body[data-page="manga"] .primary-nav a[aria-current="page"]{
-    color:#c2ffef!important;background:rgba(139,225,207,.12)!important;
-    border-color:rgba(139,225,207,.23)!important;
-  }
-  .view{padding-top:22px}
-  .workspace-head{gap:11px;margin:8px 0 16px}
-  .workspace-head h1{font-size:clamp(26px,7vw,32px);line-height:1.12}
-  .head-actions{width:100%}
-  .head-actions button{min-height:44px}
-  .subnav{
-    display:flex;gap:9px!important;overflow-x:auto;overflow-y:hidden;
-    scrollbar-width:none;scrollbar-color:transparent transparent;
-    margin-right:-2px;padding-bottom:2px;
-  }
-  .subnav::-webkit-scrollbar{display:none}
-  .subnav button{min-height:44px;flex:0 0 auto;padding:10px 12px}
-  .toolbar{gap:10px}
-  .searchbox{width:100%;max-width:none;min-height:46px}
-  .filterrow{flex-wrap:nowrap;overflow-x:auto;overscroll-behavior-x:contain;padding-bottom:4px}
-  .filterrow .filter{flex:0 0 auto;min-height:38px}
-  .grid,.catalog-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
-  .card,.catalog-card{border-radius:14px}
-  .card-body,.catalog-card-body{padding:9px;gap:6px}
-  .btn,.btn-secondary,.btn-primary,.btn-mint,.iconbtn,.input,select.input{min-height:44px}
-  .anime-account-actions button{min-height:44px}
-  #hekomiCompanion{z-index:66}
-}
-@media (max-width:390px){
-  .app{padding-left:12px!important;padding-right:12px!important}
-  .brand small{font-size:7px;letter-spacing:.025em}
-  .top-actions{gap:3px}
-  .top-actions .iconbtn{width:37px;min-width:37px}
-  .primary-nav{left:8px!important;right:8px!important}
-  .primary-nav a{font-size:9px!important;min-height:52px!important}
-  .primary-nav a svg{width:17px;height:17px;flex-basis:17px}
-}
-@media (min-width:761px){
-  .primary-nav a[data-route-link="profile"]{display:none}
-  .primary-nav a svg{display:none}
-}
-@media (prefers-reduced-motion:reduce){
-  .primary-nav a,.subnav button{transition:none!important}
-  html{scroll-behavior:auto}
-}
-</style>
-</head><body><h1>Hekomi — My Local Anime List</h1><p>Exported '+escapeHtml(new Date().toLocaleString())+' · '+rows.length+' anime</p><table><thead><tr><th>#</th><th>Anime</th><th>Status</th><th>Episodes</th><th>Score</th><th>MAL ID</th></tr></thead><tbody>'+table+'</tbody></table><script>window.onload=()=>window.print()<\/script></body></html>');
+    win.document.write('<!doctype html><html><head><meta charset="utf-8"><title>Hekomi Anime List</title><style>body{font:12px Arial,sans-serif;color:#20232a;padding:28px}h1{font-size:22px}p{color:#626875}table{width:100%;border-collapse:collapse;margin-top:20px}th,td{border:1px solid #d9dce2;padding:8px;text-align:left}th{background:#f0f1f4}tr{break-inside:avoid}@media print{body{padding:0}}</style></head><body><h1>Hekomi — My Local Anime List</h1><p>Exported '+escapeHtml(new Date().toLocaleString())+' · '+rows.length+' anime</p><table><thead><tr><th>#</th><th>Anime</th><th>Status</th><th>Episodes</th><th>Score</th><th>MAL ID</th></tr></thead><tbody>'+table+'</tbody></table><script>window.onload=()=>window.print()<\/script></body></html>');
     win.document.close();
   }
   async function importMalListToLocal(){
