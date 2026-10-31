@@ -1106,6 +1106,26 @@ body[data-page="discover"] .catalog-attribution{
 }
 </style>
 
+
+<style id="hekomi-mangadex-search">
+body[data-page="manga"] #mangaView .mangadex-search-row{
+ display:grid;grid-template-columns:minmax(0,1fr) auto;gap:9px;
+ align-items:center;margin:15px 0 7px;max-width:760px;
+}
+body[data-page="manga"] #mangaView .mangadex-search-row .searchbox{
+ min-height:45px;border:1px solid #303644;border-radius:12px;background:#11141b;
+}
+body[data-page="manga"] #mangaView .mangadex-search-row input{
+ width:100%;min-width:0;background:transparent;border:0;outline:0;color:var(--text);
+}
+body[data-page="manga"] #mangaView .mangadex-search-row button{min-height:44px}
+body[data-page="manga"] #mangaView #mangaDexSearchStatus{min-height:18px;margin:5px 0 12px;font-size:11px;color:#929baa}
+body[data-page="manga"] #mangaView #mangaDexSearchResults:empty{display:none}
+@media(max-width:520px){
+ body[data-page="manga"] #mangaView .mangadex-search-row{grid-template-columns:minmax(0,1fr);max-width:none}
+ body[data-page="manga"] #mangaView .mangadex-search-row button{width:100%}
+}
+</style>
 </head>
 <body data-page="__HEKOMI_PAGE__">
 <div class="app-scroll-progress" aria-hidden="true"><span id="appScrollProgressBar"></span></div>
@@ -1204,7 +1224,7 @@ body[data-page="discover"] .catalog-attribution{
       <div class="mode-banner"><strong>✧ THE MANGA SIGNAL IS OPEN</strong><span>Find a source. Follow the chapters. Get lost in another world.</span></div>
       <nav class="subnav" id="mangaTabs"><button class="active" data-tab="explore">Discover</button><button data-tab="library">My library</button><button data-tab="discover">Extensions</button><button data-tab="sources">Sources</button></nav>
       <div id="mangaExploreTab">
-        <div class="manga-explore-heading"><div><span class="eyebrow">MANGA DISCOVERY</span><h2>Find your next series.</h2><p class="muted">Browse live titles from your enabled sources. Open any title to explore its chapters and available reading options.</p></div><div class="manga-explore-controls"><select class="input" id="mangaExploreProvider" aria-label="Discovery sources"><option value="mangahook" selected>Manga Hook API · Default</option><option value="all">All supported sources</option><option value="batoto">Bato network</option><option value="mangabuddy">MangaBuddy</option><option value="mangakakalot">Mangakakalot</option><option value="gomanga">GoManga API</option><option value="mangadex">MangaDex · Reading API</option></select><button class="btn-secondary" type="button" id="mangaExploreRefresh">↻ Refresh</button></div></div>
+        <div class="manga-explore-heading"><div><span class="eyebrow">MANGA DISCOVERY</span><h2>Find your next series.</h2><p class="muted">Browse live titles, or search MangaDex directly by title. Open any result to explore chapters and reading options.</p></div><div class="manga-explore-controls"><select class="input" id="mangaExploreProvider" aria-label="Discovery sources"><option value="mangahook">Manga Hook API · Default</option><option value="all">All supported sources</option><option value="batoto">Bato network</option><option value="mangabuddy">MangaBuddy</option><option value="mangakakalot">Mangakakalot</option><option value="mangadex" selected>MangaDex · Reading API</option></select><button class="btn-secondary" type="button" id="mangaExploreRefresh">↻ Refresh</button></div></div><div class="mangadex-search-row"><div class="searchbox"><span>⌕</span><input id="mangaDexSearchQuery" type="search" placeholder="Search MangaDex by manga title…" autocomplete="off"></div><button class="btn-mint" type="button" id="mangaDexSearchBtn">Search MangaDex</button></div><div id="mangaDexSearchStatus" class="small muted" role="status">Search the full MangaDex catalogue by title.</div><div id="mangaDexSearchResults" class="grid manga-explore-grid"></div>
         <div class="manga-feed-switch" id="mangaFeedSwitch" aria-label="Manga feed"><button type="button" class="active" data-manga-feed="trending">✦ Trending</button><button type="button" data-manga-feed="latest">◷ Latest updates</button></div>
         <div id="mangaExploreStatus" class="small muted" role="status">Preparing your manga feed…</div>
         <div class="grid manga-explore-grid" id="mangaExploreGrid"></div>
@@ -2281,6 +2301,39 @@ function mangaFeedCardMarkup(item,index){
     if(!errors||!errors.length){root.textContent='';return;}
     root.innerHTML='<p>Some sources were unavailable: '+errors.map(error=>esc(error.label||error.provider)+ ' — '+esc(error.message||'unavailable')).join(' · ')+'</p>';
   }
+
+  async function searchMangaDexCatalog(){
+    const query=$('#mangaDexSearchQuery').value.trim();
+    const status=$('#mangaDexSearchStatus'),root=$('#mangaDexSearchResults'),button=$('#mangaDexSearchBtn');
+    if(query.length<2){status.textContent='Enter at least two characters to search MangaDex.';return;}
+    button.disabled=true;button.textContent='Searching…';status.classList.remove('error');
+    status.textContent='Searching the MangaDex catalogue…';root.innerHTML=catalogLoadingMarkup(6);
+    try{
+      const data=await api('/api/mangascrape/search',{method:'POST',body:{provider:'mangadex',query}});
+      const results=Array.isArray(data.results)?data.results:[];
+      status.textContent=results.length+' MangaDex result'+(results.length===1?'':'s')+' for “'+query+'”.';
+      root.innerHTML=results.length?results.map(item=>{
+        const meta=[item.providerLabel||'MangaDex',item.status||'',...(Array.isArray(item.genres)?item.genres.slice(0,3):[])].filter(Boolean).join(' · ');
+        const cover=item.cover?'<img class="catalog-poster" src="'+esc(item.cover)+'" alt="'+esc('Cover for '+(item.title||'manga'))+'" loading="lazy" decoding="async">':'<div class="catalog-poster"></div>';
+        return '<article class="catalog-card"><div class="catalog-card-art">'+cover+'</div><div class="catalog-card-body"><h3 class="card-title">'+esc(item.title||'Untitled')+'</h3><p class="card-meta">'+esc(meta)+'</p><div class="catalog-card-actions"><button class="btn-mint" type="button" data-mangadex-add="'+esc(item.id)+'">＋ Add to library</button><a class="btn-secondary" href="'+esc(item.url||('https://mangadex.org/title/'+encodeURIComponent(item.id)))+'" target="_blank" rel="noreferrer">MangaDex ↗</a></div></div></article>';
+      }).join(''):'<div class="empty"><strong>No matching MangaDex titles</strong>Try another title or alternate spelling.</div>';
+      root.querySelectorAll('[data-mangadex-add]').forEach(button=>button.addEventListener('click',()=>{
+        const item=results.find(result=>String(result.id)===button.dataset.mangadexAdd);
+        if(!item)return;
+        addMangaToLibraryFromSource({
+          id:item.id,title:item.title,cover:item.cover,url:item.url||('https://mangadex.org/title/'+encodeURIComponent(item.id)),
+          source:'mangadex',provider:'mangadex',providerLabel:'MangaDex',
+          status:item.status||'',genres:item.genres||[],chapters:[],authors:item.authors||[]
+        });
+      }));
+    }catch(error){
+      status.classList.add('error');status.textContent=error.message||'MangaDex search failed.';
+      root.innerHTML='<div class="empty"><strong>Could not search MangaDex</strong>Try again in a moment.</div>';
+    }finally{button.disabled=false;button.textContent='Search MangaDex';}
+  }
+  $('#mangaDexSearchBtn').addEventListener('click',searchMangaDexCatalog);
+  $('#mangaDexSearchQuery').addEventListener('keydown',event=>{if(event.key==='Enter')searchMangaDexCatalog();});
+
   $('#mangaExploreProvider').addEventListener('change',()=>{
     mangaPreferences.defaultProvider=$('#mangaExploreProvider').value;
     write('hekomi_preferences_v1',mangaPreferences);
