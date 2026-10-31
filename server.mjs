@@ -1023,6 +1023,7 @@ const SEASON_CATALOG_QUERY = 'query HekomiSeasonCatalog($season:MediaSeason!,$se
 const seasonCatalogCache = new Map();
 const CATALOG_SEARCH_QUERY = 'query HekomiCatalogSearch($search:String!,$page:Int!) { anime: Page(page:$page,perPage:24) { pageInfo { currentPage hasNextPage } media(search:$search,type:ANIME,sort:[SEARCH_MATCH],isAdult:false) { ' + MEDIA_CATALOG_FIELDS + ' } } manga: Page(page:$page,perPage:24) { pageInfo { currentPage hasNextPage } media(search:$search,type:MANGA,sort:[SEARCH_MATCH],isAdult:false) { ' + MEDIA_CATALOG_FIELDS + ' } } }';
 const MEDIA_DETAIL_QUERY = 'query HekomiMediaDetail($id:Int!) { Media(id:$id) { ' + MEDIA_CATALOG_FIELDS + ' } }';
+const MEDIA_MAL_DETAIL_QUERY = 'query HekomiMalMediaDetail($idMal:Int!) { Media(idMal:$idMal,type:ANIME) { ' + MEDIA_CATALOG_FIELDS + ' } }';
 const publicCatalogCache = { data:null, expiresAt:0 };
 const publicCatalogSearchCache = new Map();
 const mediaDetailCache = new Map();
@@ -1172,6 +1173,16 @@ async function searchPublicCatalog(rawQuery, rawPage=1, rawFilters={}) {
   if (publicCatalogSearchCache.size > 160) publicCatalogSearchCache.delete(publicCatalogSearchCache.keys().next().value);
   return result;
 }
+async function getMediaByMalId(idMal) {
+  const id=Number(idMal);
+  if(!Number.isSafeInteger(id)||id<1) return null;
+  const key='mal:'+id, cached=mediaDetailCache.get(key);
+  if(cached&&Date.now()<cached.expiresAt)return cached.value;
+  const data=await requestAniList(MEDIA_MAL_DETAIL_QUERY,{idMal:id});
+  const media=packMedia(data.Media);
+  if(media){mediaDetailCache.set(key,{value:media,expiresAt:Date.now()+60*60*1000});if(mediaDetailCache.size>300)mediaDetailCache.delete(mediaDetailCache.keys().next().value);}
+  return media;
+}
 async function getMediaDetail(id, expectedKind) {
   const key = String(id);
   const cached = mediaDetailCache.get(key);
@@ -1299,6 +1310,12 @@ const server=http.createServer(async(req,res)=>{
     } catch(e) {
       return send(res,502,{error:'The title details are temporarily unavailable. '+(e.message||'')});
     }
+  }
+  if(req.method==='GET' && url.pathname==='/api/catalog/mal-detail') {
+    const idMal=Number(url.searchParams.get('id'));
+    if(!Number.isSafeInteger(idMal)||idMal<1)return send(res,400,{error:'Provide a valid MyAnimeList ID.'});
+    try { const media=await getMediaByMalId(idMal);if(!media)return send(res,404,{error:'No AniList airing record is linked to this MAL title.'});return send(res,200,media,{'Cache-Control':'public, max-age=600, stale-while-revalidate=3600'}); }
+    catch(e) { return send(res,502,{error:'Airing information is temporarily unavailable. '+(e.message||'')}); }
   }
   if(req.method==='GET' && url.pathname==='/api/catalog/season') {
     try { return send(res,200,await getSeasonCatalog(url.searchParams.get('season'),url.searchParams.get('year')) ,{'Cache-Control':'public, max-age=1800'}); }
