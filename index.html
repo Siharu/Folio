@@ -509,7 +509,20 @@ h1,h2,h3,.workspace-head h1,.catalog-heading h2,.showcase-copy h2{font-family:va
 .profile-mal-card{margin:0 0 14px;padding:13px 16px}.profile-mal-main{display:flex;justify-content:space-between;align-items:center;gap:12px}.profile-mal-main strong{font-size:13px}.profile-mal-main p{margin:3px 0 0}.profile-mal-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}.profile-mal-actions button{font-size:11px;padding:8px 12px}
 .profile-notify-card{margin:0 0 12px;padding:12px 15px}.profile-notify-row{display:flex;align-items:center;justify-content:space-between;gap:12px}.profile-notify-row strong{font-size:13px}.profile-notify-row p{font-size:11px;margin:3px 0 0}.profile-notify-row button{font-size:11px;padding:8px 12px;white-space:nowrap}
 
-/* Hekomi account layer */
+/* Profile account choice — distinct Hekomi and MAL entry points */
+.profile-account-choices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin:0 0 16px}
+.profile-account-choice{position:relative;min-width:0;padding:20px;overflow:hidden}
+.profile-account-choice:before{content:"";position:absolute;inset:0;pointer-events:none;opacity:.8}
+.hekomi-account-choice:before{background:radial-gradient(ellipse at 100% 0%,#a9f0db18,transparent 65%)}
+.mal-account-choice:before{background:radial-gradient(ellipse at 100% 0%,#c5b5ff18,transparent 65%)}
+.profile-choice-kicker{position:relative;display:block;font-size:9px;letter-spacing:.16em;color:var(--mint);margin-bottom:9px}
+.profile-account-choice h3{position:relative;font-size:20px;letter-spacing:-.035em;margin:0 0 7px}
+.profile-account-choice p{position:relative;min-height:42px;margin:0 0 14px;line-height:1.5}
+.profile-account-choice>.btn-primary{position:relative;min-height:40px}
+.profile-account-choice .profile-mal-actions{position:relative;margin-top:10px}
+.profile-account-choice .pill-label{position:absolute;right:18px;top:18px}
+@media(max-width:650px){.profile-account-choices{grid-template-columns:1fr}.profile-account-choice p{min-height:0}}
+\n/* Hekomi account layer */
 .hk-auth-backdrop{position:fixed;inset:0;z-index:9998;background:rgba(5,7,15,.76);backdrop-filter:blur(14px);display:none;place-items:center;padding:20px}
 .hk-auth-backdrop.open{display:grid}
 .hk-auth-card{width:min(460px,100%);background:var(--panel,#111827);color:var(--text,#f4f3f8);border:1px solid rgba(180,170,220,.2);border-radius:24px;padding:26px;box-shadow:0 28px 100px #0009;position:relative}
@@ -785,9 +798,20 @@ body[data-page="manga"] #mangaView .filter{border-radius:3px 10px 3px 10px}
       <nav class="subnav" id="profileTabs"><button class="active" data-profile-tab="overview">Profile</button><button data-profile-tab="settings">Settings</button><button data-profile-tab="privacy">Data &amp; privacy</button></nav>
       <div id="profileOverviewTab">
         <div class="profile-hero panel"><div class="profile-avatar" id="profileAvatarPreview" aria-hidden="true">H</div><div class="profile-identity"><span class="eyebrow" id="profileIdentitySource">AFTER HOURS MEMBER</span><h2 id="profileDisplayName">Hekomi reader</h2><p id="profileHandleLabel" class="muted small">@reader</p><p id="profileBioLabel">A little corner for the stories that stay with you.</p><span class="profile-local-badge"><i></i> Profile saved on this device</span></div></div>
-        <section class="panel profile-mal-card" aria-label="MyAnimeList connection">
-          <div class="profile-mal-main"><div><strong>MyAnimeList</strong><p class="muted small" id="profileMalStatus">Checking connection…</p></div><span class="pill-label" id="profileMalBadge">MAL</span></div>
-          <div class="profile-mal-actions"><button class="btn-primary" id="malSignInBtn">Sign in with MAL ↗</button><button class="btn-secondary hidden" id="malLogoutBtn">Sign out</button><button class="btn-secondary" id="profileMalSyncBtn" type="button">↻ Sync list</button></div>
+        <section class="profile-account-choices" aria-label="Choose an account">
+          <article class="panel profile-account-choice hekomi-account-choice">
+            <span class="profile-choice-kicker">YOUR PERSONAL SPACE</span>
+            <h3>Hekomi account</h3>
+            <p class="muted small">Create an account with your email to build your Hekomi identity and keep your personal space ready for cloud sync.</p>
+            <button class="btn-primary" id="profileCreateAccountBtn" type="button">Create Hekomi account ↗</button>
+          </article>
+          <article class="panel profile-account-choice mal-account-choice">
+            <span class="profile-choice-kicker">ANIME TRACKING</span>
+            <h3>MyAnimeList</h3>
+            <p class="muted small" id="profileMalStatus">Checking connection…</p>
+            <div class="profile-mal-actions"><button class="btn-primary" id="malSignInBtn" type="button">Login with MAL ↗</button><button class="btn-secondary hidden" id="malLogoutBtn" type="button">Sign out</button><button class="btn-secondary" id="profileMalSyncBtn" type="button">↻ Sync list</button></div>
+            <span class="pill-label" id="profileMalBadge">MAL</span>
+          </article>
         </section>
         <section class="panel profile-recommend-panel" aria-labelledby="profileRecommendationsHeading">
           <div class="panel-head"><div><h2 id="profileRecommendationsHeading">Picked for your taste</h2><p class="muted small">Recommendations based on the anime you updated most recently.</p></div><button class="btn-secondary" type="button" id="refreshProfileRecommendations">Refresh picks</button></div>
@@ -2287,7 +2311,7 @@ document.querySelectorAll('input[type="range"]').forEach(el=>{rangeProgress(el);
  function close(){backdrop.classList.remove('open');backdrop.setAttribute('aria-hidden','true');}
  function paint(){const signed=!!user;$('hkAuthSignedIn').hidden=!signed;form.hidden=signed;$('hkAuthIntro').textContent=signed?'Your Hekomi account is connected. Cloud library sync is coming next.':'Sign in to keep your profile and personal library connected across devices. Your current local library stays on this device.';$('hkAuthTitle').textContent=signed?'Welcome back.':'Your shelf, everywhere.';$('hkAuthEmail').textContent=user?.email||'';const b=$('profileBtn');if(b){b.title=signed?'Account: '+user.email:'Sign in to Hekomi';b.setAttribute('aria-label',b.title);}}
  async function boot(){try{const c=await fetch('/api/config',{cache:'no-store'}).then(r=>{if(!r.ok)throw Error('Account service is not configured.');return r.json();});if(!c.supabaseUrl||!c.supabasePublishableKey)throw Error('Account service is not configured yet.');if(!window.supabase?.createClient)await new Promise((resolve,reject)=>{const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';s.onload=resolve;s.onerror=()=>reject(Error('Could not load account service.'));document.head.appendChild(s);});client=window.supabase.createClient(c.supabaseUrl,c.supabasePublishableKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});const {data,error}=await client.auth.getSession();if(error)throw error;user=data.session?.user||null;paint();client.auth.onAuthStateChange((_e,session)=>{user=session?.user||null;paint();});}catch(e){say(e.message||'Account service unavailable.');}}
- $('profileBtn')?.addEventListener('click',open);$('hkAuthClose').addEventListener('click',close);backdrop.addEventListener('click',e=>{if(e.target===backdrop)close();});document.addEventListener('keydown',e=>{if(e.key==='Escape')close();});
+ $('profileBtn')?.addEventListener('click',open);$('profileCreateAccountBtn')?.addEventListener('click',open);$('hkAuthClose').addEventListener('click',close);backdrop.addEventListener('click',e=>{if(e.target===backdrop)close();});document.addEventListener('keydown',e=>{if(e.key==='Escape')close();});
  $('hkAuthCreate').addEventListener('click',async()=>{if(!client){say('Account service is loading.');return;}const email=$('hkAuthEmailInput').value.trim(),password=$('hkAuthPassword').value;if(!email||password.length<8){say('Enter an email and a password with at least 8 characters.');return;}const buttons=[$('hkAuthCreate'),$('hkAuthSubmit')];buttons.forEach(b=>b.disabled=true);say('Creating your account…');try{const {data,error}=await client.auth.signUp({email,password});if(error)throw error;if(data.session){user=data.user;paint();say('Account created. Welcome to Hekomi!');}else say('Check your email to confirm your account, then sign in.');}catch(e){say(e.message||'Could not create account.');}finally{buttons.forEach(b=>b.disabled=false);}});
  form.addEventListener('submit',async e=>{e.preventDefault();if(!client){say('Account service is loading.');return;}const buttons=[$('hkAuthSubmit'),$('hkAuthCreate')];buttons.forEach(b=>b.disabled=true);say('Signing in…');try{const {data,error}=await client.auth.signInWithPassword({email:$('hkAuthEmailInput').value.trim(),password:$('hkAuthPassword').value});if(error)throw error;user=data.user;paint();say('Signed in. Welcome back!');}catch(e){say(e.message||'Sign-in failed.');}finally{buttons.forEach(b=>b.disabled=false);}});
  $('hkAuthSignOut').addEventListener('click',async()=>{if(!client)return;const {error}=await client.auth.signOut();if(error){say(error.message);return;}user=null;paint();say('Signed out. Your local library is still here.');});
