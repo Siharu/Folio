@@ -1162,11 +1162,11 @@ async function searchPublicCatalog(rawQuery, rawPage=1, rawFilters={}) {
     const alias = mediaType.toLowerCase();
     const animeSeasonArgs = mediaType === 'ANIME' ? ',season:$season,seasonYear:$seasonYear' : '';
     return alias + ': Page(page:$page,perPage:24) { pageInfo { currentPage hasNextPage } media(type:' + mediaType +
-      ',search:$search,genre_in:$genreIn,genre_not_in:$genreNotIn,format:$format,status:$status' + animeSeasonArgs +
+      ',search:$search,genre_in:$genreIn,genre_not_in:$genreNotIn,format_in:$formats,status:$status' + animeSeasonArgs +
       ',startDate_like:$startDateLike,averageScore_greater:$minScore,sort:$sort,isAdult:false) { ' + MEDIA_CATALOG_FIELDS + ' } }';
   }).join(' ');
-  const discoveryQuery = 'query HekomiCatalogDiscovery($search:String,$page:Int!,$genreIn:[String],$genreNotIn:[String],$format:MediaFormat,$status:MediaStatus,$season:MediaSeason,$seasonYear:Int,$startDateLike:String,$minScore:Int,$sort:[MediaSort]) { ' + pageFields + ' }';
-  const variables = {search:query || null,page,genreIn:genreIn.length?genreIn:null,genreNotIn:genreNotIn.length?genreNotIn:null,format,status,season,seasonYear:season ? (year || null) : null,startDateLike:year ? String(year)+'%' : null,minScore,sort};
+  const discoveryQuery = 'query HekomiCatalogDiscovery($search:String,$page:Int!,$genreIn:[String],$genreNotIn:[String],$formats:[MediaFormat],$status:MediaStatus,$season:MediaSeason,$seasonYear:Int,$startDateLike:String,$minScore:Int,$sort:[MediaSort]) { ' + pageFields + ' }';
+  const variables = {search:query || null,page,genreIn:genreIn.length?genreIn:null,genreNotIn:genreNotIn.length?genreNotIn:null,formats:format?[format]:null,status,season,seasonYear:season ? (year || null) : null,startDateLike:year ? String(year)+'%' : null,minScore,sort};
   const data = await requestAniList(discoveryQuery,variables);
   const animePage=data.anime||{},mangaPage=data.manga||{};
   const result = {anime:(animePage.media||[]).map(packMedia).filter(Boolean),manga:(mangaPage.media||[]).map(packMedia).filter(Boolean),page,hasNextPage:!!((animePage.pageInfo&&animePage.pageInfo.hasNextPage)||(mangaPage.pageInfo&&mangaPage.pageInfo.hasNextPage)),source:'AniList',updatedAt:new Date().toISOString(),filters};
