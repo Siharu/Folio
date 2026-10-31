@@ -733,6 +733,16 @@ body[data-page="anime"] #malView .mode-label:before{display:none}
   line-height:1.04;letter-spacing:-.06em;font-weight:760;
 }
 .workspace-head p{max-width:650px;color:#a5adba;font-size:14px;line-height:1.7}
+body[data-page="anime"] #malView .workspace-head .mode-label,
+body[data-page="manga"] #mangaView .workspace-head .mode-label,
+body[data-page="profile"] #profileView .workspace-head .mode-label{
+  font:750 10px/1.2 Inter,ui-sans-serif,system-ui,sans-serif!important;
+  letter-spacing:.16em!important;text-transform:uppercase!important;
+}
+body[data-page="anime"] #malView:before,
+body[data-page="manga"] #mangaView:before{opacity:.22}
+body[data-page="manga"] #mangaView .workspace-head #mangaLibraryBtn{display:none!important}
+
 .head-actions{gap:8px;flex-wrap:wrap}
 body[data-page="anime"] #malView>.mode-banner,
 body[data-page="manga"] #mangaView>.mode-banner{display:none!important}
