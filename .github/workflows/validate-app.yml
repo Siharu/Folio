@@ -55,12 +55,16 @@ jobs:
           import fs from 'node:fs/promises';
           const html = await fs.readFile('index.html', 'utf8');
           const server = await fs.readFile('server.mjs', 'utf8');
+          const mascot = await fs.readFile('assets/hekomi-chan.svg', 'utf8');
           const scripts = [...html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)];
           const appScripts = scripts.filter(match => !/application\/(?:ld\+json|json)/i.test(match[1]));
           if (!appScripts.length) throw new Error('No inline application script found in Hekomi HTML.');
           for (const script of appScripts) new Function(script[2]);
-          for (const required of ['MAL Client', 'Manga Library', 'animeCatalogGrid', 'mangaCatalogGrid', 'airingCatalogGrid', 'showcaseAddButton', 'og:image', 'application/ld+json', 'catalogDiscoverButton', 'filterGenre', 'function editLocalAnime', 'animeListCardMarkup', 'anime-list-grid', 'genreTransitionTheme', 'data-genre-transition', 'data-transition-image', 'hk-transition-poster', 'HEKOMI / YOUR PERSONAL ANIME &amp; MANGA SPACE', 'Choose what you\'re here for.', '--hk-accent-ink', '.home-visual', 'assets/hekomi-chan.svg', 'hkMascotWave', 'HEKOMI-CHAN', 'backdrop-filter:blur(22px) saturate(150%)', '#hkAuthBackdrop{display:none}', 'genreSoundToggle']) {
+          for (const required of ['MAL Client', 'Manga Library', 'animeCatalogGrid', 'mangaCatalogGrid', 'airingCatalogGrid', 'showcaseAddButton', 'og:image', 'application/ld+json', 'catalogDiscoverButton', 'filterGenre', 'function editLocalAnime', 'animeListCardMarkup', 'anime-list-grid', 'genreTransitionTheme', 'data-genre-transition', 'data-transition-image', 'hk-transition-poster', 'HEKOMI / YOUR PERSONAL ANIME &amp; MANGA SPACE', 'Choose what you\'re here for.', '--hk-accent-ink', '.home-visual', 'assets/hekomi-chan.svg', '.home-mascot', 'HEKOMI-CHAN', 'backdrop-filter:blur(22px) saturate(150%)', '#hkAuthBackdrop{display:none}', 'genreSoundToggle']) {
             if (!html.includes(required)) throw new Error('Required Hekomi UI/SEO hook is missing: ' + required);
+          }
+          for (const required of ['shape-rendering="crispEdges"', 'class="wave"', '@keyframes wave', 'class="blink"']) {
+            if (!mascot.includes(required)) throw new Error('Hekomi-chan pixel sprite is missing: ' + required);
           }
           for (const required of ['detail-art-backdrop', 'data-detail-genre', 'detailVisualStyles']) {
             if (!server.includes(required)) throw new Error('Required Hekomi detail-page hook is missing: ' + required);
