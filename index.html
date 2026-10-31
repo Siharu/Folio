@@ -522,7 +522,8 @@ h1,h2,h3,.workspace-head h1,.catalog-heading h2,.showcase-copy h2{font-family:va
 .profile-account-choice .profile-mal-actions{position:relative;margin-top:10px}
 .profile-account-choice .pill-label{position:absolute;right:18px;top:18px}
 @media(max-width:650px){.profile-account-choices{grid-template-columns:1fr}.profile-account-choice p{min-height:0}}
-\n/* Hekomi account layer */
+
+/* Hekomi account layer */
 .hk-auth-backdrop{position:fixed;inset:0;z-index:9998;background:rgba(5,7,15,.76);backdrop-filter:blur(14px);display:none;place-items:center;padding:20px}
 .hk-auth-backdrop.open{display:grid}
 .hk-auth-card{width:min(460px,100%);background:var(--panel,#111827);color:var(--text,#f4f3f8);border:1px solid rgba(180,170,220,.2);border-radius:24px;padding:26px;box-shadow:0 28px 100px #0009;position:relative}
@@ -1311,6 +1312,133 @@ body[data-page="home"] .statusline .led{background:var(--mint);box-shadow:0 0 10
 }
 @media(max-width:420px){body[data-page="home"] .home-hero-actions{display:grid;grid-template-columns:1fr}.theme-mode .topbar{flex-wrap:wrap}}
 @media(prefers-reduced-motion:reduce){body[data-page="home"] .home-hero *{animation:none!important;transition:none!important}}
+
+/* Frosted glass header: keep the page visible underneath instead of painting a black strip. */
+.topbar{
+  position:sticky;top:0;z-index:180;isolation:isolate;
+  background:color-mix(in srgb,var(--bg) 66%,transparent);
+  border-bottom:1px solid color-mix(in srgb,var(--line) 72%,transparent);
+  -webkit-backdrop-filter:blur(22px) saturate(150%);
+  backdrop-filter:blur(22px) saturate(150%);
+  box-shadow:0 10px 30px color-mix(in srgb,var(--bg) 24%,transparent)
+}
+@media(max-width:760px){.topbar{background:color-mix(in srgb,var(--bg) 68%,transparent)}}
+/* Bring the hero back to a balanced two-column composition. */
+body[data-page="home"] .home-hero{
+  display:grid;grid-template-columns:minmax(0,1.08fr) minmax(280px,.82fr);
+  align-items:center;gap:clamp(22px,4vw,50px);
+  width:100%;max-width:1120px;margin:clamp(27px,4.5vw,54px) auto 32px;
+  padding:clamp(22px,3.2vw,38px);position:relative;
+  overflow:hidden;border:1px solid color-mix(in srgb,var(--line) 64%,var(--violet) 36%);
+  border-radius:clamp(20px,2.4vw,30px);
+  background:
+    radial-gradient(ellipse at 84% 36%,color-mix(in srgb,var(--violet) 13%,transparent),transparent 38%),
+    radial-gradient(ellipse at 98% 100%,color-mix(in srgb,var(--mint) 10%,transparent),transparent 38%),
+    linear-gradient(135deg,color-mix(in srgb,var(--panel) 62%,transparent),color-mix(in srgb,var(--panel2) 34%,transparent));
+  -webkit-backdrop-filter:blur(24px) saturate(145%);
+  backdrop-filter:blur(24px) saturate(145%);
+  box-shadow:0 24px 62px color-mix(in srgb,var(--bg) 32%,transparent),inset 0 1px color-mix(in srgb,var(--text) 8%,transparent);
+  text-align:left
+}
+body[data-page="home"] .home-hero:before{
+  content:"";position:absolute;inset:0;z-index:0;pointer-events:none;
+  background:linear-gradient(115deg,color-mix(in srgb,var(--text) 5%,transparent),transparent 42%);
+  opacity:.6
+}
+body[data-page="home"] .home-hero .hero-copy{position:relative;z-index:2;max-width:620px;min-width:0}
+body[data-page="home"] .home-hero .hero-kicker{color:var(--muted);font-size:9px;letter-spacing:.13em;gap:8px}
+body[data-page="home"] .home-hero .hero-kicker .hero-edition{border-left:1px solid var(--line);padding-left:12px;margin-left:2px;color:var(--muted)}
+body[data-page="home"] .home-hero .eyebrow{margin-top:23px;color:var(--mint)}
+body[data-page="home"] .home-hero h1{max-width:580px;margin:12px 0 15px;font-size:clamp(43px,5.2vw,65px);line-height:.99;letter-spacing:-.072em;color:var(--text);text-wrap:balance}
+body[data-page="home"] .home-hero h1 em{color:var(--violet);font-family:Georgia,serif;font-weight:500}
+body[data-page="home"] .home-hero p{max-width:510px;margin:0;color:var(--muted);font-size:clamp(14px,1.25vw,16px);line-height:1.7}
+body[data-page="home"] .home-hero-actions{display:flex;flex-wrap:wrap;gap:9px;margin-top:21px}
+body[data-page="home"] .home-hero-actions a,body[data-page="home"] .home-hero-actions button{min-height:42px;text-decoration:none}
+body[data-page="home"] .home-hero .hero-art,body[data-page="home"] .home-proof{display:none}
+/* Animated signal sculpture: subtle enough to sit beside the headline, alive enough to fill the space. */
+.home-visual{
+  --visual-line:color-mix(in srgb,var(--violet) 28%,var(--line));
+  position:relative;z-index:1;isolation:isolate;min-width:0;min-height:300px;overflow:hidden;
+  border:1px solid color-mix(in srgb,var(--line) 60%,var(--violet) 40%);
+  border-radius:22px;
+  background:
+    radial-gradient(ellipse at 50% 46%,color-mix(in srgb,var(--violet) 15%,transparent),transparent 42%),
+    radial-gradient(ellipse at 85% 88%,color-mix(in srgb,var(--mint) 12%,transparent),transparent 45%),
+    color-mix(in srgb,var(--panel) 36%,transparent);
+  -webkit-backdrop-filter:blur(18px) saturate(135%);
+  backdrop-filter:blur(18px) saturate(135%);
+  box-shadow:inset 0 1px color-mix(in srgb,var(--text) 7%,transparent),0 18px 42px color-mix(in srgb,var(--bg) 22%,transparent)
+}
+.home-visual-grid{position:absolute;inset:0;opacity:.45;background-image:linear-gradient(color-mix(in srgb,var(--violet) 8%,transparent) 1px,transparent 1px),linear-gradient(90deg,color-mix(in srgb,var(--violet) 8%,transparent) 1px,transparent 1px);background-size:22px 22px;mask-image:radial-gradient(ellipse at 50% 50%,#000,transparent 78%)}
+.home-visual-glow{position:absolute;left:50%;top:48%;width:205px;height:205px;border-radius:50%;background:radial-gradient(circle,color-mix(in srgb,var(--violet) 22%,transparent),color-mix(in srgb,var(--mint) 9%,transparent) 44%,transparent 72%);filter:blur(9px);transform:translate(-50%,-50%);animation:hkVisualBreathe 7s ease-in-out infinite}
+.home-visual-orbit{position:absolute;left:50%;top:47%;border:1px solid var(--visual-line);border-radius:50%;transform:translate(-50%,-50%);pointer-events:none}
+.home-visual-orbit.orbit-a{width:210px;height:210px;animation:hkVisualOrbit 22s linear infinite}
+.home-visual-orbit.orbit-b{width:268px;height:142px;transform:translate(-50%,-50%) rotate(-38deg);border-color:color-mix(in srgb,var(--mint) 28%,var(--line));animation:hkVisualOrbitReverse 27s linear infinite}
+.home-visual-orbit.orbit-c{width:164px;height:164px;border-style:dashed;border-color:color-mix(in srgb,var(--violet) 23%,transparent);animation:hkVisualOrbit 34s linear infinite}
+.home-visual-orbit i{position:absolute;left:50%;top:-4px;width:8px;height:8px;border-radius:50%;background:var(--mint);box-shadow:0 0 14px color-mix(in srgb,var(--mint) 70%,transparent)}
+.home-visual-orbit.orbit-b i{left:14%;top:50%;background:var(--violet);box-shadow:0 0 14px color-mix(in srgb,var(--violet) 70%,transparent)}
+.home-visual-core{
+  position:absolute;left:50%;top:47%;width:94px;height:94px;border:1px solid color-mix(in srgb,var(--violet) 48%,var(--line));
+  border-radius:28px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+  color:var(--text);background:linear-gradient(145deg,color-mix(in srgb,var(--panel) 74%,transparent),color-mix(in srgb,var(--panel2) 52%,transparent));
+  -webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);
+  box-shadow:0 0 42px color-mix(in srgb,var(--violet) 18%,transparent),inset 0 1px color-mix(in srgb,var(--text) 12%,transparent);
+  transform:translate(-50%,-50%) rotate(-7deg);animation:hkVisualCore 6s ease-in-out infinite
+}
+.home-visual-core span{font-family:Georgia,serif;font-size:42px;font-style:italic;line-height:.9;color:var(--violet);text-shadow:0 0 22px color-mix(in srgb,var(--violet) 35%,transparent)}
+.home-visual-core small{font-size:7px;letter-spacing:.16em;color:var(--muted)}
+.home-visual-card{
+  position:absolute;z-index:2;display:grid;gap:4px;min-width:0;padding:11px 13px;
+  border:1px solid color-mix(in srgb,var(--line) 56%,var(--violet) 44%);border-radius:13px;
+  background:color-mix(in srgb,var(--panel) 54%,transparent);color:var(--text);
+  -webkit-backdrop-filter:blur(16px) saturate(145%);backdrop-filter:blur(16px) saturate(145%);
+  box-shadow:0 12px 30px color-mix(in srgb,var(--bg) 25%,transparent);
+  animation:hkVisualFloat 7s ease-in-out infinite
+}
+.home-visual-card small{font-size:8px;letter-spacing:.16em;color:var(--mint);font-weight:800}
+.home-visual-card strong{font-size:12px;line-height:1.2;letter-spacing:-.02em}
+.home-visual-card span{font-size:8px;color:var(--muted);white-space:nowrap}
+.visual-card-anime{top:13%;right:4%;width:170px;transform:rotate(3deg)}
+.visual-card-manga{left:3%;bottom:15%;width:176px;border-color:color-mix(in srgb,var(--line) 56%,var(--mint) 44%);animation-delay:-3.2s;transform:rotate(-3deg)}
+.visual-card-manga small{color:var(--violet)}
+.home-visual-star{position:absolute;color:var(--violet);text-shadow:0 0 18px color-mix(in srgb,var(--violet) 62%,transparent);animation:hkVisualTwinkle 3.8s ease-in-out infinite}
+.star-one{left:18%;top:21%;font-size:20px}
+.star-two{right:19%;bottom:26%;font-size:15px;color:var(--mint);animation-delay:-1.7s}
+.home-visual-caption{position:absolute;left:15px;right:15px;bottom:10px;text-align:center;font-size:7px;letter-spacing:.2em;color:var(--muted);opacity:.8}
+@keyframes hkVisualOrbit{to{transform:translate(-50%,-50%) rotate(360deg)}}
+@keyframes hkVisualOrbitReverse{to{transform:translate(-50%,-50%) rotate(-398deg)}}
+@keyframes hkVisualBreathe{0%,100%{opacity:.62;transform:translate(-50%,-50%) scale(.92)}50%{opacity:1;transform:translate(-50%,-50%) scale(1.08)}}
+@keyframes hkVisualCore{0%,100%{transform:translate(-50%,-50%) rotate(-7deg)}50%{transform:translate(-50%,-53%) rotate(2deg)}}
+@keyframes hkVisualFloat{0%,100%{translate:0 0}50%{translate:0 -7px}}
+@keyframes hkVisualTwinkle{0%,100%{opacity:.42;transform:scale(.85) rotate(0)}50%{opacity:1;transform:scale(1.12) rotate(18deg)}}
+@media(max-width:760px){
+  body[data-page="home"] .home-hero{grid-template-columns:minmax(0,1fr);gap:18px;margin:25px auto 26px;padding:20px;border-radius:20px}
+  body[data-page="home"] .home-hero .hero-kicker{font-size:8px;line-height:1.55}
+  body[data-page="home"] .home-hero .hero-kicker .hero-edition{margin:0;padding:0;border:0}
+  body[data-page="home"] .home-hero .eyebrow{margin-top:18px}
+  body[data-page="home"] .home-hero h1{font-size:clamp(42px,10.5vw,55px);margin:10px 0 12px}
+  body[data-page="home"] .home-hero p{font-size:13px;line-height:1.65}
+  body[data-page="home"] .home-hero-actions{gap:7px;margin-top:17px}
+  body[data-page="home"] .home-hero-actions>*{flex:1;min-width:0;padding-inline:10px;font-size:11px}
+  .home-visual{min-height:210px;border-radius:16px}
+  .home-visual-orbit.orbit-a{width:152px;height:152px}
+  .home-visual-orbit.orbit-b{width:205px;height:108px}
+  .home-visual-orbit.orbit-c{width:124px;height:124px}
+  .home-visual-glow{width:150px;height:150px}
+  .home-visual-core{width:70px;height:70px;border-radius:21px}
+  .home-visual-core span{font-size:32px}
+  .home-visual-core small{font-size:6px}
+  .home-visual-card{padding:8px 9px;border-radius:10px;width:145px}
+  .home-visual-card strong{font-size:10px}
+  .home-visual-card span{font-size:7px}
+  .visual-card-anime{top:8%;right:2%}
+  .visual-card-manga{left:2%;bottom:12%}
+  .home-visual-caption{font-size:6px;bottom:7px}
+}
+@media(prefers-reduced-motion:reduce){.home-visual-glow,.home-visual-orbit,.home-visual-core,.home-visual-card,.home-visual-star{animation:none!important}}
+/* The Hekomi account dialog is a modal, never a page section at the bottom. */
+#hkAuthBackdrop{display:none}
+#hkAuthBackdrop.open{display:grid}
 </style>
 </head>
 <body data-page="__HEKOMI_PAGE__">
@@ -1329,18 +1457,31 @@ body[data-page="home"] .statusline .led{background:var(--mint);box-shadow:0 0 10
   </header>
   <main>
     <section id="landing">
-      <div class="hero home-hero">
+      <section class="hero home-hero" aria-labelledby="homeHeroTitle">
         <div class="hero-copy">
           <div class="hero-kicker"><span class="hero-signal"></span> HEKOMI / YOUR PERSONAL ANIME &amp; MANGA SPACE <span class="hero-edition">DISCOVER · TRACK · READ</span></div>
           <div class="eyebrow">YOUR STORIES. YOUR PACE.</div>
-          <h1>Less scrolling.<br><em>More feeling.</em></h1>
+          <h1 id="homeHeroTitle">Less scrolling.<br><em>More feeling.</em></h1>
           <p>Keep the shows you love close, discover your next manga, and bring all your favourite worlds into one calm little corner.</p>
           <div class="home-hero-actions">
             <a class="btn-primary" href="/discover">Explore the catalog <span aria-hidden="true">↗</span></a>
             <button class="btn-secondary" type="button" id="homeChooseMode">Choose your space <span aria-hidden="true">↓</span></button>
           </div>
         </div>
-      </div>
+        <div class="home-visual" aria-hidden="true">
+          <div class="home-visual-grid"></div>
+          <div class="home-visual-glow"></div>
+          <div class="home-visual-orbit orbit-a"><i></i></div>
+          <div class="home-visual-orbit orbit-b"><i></i></div>
+          <div class="home-visual-orbit orbit-c"><i></i></div>
+          <div class="home-visual-core"><span>H</span><small>HEKOMI SIGNAL</small></div>
+          <div class="home-visual-card visual-card-anime"><small>01 / ANIME</small><strong>Keep the stories</strong><span>watch · score · remember</span></div>
+          <div class="home-visual-card visual-card-manga"><small>02 / MANGA</small><strong>Find the next page</strong><span>discover · read · collect</span></div>
+          <div class="home-visual-star star-one">✦</div>
+          <div class="home-visual-star star-two">✧</div>
+          <div class="home-visual-caption">YOUR LITTLE WORLDS / OPEN ALL HOURS</div>
+        </div>
+      </section>
       <section class="anime-showcase" id="animeShowcase" data-slide="0" aria-label="Featured anime-inspired carousel">
         <div class="showcase-orbit orbit-one"></div><div class="showcase-orbit orbit-two"></div>
         <div class="showcase-copy" aria-live="polite"><span class="showcase-kicker"><i></i> <span id="showcaseKicker">HEKOMI ANIME TRANSMISSION</span></span><h2 id="showcaseTitle">Find your <em>next obsession.</em></h2><p id="showcaseDescription">New worlds. Strange signals. One more chapter before sleep.</p><div class="showcase-tags" id="showcaseTags"><span>ANIME</span><span>MANGA</span><span>AFTER HOURS</span></div><div class="showcase-actions"><a id="showcaseDetailsLink" class="showcase-primary hidden" href="/" tabindex="-1">View series details ↗</a><button id="showcaseAddButton" class="showcase-add hidden" type="button">＋ Add to my shelf</button></div></div>
@@ -1383,7 +1524,8 @@ body[data-page="home"] .statusline .led{background:var(--mint);box-shadow:0 0 10
   <div id="catalogSearchResults" class="catalog-grid hidden" aria-label="Catalog search results"></div><div id="catalogLoadMoreWrap" class="catalog-load-more hidden"><button type="button" class="btn-secondary" id="catalogLoadMore">Load more results</button></div>
   <section class="catalog-shelf" aria-labelledby="animeCatalogTitle"><div class="catalog-shelf-head"><div><span class="eyebrow">ANIMATION</span><h3 id="animeCatalogTitle">Trending anime</h3><p class="muted small">Series and films fans are watching right now.</p></div><div class="catalog-shelf-tools"><button type="button" class="rail-arrow" data-rail-scroll="animeCatalogGrid" data-direction="-1" aria-label="Scroll trending anime backward">‹</button><button type="button" class="rail-arrow" data-rail-scroll="animeCatalogGrid" data-direction="1" aria-label="Scroll trending anime forward">›</button><button type="button" class="btn-secondary" id="refreshCatalog">↻ Refresh</button></div></div><div id="animeCatalogGrid" class="catalog-grid catalog-row" aria-live="polite"><div class="catalog-loading">Loading anime covers and details…</div></div></section>
   <section class="catalog-shelf" aria-labelledby="mangaCatalogTitle"><div class="catalog-shelf-head"><div><span class="eyebrow">PAGES &amp; PANELS</span><h3 id="mangaCatalogTitle">Trending manga</h3><p class="muted small">Discover manga, manhwa, manhua, and one-shots.</p></div><div class="catalog-shelf-tools"><button type="button" class="rail-arrow" data-rail-scroll="mangaCatalogGrid" data-direction="-1" aria-label="Scroll trending manga backward">‹</button><button type="button" class="rail-arrow" data-rail-scroll="mangaCatalogGrid" data-direction="1" aria-label="Scroll trending manga forward">›</button></div></div><div id="mangaCatalogGrid" class="catalog-grid catalog-row" aria-live="polite"><div class="catalog-loading">Loading manga covers and details…</div></div></section>
-  <section class="catalog-shelf seasonal-shelf" aria-labelledby="seasonalCatalogTitle"><div class="catalog-shelf-head"><div><span class="eyebrow">THIS SEASON</span><h3 id="seasonalCatalogTitle">Seasonal anime</h3><p class="muted small" id="seasonalCatalogSubtitle">Fresh picks for the current anime season.</p><div class="season-picker" aria-label="Browse anime by season"><label class="sr-only" for="seasonPicker">Season</label><select id="seasonPicker" class="input season-picker-select"><option value="WINTER">Winter</option><option value="SPRING">Spring</option><option value="SUMMER">Summer</option><option value="FALL">Fall</option></select><label class="sr-only" for="seasonYearPicker">Year</label><select id="seasonYearPicker" class="input season-picker-select"></select><button type="button" class="btn-secondary" id="loadSeasonButton">Explore season</button></div></div><div class="catalog-shelf-tools"><button type="button" class="rail-arrow" data-rail-scroll="seasonalCatalogGrid" data-direction="-1" aria-label="Scroll seasonal anime backward">‹</button><button type="button" class="rail-arrow" data-rail-scroll="seasonalCatalogGrid" data-direction="1" aria-label="Scroll seasonal anime forward">›</button></div></div><div id="seasonalCatalogGrid" class="catalog-grid catalog-row" aria-live="polite"><div class="catalog-loading">Loading this season’s anime…</div></div></section>\n  <section class="catalog-shelf" aria-labelledby="airingCatalogTitle"><div class="catalog-shelf-head"><div><span class="eyebrow">ON THE AIR</span><h3 id="airingCatalogTitle">Currently airing</h3><p class="muted small">Follow the shows with new episodes this season.</p></div><div class="catalog-shelf-tools"><button type="button" class="rail-arrow" data-rail-scroll="airingCatalogGrid" data-direction="-1" aria-label="Scroll currently airing anime backward">‹</button><button type="button" class="rail-arrow" data-rail-scroll="airingCatalogGrid" data-direction="1" aria-label="Scroll currently airing anime forward">›</button></div></div><div id="airingCatalogGrid" class="catalog-grid catalog-row" aria-live="polite"><div class="catalog-loading">Checking currently airing anime…</div></div></section>
+  <section class="catalog-shelf seasonal-shelf" aria-labelledby="seasonalCatalogTitle"><div class="catalog-shelf-head"><div><span class="eyebrow">THIS SEASON</span><h3 id="seasonalCatalogTitle">Seasonal anime</h3><p class="muted small" id="seasonalCatalogSubtitle">Fresh picks for the current anime season.</p><div class="season-picker" aria-label="Browse anime by season"><label class="sr-only" for="seasonPicker">Season</label><select id="seasonPicker" class="input season-picker-select"><option value="WINTER">Winter</option><option value="SPRING">Spring</option><option value="SUMMER">Summer</option><option value="FALL">Fall</option></select><label class="sr-only" for="seasonYearPicker">Year</label><select id="seasonYearPicker" class="input season-picker-select"></select><button type="button" class="btn-secondary" id="loadSeasonButton">Explore season</button></div></div><div class="catalog-shelf-tools"><button type="button" class="rail-arrow" data-rail-scroll="seasonalCatalogGrid" data-direction="-1" aria-label="Scroll seasonal anime backward">‹</button><button type="button" class="rail-arrow" data-rail-scroll="seasonalCatalogGrid" data-direction="1" aria-label="Scroll seasonal anime forward">›</button></div></div><div id="seasonalCatalogGrid" class="catalog-grid catalog-row" aria-live="polite"><div class="catalog-loading">Loading this season’s anime…</div></div></section>
+  <section class="catalog-shelf" aria-labelledby="airingCatalogTitle"><div class="catalog-shelf-head"><div><span class="eyebrow">ON THE AIR</span><h3 id="airingCatalogTitle">Currently airing</h3><p class="muted small">Follow the shows with new episodes this season.</p></div><div class="catalog-shelf-tools"><button type="button" class="rail-arrow" data-rail-scroll="airingCatalogGrid" data-direction="-1" aria-label="Scroll currently airing anime backward">‹</button><button type="button" class="rail-arrow" data-rail-scroll="airingCatalogGrid" data-direction="1" aria-label="Scroll currently airing anime forward">›</button></div></div><div id="airingCatalogGrid" class="catalog-grid catalog-row" aria-live="polite"><div class="catalog-loading">Checking currently airing anime…</div></div></section>
   <p class="catalog-attribution">Catalog data supplied by <a href="https://anilist.co/" target="_blank" rel="noreferrer">AniList</a>. Cover artwork belongs to its respective creators and rights holders and is shown for title identification. Availability and details may change at the source.</p>
 </section>
     </section>
@@ -1513,7 +1655,8 @@ body[data-page="home"] .statusline .led{background:var(--mint);box-shadow:0 0 10
             <form id="profileForm" class="formstack">
               <label><span class="small-label">Display name</span><input id="profileNameInput" class="input" maxlength="48" placeholder="What should Hekomi call you?"></label>
               <label><span class="small-label">Handle</span><input id="profileHandleInput" class="input" maxlength="24" placeholder="reader_001" autocomplete="nickname"></label>
-              <label><span class="small-label">Avatar image URL (optional)</span><input id="profileAvatarInput" class="input" type="url" placeholder="https://…"></label>\n              <label><span class="small-label">Custom profile picture</span><input id="profileAvatarFile" class="input" type="file" accept="image/*"><small class="muted">Stored locally in this browser. A custom picture takes priority over your MAL avatar.</small></label><button class="btn-secondary" type="button" id="profileAvatarClear">Use MyAnimeList picture</button>
+              <label><span class="small-label">Avatar image URL (optional)</span><input id="profileAvatarInput" class="input" type="url" placeholder="https://…"></label>
+              <label><span class="small-label">Custom profile picture</span><input id="profileAvatarFile" class="input" type="file" accept="image/*"><small class="muted">Stored locally in this browser. A custom picture takes priority over your MAL avatar.</small></label><button class="btn-secondary" type="button" id="profileAvatarClear">Use MyAnimeList picture</button>
               <label><span class="small-label">Bio</span><textarea id="profileBioInput" class="input" rows="3" maxlength="220" placeholder="Favourite genres, current obsession, or whatever feels like you."></textarea></label>
               <button class="btn-primary" type="submit">Save profile</button>
             </form>
