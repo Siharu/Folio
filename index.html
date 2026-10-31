@@ -1427,7 +1427,8 @@ body[data-page="manga"] #mangaView #mangaDexSearchResults:empty{display:none}
   function catalogGenres(m){return Array.isArray(m.genres)?m.genres.slice(0,2):[];}
   function catalogDetailUrl(m,kind){return '/series/'+kind+'/'+Number(m.id)+'-'+slug(catalogTitle(m));}
   function genreTransitionTheme(genres){
-    const main=String(Array.isArray(genres)?genres[0]||'':genres||'').toLowerCase().trim();
+    const first=Array.isArray(genres)?genres[0]||'':genres||'';
+    const main=String(typeof first==='string'?first:first&&first.name||'').toLowerCase().trim();
     if(/horror|thriller|psychological/.test(main))return 'horror';
     if(/romance/.test(main))return 'romance';
     if(/fantasy|magic|myth/.test(main))return 'fantasy';
