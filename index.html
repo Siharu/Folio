@@ -608,6 +608,12 @@ body[data-page="manga"] #mangaView{display:block!important}
 </style>
 
 <style>
+/* Clear account and source section boundaries on the media workspaces. */
+.anime-account-panel{display:flex;align-items:center;justify-content:space-between;gap:18px;margin:14px 0 18px;padding:18px 20px;border:1px solid color-mix(in srgb,var(--violet) 30%,var(--line));background:linear-gradient(105deg,color-mix(in srgb,var(--violet) 9%,var(--panel)),var(--panel) 72%)}
+.anime-account-copy{min-width:0}.anime-account-copy h2{font-size:18px;letter-spacing:-.03em;margin:5px 0 3px}.anime-account-copy p{margin:0}.anime-account-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;flex-shrink:0}
+.manga-source-search-panel{margin-top:14px;border-top:2px solid color-mix(in srgb,var(--mint) 36%,var(--line))}
+@media(max-width:650px){.anime-account-panel{align-items:stretch;flex-direction:column;padding:15px}.anime-account-actions{display:grid;grid-template-columns:1fr 1fr}.anime-account-actions #animeMalSignInBtn{grid-column:1/-1}.anime-account-actions button{width:100%}}
+ 
 /* Distinct media identities: anime is a broadcast archive; manga is an ink-and-paper library. */
 body[data-page="anime"] #malView,
 body[data-page="manga"] #mangaView{position:relative;isolation:isolate}
@@ -720,6 +726,10 @@ body[data-page="manga"] #mangaView .filter{border-radius:3px 10px 3px 10px}
     <section id="malView" class="view hidden">
       <div class="workspace-head"><div><span class="mode-label">MODE 01 · MAL CLIENT</span><h1>Anime list manager</h1><p>Manage your local list or connect to MyAnimeList to load and update your actual account.</p></div></div>
       <div class="mode-banner"><strong>✦ YOUR ANIME ARCHIVE, IN ORBIT</strong><span>Track the stories that stay with you — one episode at a time.</span></div>
+      <section class="panel anime-account-panel" aria-label="MyAnimeList connection">
+        <div class="anime-account-copy"><span class="eyebrow">ACCOUNT CONNECTION</span><h2>Connect your MyAnimeList</h2><p class="muted small" id="animeMalStatus">Checking your MyAnimeList connection…</p></div>
+        <div class="anime-account-actions"><button class="btn-primary" type="button" id="animeMalSignInBtn">Login with MAL ↗</button><button class="btn-secondary hidden" type="button" id="animeMalLogoutBtn">Sign out</button><button class="btn-secondary" type="button" id="animeMalSyncBtn">↻ Sync list</button></div>
+      </section>
       <nav class="subnav" id="malTabs"><button class="active" data-tab="mylist">My list</button><button data-tab="search">Discover anime</button><button data-tab="local">Local list</button><button data-tab="about">Connection & help</button></nav>
       <div id="malMyListTab">
         <section class="weeb-stats panel" id="weebStatsPanel" aria-labelledby="weebStatsTitle"><div class="panel-head"><div><span class="eyebrow">YOUR ANIME DNA</span><h2 id="weebStatsTitle">Weebology report ✦</h2><p class="muted small" id="weebStatsSubtitle">Your watch history, lovingly roasted by math.</p></div><button class="btn-secondary" type="button" id="refreshWeebStats">↻ Recalculate</button></div><div class="weeb-stats-grid"><div class="weeb-archetype"><div class="weeb-radar" id="weebRadar" role="img" aria-label="Hexagonal anime habit chart"></div><div class="weeb-type" id="weebType">The Unclassified Weeb</div><p class="muted small" id="weebRoast">Sync your MAL list to reveal your anime energy.</p></div><div class="weeb-metrics"><div class="weeb-metric"><span>Episodes watched</span><strong id="weebEpisodes">—</strong><small>One more episode, obviously.</small></div><div class="weeb-metric"><span>Time in anime jail</span><strong id="weebDays">—</strong><small id="weebTimeFoot">Estimated at 24 min per episode.</small></div><div class="weeb-metric"><span>Completed titles</span><strong id="weebCompleted">—</strong><small>Credits rolled. Feelings remain.</small></div><div class="weeb-metric"><span>Average score</span><strong id="weebScore">—</strong><small>Your inner critic has entered the chat.</small></div></div></div><div class="weeb-genre"><div class="weeb-genre-head"><h3>Genre goblin report</h3><span class="pill-label" id="weebGenreBadge">Awaiting data</span></div><div id="weebGenreBars"><p class="muted small">Genre breakdown appears when your list has genre metadata.</p></div></div><p class="weeb-footnote">Stats use the list currently available in Hekomi. Watch-time is an estimate, not a surveillance device. Sync MAL for account-wide totals.</p></section>
@@ -767,7 +777,10 @@ body[data-page="manga"] #mangaView .filter{border-radius:3px 10px 3px 10px}
             <label class="extension-option"><input type="checkbox" value="gomanga"><span><strong>GoManga API</strong><small>Backup catalogue, search, manga details and page images</small></span><em>API source</em></label>
             <label class="extension-option"><input type="checkbox" value="mangadex"><span><strong>MangaDex</strong><small>Direct API catalogue, search, chapters and in-app page reader</small></span><em>API source</em></label>
           </div>
-          <div class="formrow mobile-stack" style="margin-top:15px">
+        </div>
+        <section class="panel manga-source-search-panel" aria-labelledby="mangaSourceSearchHeading">
+          <div class="panel-head"><div><h2 id="mangaSourceSearchHeading">Search your extensions</h2><p class="muted small">Search the selected source or all enabled sources. Results appear below this section.</p></div><span class="pill-label">SOURCE SEARCH</span></div>
+          <div class="formrow mobile-stack" style="margin-top:8px">
             <select class="input" id="mangaAdapterProvider" aria-label="Search scope">
               <option value="mangahook" selected>Manga Hook API</option>
               <option value="all">All enabled extensions</option>
@@ -782,8 +795,7 @@ body[data-page="manga"] #mangaView .filter{border-radius:3px 10px 3px 10px}
           </div>
           <div id="mangaAdapterStatus" class="small muted" style="margin-top:10px" role="status"></div>
           <div id="mangaAdapterResults" class="results"></div>
-          
-        </div>
+        </section>
         <div class="panel advanced-source-tools"><div class="panel-head"><div><h2>Find manga websites</h2><p class="muted small">Search the public web for manga or manhwa sources, then choose a result for Hekomi to inspect.</p></div><span class="pill-label">WEB SEARCH</span></div><div class="formrow mobile-stack"><input class="input" id="siteSearchQuery" placeholder="e.g. Solo Leveling manhwa chapters" autocomplete="off"><button class="btn-mint" id="siteSearchBtn">Search websites</button></div><div id="siteSearchStatus" class="small muted" style="margin-top:10px"></div><div id="siteSearchResults" class="results"></div><div class="notice">This searches for public web pages; results can include unofficial sources. Hekomi checks site rules before inspecting a selected result and does not bypass logins, paywalls, DRM, or other access controls.</div></div>
         <div class="panel advanced-source-tools"><div class="panel-head"><div><h2>Inspect a manga website</h2><p class="muted small">Paste a public website or manga page URL. The crawler checks robots.txt before inspecting an HTML page.</p></div><span class="pill-label">PUBLIC PAGES</span></div><div class="formrow mobile-stack"><input class="input" id="crawlUrl" type="url" placeholder="https://example.com/manga/title"><button class="btn-mint" id="crawlBtn">Inspect page</button></div><div id="crawlStatus" class="small muted" style="margin-top:10px"></div><div id="crawlResult" class="hidden"></div></div>
         
@@ -1364,7 +1376,7 @@ function showProfileTab(tab){activeProfileTab=tab;$$('#profileTabs button').forE
       const data=await api('/api/mal/auth/status');
       malConfigured=!!data.configured;malConnected=!!data.connected;malUsername=data.username||'';
       $('#malSetupStatus').textContent=!malConfigured?'Hekomi owner setup needed: configure MAL_CLIENT_ID, MAL_CLIENT_SECRET, and FOLIO_SESSION_SECRET on the host.':malConnected?'Connected as '+(malUsername||'your MyAnimeList account')+'. Your session is private to this browser.':'Not connected. Sign in with MyAnimeList to sync your account.';
-      $('#profileMalStatus').textContent=!malConfigured?'Sign-in unavailable':malConnected?'Connected as '+(malUsername||'your MAL account'):'Not connected';$('#profileMalBadge').textContent=malConnected?'CONNECTED':'NOT CONNECTED';$('#profileMalBadge').classList.toggle('active',malConnected);
+      $('#profileMalStatus').textContent=!malConfigured?'Sign-in unavailable':malConnected?'Connected as '+(malUsername||'your MAL account'):'Not connected';$('#animeMalStatus').textContent=!malConfigured?'MAL sign-in needs the app owner’s API credentials.':malConnected?'Connected as '+(malUsername||'your MAL account')+'. Your list can sync here.':'Not connected. Sign in to load and update your MyAnimeList list.';$('#animeMalSignInBtn').classList.toggle('hidden',malConnected);$('#animeMalLogoutBtn').classList.toggle('hidden',!malConnected);$('#animeMalSignInBtn').disabled=!malConfigured;$('#profileMalBadge').textContent=malConnected?'CONNECTED':'NOT CONNECTED';$('#profileMalBadge').classList.toggle('active',malConnected);
       if(malConnected){
         try{const me=await api('/api/mal/me');const malName=String(me.name||malUsername||'').trim();const malPicture=String(me.picture||'').trim();
           profileData.malDisplayName=malName||profileData.malDisplayName||'';
@@ -1380,7 +1392,7 @@ function showProfileTab(tab){activeProfileTab=tab;$$('#profileTabs button').forE
       if(malConnected&&['mal','profile'].includes(currentPageFromPath())&&!remoteReady)await loadRemoteList();
     }catch(e){$('#malSetupStatus').textContent='Could not check the MAL connection: '+e.message;}
   }
-  if($('#profileMalSyncBtn'))$('#profileMalSyncBtn').onclick=()=>loadRemoteList();if($('#malSignInBtn'))$('#malSignInBtn').onclick=beginMalLogin;
+  if($('#profileMalSyncBtn'))$('#profileMalSyncBtn').onclick=()=>loadRemoteList();if($('#malSignInBtn'))$('#malSignInBtn').onclick=beginMalLogin;if($('#animeMalSignInBtn'))$('#animeMalSignInBtn').onclick=beginMalLogin;if($('#animeMalLogoutBtn'))$('#animeMalLogoutBtn').onclick=logoutMal;if($('#animeMalSyncBtn'))$('#animeMalSyncBtn').onclick=loadRemoteList;
   if($('#malTestBtn'))$('#malTestBtn').onclick=async()=>{await refreshMalAuthStatus();if(!malConnected){notify(malConfigured?'Sign in with MyAnimeList first.':'Hekomi MAL sign-in is not configured yet.');return;}$('#malSetupStatus').textContent='Checking your MyAnimeList connection…';try{const me=await api('/api/mal/me');malUsername=me.name||malUsername;$('#malSetupStatus').textContent='Connected as '+(malUsername||'your MAL account')+'. Loading list…';await loadRemoteList();showMalTab('mylist');notify('MyAnimeList connection successful.');}catch(e){$('#malSetupStatus').textContent=e.message;notify(e.message);}};
   async function logoutMal(){try{await fetch('/api/mal/auth/logout',{method:'POST',credentials:'same-origin'});}catch{}malConnected=false;malUsername='';remoteReady=false;malRemote=[];profileRecommendationsLoaded=false;renderProfileWatchTables();renderProfileRecommendations();$('#malRemoteWrap').classList.add('hidden');$('#malConnectionNudge').classList.remove('hidden');$('#malSetupStatus').textContent='Signed out of MyAnimeList.';await refreshMalAuthStatus();notify('Signed out of MyAnimeList.');}
   $('#malLogoutBtn').onclick=logoutMal;
