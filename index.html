@@ -946,6 +946,166 @@ body[data-page="profile"] #profileView .profile-account-choice:before{opacity:.3
 }
 </style>
 
+
+<style id="hekomi-discover-clarity">
+/* Discover is search-first. Filters are progressive disclosure, not the first screen. */
+:root{--acid:#b9a6ff;--lilac:#c9b7ff}
+body[data-page="discover"] #discoverCatalog{
+  max-width:1210px;margin:0 auto;padding-top:32px;
+}
+body[data-page="discover"] .catalog-discovery:before{display:none}
+body[data-page="discover"] .catalog-heading{
+  display:grid;grid-template-columns:minmax(0,1fr) minmax(340px,.9fr);
+  align-items:end;gap:clamp(22px,4vw,52px);
+  padding:8px 0 25px;margin-bottom:17px;
+  border-bottom:1px solid var(--line);
+}
+body[data-page="discover"] .catalog-heading>div:first-child{max-width:610px}
+body[data-page="discover"] .catalog-heading .eyebrow{
+  color:var(--violet);font-size:10px;letter-spacing:.16em;
+}
+body[data-page="discover"] .catalog-heading h2{
+  margin:9px 0 8px;font-size:clamp(32px,4vw,46px);
+  line-height:1.06;letter-spacing:-.065em;text-wrap:balance;
+}
+body[data-page="discover"] .catalog-heading p{
+  max-width:600px;margin:0;color:#9da6b5;font-size:14px;line-height:1.7;
+}
+body[data-page="discover"] .catalog-search{
+  display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;
+  align-items:center;width:100%;flex:initial;
+}
+body[data-page="discover"] .catalog-search:before{display:none}
+body[data-page="discover"] .catalog-search .input{
+  min-height:48px;padding:0 15px;border:1px solid #303644;
+  border-radius:12px;background:#12151c;color:var(--text);
+}
+body[data-page="discover"] .catalog-search .btn-primary{min-height:48px;padding:0 19px}
+body[data-page="discover"] .catalog-status{min-height:17px;margin:8px 0 12px;font-size:11px}
+
+/* The filter drawer is a quiet, clearly labeled optional step. */
+body[data-page="discover"] .advanced-search{
+  margin:13px 0 28px;border:1px solid #292f3a;border-radius:15px;
+  background:#11141a;box-shadow:none;overflow:hidden;
+}
+body[data-page="discover"] .advanced-toggle{
+  display:flex;align-items:center;justify-content:space-between;gap:15px;
+  width:100%;min-height:62px;padding:13px 18px;
+  border:0;border-radius:0;background:transparent;text-align:left;
+}
+body[data-page="discover"] .advanced-toggle-title{gap:12px}
+body[data-page="discover"] .advanced-filter-icon{
+  width:34px;height:34px;border-radius:10px;
+  border:1px solid #38334c;background:#1c1a27;color:var(--violet);
+}
+body[data-page="discover"] .advanced-toggle-title strong{
+  display:block;font:650 13px/1.3 var(--font-ui,Inter,sans-serif);
+  letter-spacing:0;color:#e8eaf0;
+}
+body[data-page="discover"] .advanced-toggle-title small{
+  display:block;margin-top:3px;color:#929baa;font-size:11px;line-height:1.4;
+}
+body[data-page="discover"] .advanced-toggle-side{gap:12px}
+body[data-page="discover"] .filter-count{
+  color:#b8aecf;border:1px solid #3b354b;background:#1b1924;
+  border-radius:999px;padding:5px 9px;font-size:10px;
+}
+body[data-page="discover"] #advancedChevron{
+  display:grid;place-items:center;width:25px;height:25px;
+  border:1px solid #303644;border-radius:8px;color:#aeb5c2;
+}
+body[data-page="discover"] .advanced-filter-body{
+  padding:0 18px 18px;border-top:1px solid #292f3a;
+  animation:none!important;
+}
+body[data-page="discover"] .advanced-filter-body.is-collapsed{display:none}
+body[data-page="discover"] .advanced-filter-grid{
+  grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;padding-top:18px;
+}
+body[data-page="discover"] .advanced-field{gap:8px}
+body[data-page="discover"] .advanced-field>span{
+  color:#b7bfcc;font-size:11px;font-weight:650;letter-spacing:.01em;
+}
+body[data-page="discover"] .advanced-field .input{
+  min-height:40px;padding:9px 11px;border:1px solid #303644;border-radius:10px;
+  background:#171b23;color:#e8ebf1;font-size:12px;
+}
+body[data-page="discover"] .genre-quick-chips{gap:6px}
+body[data-page="discover"] .genre-chip,
+body[data-page="discover"] .genre-quick-chips button{
+  padding:6px 9px;border-radius:999px;font-size:10px;
+}
+body[data-page="discover"] .advanced-filter-actions{
+  margin-top:18px;padding-top:14px;border-top:1px solid #292f3a;
+}
+body[data-page="discover"] .advanced-filter-actions #filterResultCount{
+  color:#929baa;font-size:11px;
+}
+
+/* Let the posters lead; shelves share one quiet structure. */
+body[data-page="discover"] .catalog-shelf{margin-top:36px}
+body[data-page="discover"] .catalog-shelf-head{
+  align-items:flex-end;gap:16px;margin-bottom:12px;
+}
+body[data-page="discover"] .catalog-shelf-head h3{
+  margin:5px 0 4px;font-size:22px;letter-spacing:-.045em;
+}
+body[data-page="discover"] .catalog-shelf-head p{margin:0;color:#929baa;font-size:12px}
+body[data-page="discover"] .catalog-shelf-head .eyebrow{
+  color:#9fa7b5;font-size:9px;letter-spacing:.16em;
+}
+body[data-page="discover"] .catalog-shelf-tools{gap:6px}
+body[data-page="discover"] .catalog-shelf-tools .btn-secondary{
+  min-height:36px;padding:7px 11px;border-radius:10px;
+}
+body[data-page="discover"] .catalog-row{
+  gap:14px;padding:3px 1px 16px;scrollbar-color:#343b48 transparent;
+}
+body[data-page="discover"] .catalog-row>.catalog-card{
+  flex-basis:clamp(165px,15vw,205px);
+}
+body[data-page="discover"] .catalog-card{
+  border-color:#292f3a;background:#12151c;box-shadow:none;
+}
+body[data-page="discover"] .catalog-card:after{display:none}
+body[data-page="discover"] .catalog-card:hover{
+  border-color:rgba(185,166,255,.5);box-shadow:0 8px 24px rgba(0,0,0,.22);
+}
+body[data-page="discover"] .catalog-card:hover .card-title{color:#d8ceff}
+body[data-page="discover"] .seasonal-shelf{
+  padding:0;margin-top:42px;overflow:visible;
+  border:0;border-radius:0;background:transparent;box-shadow:none;
+}
+body[data-page="discover"] .seasonal-shelf:before{display:none}
+body[data-page="discover"] .seasonal-shelf .catalog-shelf-head{padding:0 0 12px}
+body[data-page="discover"] .catalog-attribution{
+  max-width:850px;margin:35px auto 0;color:#77808f;font-size:11px;
+}
+@media(max-width:760px){
+  body[data-page="discover"] #discoverCatalog{padding-top:24px}
+  body[data-page="discover"] .catalog-heading{
+    grid-template-columns:minmax(0,1fr);gap:18px;padding-top:2px;padding-bottom:20px;
+  }
+  body[data-page="discover"] .catalog-heading h2{font-size:34px}
+  body[data-page="discover"] .catalog-heading p{font-size:13px}
+  body[data-page="discover"] .catalog-search{grid-template-columns:minmax(0,1fr) auto}
+  body[data-page="discover"] .advanced-search{margin:12px 0 24px}
+  body[data-page="discover"] .advanced-toggle{padding:12px 13px;min-height:58px}
+  body[data-page="discover"] .advanced-filter-body{padding:0 13px 14px}
+  body[data-page="discover"] .advanced-filter-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:11px;padding-top:14px}
+  body[data-page="discover"] .advanced-filter-actions{flex-wrap:wrap;align-items:center}
+  body[data-page="discover"] .catalog-shelf{margin-top:30px}
+  body[data-page="discover"] .catalog-shelf-head{align-items:flex-start;flex-direction:column;gap:9px}
+  body[data-page="discover"] .catalog-shelf-head h3{font-size:20px}
+}
+@media(max-width:430px){
+  body[data-page="discover"] .advanced-filter-grid{grid-template-columns:minmax(0,1fr)}
+  body[data-page="discover"] .advanced-score-field{grid-column:span 1}
+  body[data-page="discover"] .advanced-toggle-title small{max-width:190px}
+  body[data-page="discover"] .catalog-row>.catalog-card{flex-basis:min(44vw,175px)}
+}
+</style>
+
 </head>
 <body data-page="__HEKOMI_PAGE__">
 <div class="app-scroll-progress" aria-hidden="true"><span id="appScrollProgressBar"></span></div>
@@ -985,12 +1145,12 @@ body[data-page="profile"] #profileView .profile-account-choice:before{opacity:.3
 
 <section class="catalog-discovery" id="discoverCatalog" aria-labelledby="catalogTitle">
   <div class="catalog-heading"><div><span class="eyebrow">THE HEKOMI CATALOG</span><h2 id="catalogTitle">Find your next world.</h2><p>Explore real anime and manga titles with cover art, synopses, genres, scores, and dedicated details pages.</p></div>
-    <form id="catalogSearchForm" class="catalog-search" role="search" aria-label="Search anime and manga catalog"><label class="sr-only" for="catalogSearchInput">Search anime and manga</label><input id="catalogSearchInput" class="input" type="search" maxlength="100" placeholder="Optional title — browse by filters without one…" autocomplete="off" list="catalogSearchSuggestions"><datalist id="catalogSearchSuggestions"></datalist><button class="btn-primary" type="submit" id="catalogSearchButton">Search</button></form>
+    <form id="catalogSearchForm" class="catalog-search" role="search" aria-label="Search anime and manga catalog"><label class="sr-only" for="catalogSearchInput">Search anime and manga</label><input id="catalogSearchInput" class="input" type="search" maxlength="100" placeholder="Search titles or browse the catalogue…" autocomplete="off" list="catalogSearchSuggestions"><datalist id="catalogSearchSuggestions"></datalist><button class="btn-primary" type="submit" id="catalogSearchButton">Search</button></form>
   </div>
   <div id="catalogSearchStatus" class="small muted catalog-status" role="status" aria-live="polite"></div>
   <section class="advanced-search" id="advancedCatalogFilters" aria-label="Advanced catalog filters">
-    <button type="button" class="advanced-toggle" id="advancedFiltersToggle" aria-expanded="true" aria-controls="advancedFilterBody"><span class="advanced-toggle-title"><span class="advanced-filter-icon" data-icon="sliders" aria-hidden="true"></span><span><strong>Advanced search</strong><small>Dial in your next favorite</small></span></span><span class="advanced-toggle-side"><span id="activeFilterCount" class="filter-count">0 active</span><span id="advancedChevron" aria-hidden="true">⌄</span></span></button>
-    <div id="advancedFilterBody" class="advanced-filter-body">
+    <button type="button" class="advanced-toggle" id="advancedFiltersToggle" aria-expanded="false" aria-controls="advancedFilterBody"><span class="advanced-toggle-title"><span class="advanced-filter-icon" data-icon="sliders" aria-hidden="true"></span><span><strong>Filters &amp; sorting</strong><small>Optional: narrow by genre, season, format, status, or score</small></span></span><span class="advanced-toggle-side"><span id="activeFilterCount" class="filter-count">0 active</span><span id="advancedChevron" aria-hidden="true">›</span></span></button>
+    <div id="advancedFilterBody" class="advanced-filter-body is-collapsed">
       <div class="advanced-filter-grid">
         <label class="advanced-field"><span>Media type</span><select id="filterMediaType" class="input"><option value="all">Anime + manga</option><option value="ANIME">Anime only</option><option value="MANGA">Manga only</option></select></label>
         <div class="advanced-field genre-selection-field"><span>Include genres <small class="muted">(match any selected)</small></span><div id="includeGenreChips" class="genre-quick-chips genre-multi-select" aria-label="Genres to include"></div><span class="small muted" id="includeGenreSummary">No included genres</span></div><div class="advanced-field genre-selection-field"><span>Exclude genres <small class="muted">(remove matches)</small></span><div id="excludeGenreChips" class="genre-quick-chips genre-multi-select" aria-label="Genres to exclude"></div><span class="small muted" id="excludeGenreSummary">No excluded genres</span></div><label class="advanced-field"><span>Season</span><select id="filterSeason" class="input"><option value="">Any season</option><option value="WINTER">Winter · Jan–Mar</option><option value="SPRING">Spring · Apr–Jun</option><option value="SUMMER">Summer · Jul–Sep</option><option value="FALL">Fall · Oct–Dec</option></select></label>
