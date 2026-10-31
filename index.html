@@ -1920,7 +1920,7 @@ function mangaFeedCardMarkup(item,index){
   }
   $('#profileNotifyToggle')?.addEventListener('click',toggleEpisodeNotifications);
   updateEpisodeNotifyUI();
-  if(episodeNotifyEnabled())episodeNotifyTimer=setInterval(()=>checkEpisodeNotifications(),5*60*1000);
+  episodeNotifyTimer=setInterval(()=>checkEpisodeNotifications(),5*60*1000);
   document.addEventListener('visibilitychange',()=>{if(!document.hidden)checkEpisodeNotifications();});
   const profileAiringCache=new Map();
   function profileDateTime(timestamp){return new Date(Number(timestamp)*1000).toLocaleString(undefined,{dateStyle:'medium',timeStyle:'short'});}
