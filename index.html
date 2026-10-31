@@ -658,6 +658,284 @@ body[data-page="manga"] #mangaView .filter{border-radius:3px 10px 3px 10px}
 }
 @media(prefers-reduced-motion:reduce){body[data-page="manga"] #mangaView .catalog-card img,body[data-page="manga"] #mangaView .manga-card img{transition:none}}
 </style>
+
+<style id="hekomi-clarity-pass">
+/* Hekomi clarity pass — calmer hierarchy, consistent surfaces, fewer competing frames. */
+:root{
+  --bg:#0a0b10;
+  --panel:#12151c;
+  --panel2:#181c25;
+  --line:#292e39;
+  --muted:#9aa2b1;
+  --text:#f2f3f7;
+  --violet:#b9a6ff;
+  --mint:#8be1cf;
+  --radius:17px;
+}
+html{scroll-padding-top:96px;scrollbar-gutter:stable}
+body{
+  background:
+    radial-gradient(ellipse at 16% 0%,rgba(117,91,174,.10),transparent 34%),
+    radial-gradient(ellipse at 88% 6%,rgba(59,139,123,.055),transparent 30%),
+    var(--bg);
+}
+.app{max-width:1360px;padding:0 clamp(16px,3vw,42px) 52px}
+.topbar{
+  height:72px;
+  gap:20px;
+  background:rgba(10,11,16,.88);
+  border-bottom:1px solid rgba(255,255,255,.075);
+  box-shadow:none;
+}
+.brand{gap:10px;letter-spacing:.015em}
+.brand small{font-size:10px;letter-spacing:.11em;color:#8992a2}
+.top-actions{gap:7px}
+.top-actions>.chip{display:none}
+.iconbtn{width:39px;height:39px;border-radius:12px;background:transparent;border-color:transparent;color:#aeb5c2}
+.iconbtn:hover{background:#191d26;border-color:#303644;color:var(--text)}
+.primary-nav{gap:3px}
+.primary-nav a{
+  min-height:38px;padding:8px 13px;border-radius:10px;
+  color:#a2a9b7;font-size:12px;font-weight:650;
+  border:1px solid transparent;background:transparent;
+}
+.primary-nav a:hover{background:#171a22;border-color:#292e39;color:var(--text)}
+.primary-nav a[aria-current="page"]{
+  color:#eeeaff;background:rgba(185,166,255,.10);
+  border-color:rgba(185,166,255,.19);
+}
+body[data-page="manga"] .primary-nav a[aria-current="page"]{
+  color:#d8fff5;background:rgba(139,225,207,.09);border-color:rgba(139,225,207,.18);
+}
+.view{max-width:1210px;margin:0 auto;padding-top:34px}
+body[data-page="anime"] #malView,
+body[data-page="manga"] #mangaView,
+body[data-page="profile"] #profileView{--section-accent:var(--violet)}
+body[data-page="manga"] #mangaView{--section-accent:var(--mint)}
+body[data-page="anime"] #malView .workspace-head,
+body[data-page="manga"] #mangaView .workspace-head,
+body[data-page="profile"] #profileView .workspace-head{
+  display:flex;align-items:flex-end;justify-content:space-between;gap:20px;
+  padding:5px 0 23px;margin:0 0 25px;
+  border:0;border-bottom:1px solid var(--line);border-radius:0;
+  background:transparent!important;box-shadow:none!important;overflow:visible;
+}
+body[data-page="anime"] #malView .workspace-head:after,
+body[data-page="manga"] #mangaView .workspace-head:after{display:none!important}
+.workspace-head .mode-label{
+  display:inline-block;padding:0;border:0;border-radius:0;background:none;
+  color:var(--section-accent,var(--violet));font-size:10px;font-weight:750;
+  letter-spacing:.16em;text-transform:uppercase;
+}
+body[data-page="anime"] #malView .mode-label:before{display:none}
+.workspace-head h1{
+  margin:9px 0 9px;font-size:clamp(32px,4vw,45px);
+  line-height:1.04;letter-spacing:-.06em;font-weight:760;
+}
+.workspace-head p{max-width:650px;color:#a5adba;font-size:14px;line-height:1.7}
+.head-actions{gap:8px;flex-wrap:wrap}
+body[data-page="anime"] #malView>.mode-banner,
+body[data-page="manga"] #mangaView>.mode-banner{display:none!important}
+
+/* One shared tab language across Anime, Manga and Profile. */
+body[data-page="anime"] #malView>.subnav,
+body[data-page="manga"] #mangaView>.subnav,
+body[data-page="profile"] #profileView>.subnav{
+  display:flex;align-items:center;gap:22px;
+  padding:0;margin:0 0 27px;overflow-x:auto;scrollbar-width:thin;
+  border:0;border-bottom:1px solid var(--line);border-radius:0;
+  background:transparent!important;
+}
+body[data-page="anime"] #malView>.subnav button,
+body[data-page="manga"] #mangaView>.subnav button,
+body[data-page="profile"] #profileView>.subnav button{
+  flex:0 0 auto;padding:12px 1px 13px;margin:0;
+  border:0;border-bottom:2px solid transparent;border-radius:0;
+  background:transparent!important;color:#929baa;
+  font:600 13px/1.2 Inter,ui-sans-serif,system-ui,sans-serif;
+  letter-spacing:0;text-transform:none;
+}
+body[data-page="anime"] #malView>.subnav button.active,
+body[data-page="manga"] #mangaView>.subnav button.active,
+body[data-page="profile"] #profileView>.subnav button.active{
+  color:var(--text);border-bottom-color:var(--section-accent,var(--violet));
+}
+
+/* Remove the stack of heavy gradients and shadows from nested panels. */
+body[data-page="anime"] #malView .panel,
+body[data-page="manga"] #mangaView .panel,
+body[data-page="profile"] #profileView .panel{
+  padding:clamp(16px,2vw,23px);
+  margin:0 0 18px;
+  border:1px solid var(--line)!important;border-radius:16px!important;
+  background:var(--panel)!important;box-shadow:none!important;
+}
+body[data-page="anime"] #malView .panel-head,
+body[data-page="manga"] #mangaView .panel-head,
+body[data-page="profile"] #profileView .panel-head{gap:14px;margin-bottom:16px}
+.panel-head h2{font-size:17px;letter-spacing:-.025em}
+.panel-head p{line-height:1.6}
+body[data-page="anime"] #malView .eyebrow,
+body[data-page="manga"] #mangaView .eyebrow,
+body[data-page="profile"] #profileView .eyebrow{
+  color:#9ea6b5;font-size:10px;letter-spacing:.13em;
+}
+
+/* MAL connection is a compact utility row, not a second page hero. */
+body[data-page="anime"] #malView .anime-account-panel{
+  display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;
+  gap:18px;padding:17px 20px;margin:0 0 25px;
+  border:1px solid rgba(185,166,255,.19)!important;
+  border-radius:15px!important;
+  background:linear-gradient(100deg,rgba(185,166,255,.055),var(--panel) 52%)!important;
+}
+.anime-account-copy h2{font-size:16px;margin:3px 0 3px}
+.anime-account-copy p{font-size:12px;line-height:1.5}
+.anime-account-actions{gap:8px}
+.anime-account-actions button{min-height:39px}
+
+/* Search and filters have a clear primary/secondary order. */
+body[data-page="anime"] #malView .toolbar,
+body[data-page="manga"] #mangaView .toolbar{gap:12px;margin:8px 0 22px}
+body[data-page="anime"] #malView .searchbox,
+body[data-page="manga"] #mangaView .searchbox{
+  min-height:44px;max-width:480px;padding:0 14px;
+  border:1px solid #303644;border-radius:12px;background:#11141b;
+}
+body[data-page="anime"] #malView .filter,
+body[data-page="manga"] #mangaView .filter{
+  padding:8px 12px;border-radius:999px;background:transparent;
+  border-color:#303644;color:#aab2bf;font-size:11px;
+}
+body[data-page="anime"] #malView .filter.active{
+  color:#e9e2ff;background:rgba(185,166,255,.12);border-color:rgba(185,166,255,.34);
+}
+body[data-page="manga"] #mangaView .filter.active{
+  color:#d6fff4;background:rgba(139,225,207,.10);border-color:rgba(139,225,207,.3);
+}
+body[data-page="anime"] #malView .grid,
+body[data-page="manga"] #mangaView .grid{
+  grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:19px;
+}
+body[data-page="anime"] #malView .catalog-card,
+body[data-page="manga"] #mangaView .catalog-card,
+body[data-page="anime"] #malView .card,
+body[data-page="manga"] #mangaView .card{
+  border:1px solid #2a303b;border-radius:15px;
+  background:#12151c;box-shadow:none;transition:border-color .18s,transform .18s;
+}
+body[data-page="anime"] #malView .catalog-card:hover,
+body[data-page="manga"] #mangaView .catalog-card:hover,
+body[data-page="anime"] #malView .card:hover,
+body[data-page="manga"] #mangaView .card:hover{
+  border-color:color-mix(in srgb,var(--section-accent) 48%,#2a303b);
+  transform:translateY(-2px);
+}
+
+/* Manga discovery: one readable intro, one source picker, one cover grid. */
+body[data-page="manga"] #mangaView .manga-explore-heading{
+  align-items:flex-end;gap:22px;margin:5px 0 20px;
+}
+body[data-page="manga"] #mangaView .manga-explore-heading>div:first-child{max-width:720px}
+body[data-page="manga"] #mangaView .manga-explore-heading h2{
+  margin:5px 0 7px;font-size:clamp(22px,2.5vw,29px);letter-spacing:-.045em;
+}
+body[data-page="manga"] #mangaView .manga-explore-heading p{
+  max-width:700px;font-size:13px;line-height:1.65;color:#9da6b4;
+}
+body[data-page="manga"] #mangaView .manga-explore-controls{gap:8px;min-width:min(100%,330px)}
+body[data-page="manga"] #mangaView .manga-explore-controls .input{min-width:0}
+body[data-page="manga"] #mangaView .manga-feed-switch{gap:7px;margin:0 0 13px}
+body[data-page="manga"] #mangaView .manga-feed-switch button{
+  padding:8px 13px;border-radius:999px;background:transparent;
+  border-color:#303644;font-size:11px;
+}
+body[data-page="manga"] #mangaView #mangaExploreStatus{
+  min-height:20px;margin:0 0 12px;font-size:11px;color:#929baa;
+}
+body[data-page="manga"] #mangaView #mangaExtensionList{
+  grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:5px;
+}
+body[data-page="manga"] #mangaView .extension-option{
+  align-items:center;min-height:70px;padding:13px 14px;
+  border:1px solid #2b313c;border-radius:12px;background:var(--panel2);
+}
+body[data-page="manga"] #mangaView .extension-option strong{font-size:12px}
+body[data-page="manga"] #mangaView .extension-option small{font-size:11px;line-height:1.45}
+body[data-page="manga"] #mangaView .extension-option em{font-size:9px;color:#9bdccb}
+body[data-page="manga"] #mangaView .manga-source-search-panel{
+  margin-top:22px;border-top:1px solid var(--line)!important;
+}
+body[data-page="manga"] #mangaView .manga-source-search-panel .formrow{
+  display:grid;grid-template-columns:minmax(170px,.75fr) minmax(220px,1.5fr) auto;
+  align-items:center;gap:9px;
+}
+body[data-page="manga"] #mangaView .manga-source-search-panel .formrow .input{min-width:0}
+body[data-page="manga"] #mangaView .manga-source-search-panel .formrow button{min-height:42px}
+
+/* Profile cards share the same surfaces and spacing as the media workspaces. */
+body[data-page="profile"] #profileView .profile-hero{
+  gap:20px;padding:22px;margin-bottom:20px;
+  background:linear-gradient(110deg,rgba(185,166,255,.07),var(--panel) 65%)!important;
+}
+body[data-page="profile"] #profileView .profile-account-choices{gap:12px;margin-bottom:20px}
+body[data-page="profile"] #profileView .profile-account-choice{padding:20px}
+body[data-page="profile"] #profileView .profile-account-choice:before{opacity:.35}
+
+/* Keep touch targets and layouts comfortable on narrow screens. */
+@media(max-width:760px){
+  .app{padding:0 16px 34px}
+  .topbar{height:auto;min-height:66px;gap:10px;padding-top:8px}
+  .primary-nav{order:3;flex:0 0 calc(100% + 32px);width:calc(100% + 32px);margin:8px -16px 0;padding:0 16px 8px}
+  .primary-nav a{min-height:36px;padding:8px 12px}
+  .view{padding-top:25px}
+  body[data-page="anime"] #malView .workspace-head,
+  body[data-page="manga"] #mangaView .workspace-head,
+  body[data-page="profile"] #profileView .workspace-head{
+    align-items:flex-start;flex-direction:column;gap:12px;padding-bottom:19px;margin-bottom:21px;
+  }
+  .workspace-head h1{font-size:34px}
+  .head-actions{width:100%}
+  .head-actions button{flex:1}
+  body[data-page="anime"] #malView .anime-account-panel{
+    grid-template-columns:1fr;gap:12px;padding:16px;
+  }
+  .anime-account-actions{display:grid;grid-template-columns:1fr 1fr}
+  .anime-account-actions #animeMalSignInBtn{grid-column:1/-1}
+  .anime-account-actions button{width:100%}
+  body[data-page="anime"] #malView>.subnav,
+  body[data-page="manga"] #mangaView>.subnav,
+  body[data-page="profile"] #profileView>.subnav{gap:19px;margin-bottom:22px}
+  body[data-page="anime"] #malView .toolbar,
+  body[data-page="manga"] #mangaView .toolbar{align-items:stretch;flex-direction:column}
+  body[data-page="anime"] #malView .searchbox,
+  body[data-page="manga"] #mangaView .searchbox{max-width:none;width:100%}
+  body[data-page="anime"] #malView .filterrow,
+  body[data-page="manga"] #mangaView .filterrow{flex-wrap:nowrap;overflow-x:auto;padding-bottom:3px}
+  body[data-page="anime"] #malView .filter,
+  body[data-page="manga"] #mangaView .filter{flex:0 0 auto}
+  body[data-page="anime"] #malView .grid,
+  body[data-page="manga"] #mangaView .grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+  body[data-page="manga"] #mangaView .manga-explore-heading{align-items:stretch;flex-direction:column;gap:12px}
+  body[data-page="manga"] #mangaView .manga-explore-controls{display:grid;grid-template-columns:minmax(0,1fr) auto;min-width:0}
+  body[data-page="manga"] #mangaView #mangaExtensionList{grid-template-columns:1fr}
+  body[data-page="manga"] #mangaView .manga-source-search-panel .formrow{grid-template-columns:1fr}
+  body[data-page="profile"] #profileView .profile-account-choices{grid-template-columns:1fr}
+}
+@media(max-width:390px){
+  .brand small{font-size:9px}
+  .top-actions{gap:3px}
+  .iconbtn{width:35px;height:35px}
+  .primary-nav{gap:2px}
+  .primary-nav a{padding:7px 10px;font-size:11px}
+  body[data-page="anime"] #malView .grid,
+  body[data-page="manga"] #mangaView .grid{gap:9px}
+}
+@media(prefers-reduced-motion:reduce){
+  .primary-nav a,.iconbtn,.catalog-card,.card{transition:none!important}
+}
+</style>
+
 </head>
 <body data-page="__HEKOMI_PAGE__">
 <div class="app-scroll-progress" aria-hidden="true"><span id="appScrollProgressBar"></span></div>
@@ -724,7 +1002,7 @@ body[data-page="manga"] #mangaView .filter{border-radius:3px 10px 3px 10px}
     </section>
 
     <section id="malView" class="view hidden">
-      <div class="workspace-head"><div><span class="mode-label">MODE 01 · MAL CLIENT</span><h1>Anime list manager</h1><p>Manage your local list or connect to MyAnimeList to load and update your actual account.</p></div></div>
+      <div class="workspace-head"><div><span class="mode-label">ANIME · WATCHLIST</span><h1>Your anime library</h1><p>Keep track of what you’re watching, discover your next series, and sync your MyAnimeList account.</p></div></div>
       <div class="mode-banner"><strong>✦ YOUR ANIME ARCHIVE, IN ORBIT</strong><span>Track the stories that stay with you — one episode at a time.</span></div>
       <section class="panel anime-account-panel" aria-label="MyAnimeList connection">
         <div class="anime-account-copy"><span class="eyebrow">ACCOUNT CONNECTION</span><h2>Connect your MyAnimeList</h2><p class="muted small" id="animeMalStatus">Checking your MyAnimeList connection…</p></div>
@@ -752,11 +1030,11 @@ body[data-page="manga"] #mangaView .filter{border-radius:3px 10px 3px 10px}
     </section>
 
     <section id="mangaView" class="view manga-mode hidden">
-      <div class="workspace-head"><div><span class="mode-label">MODE 02 · MANGA CRAWLER</span><h1>Your manga library</h1><p>Inspect permitted public website pages, collect covers and chapter links, and maintain your own collection.</p></div><div class="head-actions"><button class="btn-secondary" id="mangaLibraryBtn">▥ My library</button><button class="btn-mint" id="openCrawlerBtn">＋ Inspect website</button></div></div>
+      <div class="workspace-head"><div><span class="mode-label">MANGA · READING SHELF</span><h1>Your manga library</h1><p>Explore titles from your sources, follow chapters, and keep your reading progress in one place.</p></div><div class="head-actions"><button class="btn-secondary" id="mangaLibraryBtn">▥ My library</button><button class="btn-mint" id="openCrawlerBtn">＋ Inspect website</button></div></div>
       <div class="mode-banner"><strong>✧ THE MANGA SIGNAL IS OPEN</strong><span>Find a source. Follow the chapters. Get lost in another world.</span></div>
-      <nav class="subnav" id="mangaTabs"><button class="active" data-tab="explore">For you</button><button data-tab="library">My library</button><button data-tab="discover">Extensions</button><button data-tab="sources">Sources</button></nav>
+      <nav class="subnav" id="mangaTabs"><button class="active" data-tab="explore">Discover</button><button data-tab="library">My library</button><button data-tab="discover">Extensions</button><button data-tab="sources">Sources</button></nav>
       <div id="mangaExploreTab">
-        <div class="manga-explore-heading"><div><span class="eyebrow">YOUR NEXT RABBIT HOLE</span><h2>Stories people are reading.</h2><p class="muted">Manga Hook is the preferred catalogue. If it returns no live titles, Hekomi tries the other supported sources. Open a title’s Details &amp; chapters panel to browse chapters and read supported chapters inside Hekomi.</p></div><div class="manga-explore-controls"><select class="input" id="mangaExploreProvider" aria-label="Discovery sources"><option value="mangahook" selected>Manga Hook API · Default</option><option value="all">All supported sources</option><option value="batoto">Bato network</option><option value="mangabuddy">MangaBuddy</option><option value="mangakakalot">Mangakakalot</option><option value="gomanga">GoManga API</option><option value="mangadex">MangaDex · Reading API</option></select><button class="btn-secondary" type="button" id="mangaExploreRefresh">↻ Refresh</button></div></div>
+        <div class="manga-explore-heading"><div><span class="eyebrow">MANGA DISCOVERY</span><h2>Find your next series.</h2><p class="muted">Browse live titles from your enabled sources. Open any title to explore its chapters and available reading options.</p></div><div class="manga-explore-controls"><select class="input" id="mangaExploreProvider" aria-label="Discovery sources"><option value="mangahook" selected>Manga Hook API · Default</option><option value="all">All supported sources</option><option value="batoto">Bato network</option><option value="mangabuddy">MangaBuddy</option><option value="mangakakalot">Mangakakalot</option><option value="gomanga">GoManga API</option><option value="mangadex">MangaDex · Reading API</option></select><button class="btn-secondary" type="button" id="mangaExploreRefresh">↻ Refresh</button></div></div>
         <div class="manga-feed-switch" id="mangaFeedSwitch" aria-label="Manga feed"><button type="button" class="active" data-manga-feed="trending">✦ Trending</button><button type="button" data-manga-feed="latest">◷ Latest updates</button></div>
         <div id="mangaExploreStatus" class="small muted" role="status">Preparing your manga feed…</div>
         <div class="grid manga-explore-grid" id="mangaExploreGrid"></div>
