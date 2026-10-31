@@ -1134,7 +1134,10 @@ async function searchPublicCatalog(rawQuery, rawPage=1, rawFilters={}) {
   const page = Math.max(1,Math.min(50,Math.floor(Number(rawPage)||1)));
   const typeValue = String(rawFilters.type || 'all').toUpperCase();
   const type = ['ANIME','MANGA'].includes(typeValue) ? typeValue : 'all';
-  const genre = String(rawFilters.genre || '').trim().slice(0,60);
+  const validGenres = ['Action','Adventure','Avant Garde','Award Winning','Boys Love','Comedy','Drama','Ecchi','Fantasy','Girls Love','Gourmet','Hentai','Horror','Mahou Shoujo','Mecha','Music','Mystery','Psychological','Romance','Sci-Fi','Slice of Life','Sports','Supernatural','Suspense','Thriller'];
+  const parseGenres = value => [...new Set(String(value || '').split(',').map(g=>g.trim()).filter(g=>validGenres.includes(g)))].slice(0,validGenres.length);
+  const genreIn = parseGenres(rawFilters.genreIn);
+  const genreNotIn = parseGenres(rawFilters.genreNotIn).filter(g=>!genreIn.includes(g));
   const formats = ['TV','TV_SHORT','MOVIE','SPECIAL','OVA','ONA','MUSIC','MANGA','NOVEL','ONE_SHOT'];
   const statuses = ['RELEASING','FINISHED','NOT_YET_RELEASED','CANCELLED','HIATUS'];
   const seasons = ['WINTER','SPRING','SUMMER','FALL'];
@@ -1149,7 +1152,7 @@ async function searchPublicCatalog(rawQuery, rawPage=1, rawFilters={}) {
   const sortMap = {match:query ? ['SEARCH_MATCH'] : ['TRENDING_DESC','POPULARITY_DESC'],score:['SCORE_DESC'],popular:['POPULARITY_DESC'],title:['TITLE_ROMAJI'],newest:['START_DATE_DESC']};
   const sort = sortMap[sortKey] || sortMap.match;
   const typeFilters = type === 'all' ? (season ? ['ANIME'] : ['ANIME','MANGA']) : [type];
-  const filters = {type,genre,format,status,season,year,score:scoreNumber,sort:sortKey};
+  const filters = {type,genreIn,genreNotIn,format,status,season,year,score:scoreNumber,sort:sortKey};
   const key = JSON.stringify({query,page,filters});
   const cached = publicCatalogSearchCache.get(key);
   if (cached && Date.now() - cached.at < 10*60*1000) return cached.value;
@@ -1157,11 +1160,11 @@ async function searchPublicCatalog(rawQuery, rawPage=1, rawFilters={}) {
     const alias = mediaType.toLowerCase();
     const animeSeasonArgs = mediaType === 'ANIME' ? ',season:$season,seasonYear:$seasonYear' : '';
     return alias + ': Page(page:$page,perPage:24) { pageInfo { currentPage hasNextPage } media(type:' + mediaType +
-      ',search:$search,genre_in:$genreIn,format:$format,status:$status' + animeSeasonArgs +
+      ',search:$search,genre_in:$genreIn,genre_not_in:$genreNotIn,format:$format,status:$status' + animeSeasonArgs +
       ',startDate_like:$startDateLike,averageScore_greater:$minScore,sort:$sort,isAdult:false) { ' + MEDIA_CATALOG_FIELDS + ' } }';
   }).join(' ');
-  const discoveryQuery = 'query HekomiCatalogDiscovery($search:String,$page:Int!,$genreIn:[String],$format:MediaFormat,$status:MediaStatus,$season:MediaSeason,$seasonYear:Int,$startDateLike:String,$minScore:Int,$sort:[MediaSort]) { ' + pageFields + ' }';
-  const variables = {search:query || null,page,genreIn:genre ? [genre] : null,format,status,season,seasonYear:season ? (year || null) : null,startDateLike:year ? String(year)+'%' : null,minScore,sort};
+  const discoveryQuery = 'query HekomiCatalogDiscovery($search:String,$page:Int!,$genreIn:[String],$genreNotIn:[String],$format:MediaFormat,$status:MediaStatus,$season:MediaSeason,$seasonYear:Int,$startDateLike:String,$minScore:Int,$sort:[MediaSort]) { ' + pageFields + ' }';
+  const variables = {search:query || null,page,genreIn:genreIn.length?genreIn:null,genreNotIn:genreNotIn.length?genreNotIn:null,format,status,season,seasonYear:season ? (year || null) : null,startDateLike:year ? String(year)+'%' : null,minScore,sort};
   const data = await requestAniList(discoveryQuery,variables);
   const animePage=data.anime||{},mangaPage=data.manga||{};
   const result = {anime:(animePage.media||[]).map(packMedia).filter(Boolean),manga:(mangaPage.media||[]).map(packMedia).filter(Boolean),page,hasNextPage:!!((animePage.pageInfo&&animePage.pageInfo.hasNextPage)||(mangaPage.pageInfo&&mangaPage.pageInfo.hasNextPage)),source:'AniList',updatedAt:new Date().toISOString(),filters};
@@ -1302,7 +1305,7 @@ const server=http.createServer(async(req,res)=>{
     catch(e) { return send(res,400,{error:e.message||'Seasonal catalog could not be loaded.'}); }
   }
   if(req.method==='GET' && url.pathname==='/api/catalog/search') {
-    const filters = {type:url.searchParams.get('type'),genre:url.searchParams.get('genre'),format:url.searchParams.get('format'),status:url.searchParams.get('status'),year:url.searchParams.get('year'),season:url.searchParams.get('season'),minScore:url.searchParams.get('minScore'),sort:url.searchParams.get('sort')};
+    const filters = {type:url.searchParams.get('type'),genreIn:url.searchParams.get('genreIn'),genreNotIn:url.searchParams.get('genreNotIn'),format:url.searchParams.get('format'),status:url.searchParams.get('status'),year:url.searchParams.get('year'),season:url.searchParams.get('season'),minScore:url.searchParams.get('minScore'),sort:url.searchParams.get('sort')};
     try { return send(res,200,await searchPublicCatalog(url.searchParams.get('q'),url.searchParams.get('page'),filters),{'Cache-Control':'public, max-age=300'}); }
     catch(e) { return send(res,400,{error:e.message||'Catalog search failed.'}); }
   }

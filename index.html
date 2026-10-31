@@ -562,14 +562,14 @@ body[data-page="manga"] #mangaView{display:block!important}
     <div id="advancedFilterBody" class="advanced-filter-body">
       <div class="advanced-filter-grid">
         <label class="advanced-field"><span>Media type</span><select id="filterMediaType" class="input"><option value="all">Anime + manga</option><option value="ANIME">Anime only</option><option value="MANGA">Manga only</option></select></label>
-        <label class="advanced-field"><span>Genre</span><select id="filterGenre" class="input"><option value="">All genres</option></select></label><label class="advanced-field"><span>Season</span><select id="filterSeason" class="input"><option value="">Any season</option><option value="WINTER">Winter · Jan–Mar</option><option value="SPRING">Spring · Apr–Jun</option><option value="SUMMER">Summer · Jul–Sep</option><option value="FALL">Fall · Oct–Dec</option></select></label>
+        <div class="advanced-field genre-selection-field"><span>Include genres <small class="muted">(match any selected)</small></span><div id="includeGenreChips" class="genre-quick-chips genre-multi-select" aria-label="Genres to include"></div><span class="small muted" id="includeGenreSummary">No included genres</span></div><div class="advanced-field genre-selection-field"><span>Exclude genres <small class="muted">(remove matches)</small></span><div id="excludeGenreChips" class="genre-quick-chips genre-multi-select" aria-label="Genres to exclude"></div><span class="small muted" id="excludeGenreSummary">No excluded genres</span></div><label class="advanced-field"><span>Season</span><select id="filterSeason" class="input"><option value="">Any season</option><option value="WINTER">Winter · Jan–Mar</option><option value="SPRING">Spring · Apr–Jun</option><option value="SUMMER">Summer · Jul–Sep</option><option value="FALL">Fall · Oct–Dec</option></select></label>
         <label class="advanced-field"><span>Format</span><select id="filterFormat" class="input"><option value="">All formats</option><option value="TV">TV</option><option value="TV_SHORT">TV short</option><option value="MOVIE">Movie</option><option value="SPECIAL">Special</option><option value="OVA">OVA</option><option value="ONA">ONA</option><option value="MANGA">Manga</option><option value="NOVEL">Novel</option><option value="ONE_SHOT">One-shot</option></select></label>
         <label class="advanced-field"><span>Status</span><select id="filterStatus" class="input"><option value="">Any status</option><option value="RELEASING">Releasing</option><option value="FINISHED">Finished</option><option value="NOT_YET_RELEASED">Not yet released</option><option value="CANCELLED">Cancelled</option><option value="HIATUS">Hiatus</option></select></label>
         <label class="advanced-field"><span>Year</span><input id="filterYear" class="input" type="number" min="1940" max="2100" placeholder="Any year"></label>
         <label class="advanced-field"><span>Sort results</span><select id="filterSort" class="input"><option value="match">Best match</option><option value="score">Highest score</option><option value="popular">Most popular</option><option value="title">Title A–Z</option><option value="newest">Newest first</option></select></label>
         <label class="advanced-field advanced-score-field"><span>Minimum score <strong id="filterScoreValue">0/10</strong></span><input id="filterMinScore" type="range" min="0" max="10" step="0.5" value="0" aria-label="Minimum score out of ten"><small>Hide titles rated below your threshold</small></label>
       </div>
-      <div id="genreQuickChips" class="genre-quick-chips" aria-label="Quick genre filters"></div><div class="advanced-filter-actions"><span id="filterResultCount" class="small muted">Choose filters or discover popular titles without a title.</span><div class="head-actions"><button type="button" class="btn-primary" id="catalogDiscoverButton">Discover titles ↗</button><button type="button" class="btn-secondary" id="clearCatalogFilters">Clear filters</button></div></div>
+      <div class="advanced-filter-actions"><span id="filterResultCount" class="small muted">Choose filters or discover popular titles without a title.</span><div class="head-actions"><button type="button" class="btn-primary" id="catalogDiscoverButton">Discover titles ↗</button><button type="button" class="btn-secondary" id="clearCatalogFilters">Clear filters</button></div></div>
     </div>
   </section>
   <div id="catalogSearchResults" class="catalog-grid hidden" aria-label="Catalog search results"></div><div id="catalogLoadMoreWrap" class="catalog-load-more hidden"><button type="button" class="btn-secondary" id="catalogLoadMore">Load more results</button></div>
@@ -758,15 +758,23 @@ body[data-page="manga"] #mangaView{display:block!important}
   }
   let lastCatalogSearchItems=[],lastCatalogSearchQuery='',catalogServerPage=1,catalogHasNextPage=false,catalogPageLoading=false;
   const recentCatalogQueries=[];
-  const catalogFilterIds=['filterMediaType','filterGenre','filterFormat','filterStatus','filterYear','filterSeason','filterMinScore','filterSort'];
+  const catalogFilterIds=['filterMediaType','filterFormat','filterStatus','filterYear','filterSeason','filterMinScore','filterSort'];
   const catalogPageSize=12;
   let catalogVisibleCount=12,catalogFilteredItems=[],catalogDiscoveryTimer=null;
-  const catalogGenreOptions=['Action','Adventure','Comedy','Drama','Ecchi','Fantasy','Horror','Mahou Shoujo','Mecha','Music','Mystery','Psychological','Romance','Sci-Fi','Slice of Life','Sports','Supernatural','Thriller'];
+  const catalogGenreOptions=['Action','Adventure','Avant Garde','Award Winning','Boys Love','Comedy','Drama','Ecchi','Fantasy','Girls Love','Gourmet','Hentai','Horror','Mahou Shoujo','Mecha','Music','Mystery','Psychological','Romance','Sci-Fi','Slice of Life','Sports','Supernatural','Suspense','Thriller'];
+  const includedCatalogGenres=new Set(),excludedCatalogGenres=new Set();
   function renderCatalogGenreControls(){
-    const select=$('#filterGenre');
-    select.innerHTML='<option value="">All genres</option>'+catalogGenreOptions.map(g=>'<option value="'+esc(g)+'">'+esc(g)+'</option>').join('');
-    $('#genreQuickChips').innerHTML=catalogGenreOptions.map(g=>'<button type="button" class="genre-chip" data-genre-chip="'+esc(g)+'" aria-pressed="false">'+esc(g)+'</button>').join('');
+    $('#includeGenreChips').innerHTML=catalogGenreOptions.map(g=>'<button type="button" class="genre-chip" data-genre-include="'+esc(g)+'" aria-pressed="'+includedCatalogGenres.has(g)+'">'+esc(g)+'</button>').join('');
+    $('#excludeGenreChips').innerHTML=catalogGenreOptions.map(g=>'<button type="button" class="genre-chip" data-genre-exclude="'+esc(g)+'" aria-pressed="'+excludedCatalogGenres.has(g)+'">'+esc(g)+'</button>').join('');
   }
+  function toggleCatalogGenre(genre,mode){
+    const own=mode==='include'?includedCatalogGenres:excludedCatalogGenres;
+    const other=mode==='include'?excludedCatalogGenres:includedCatalogGenres;
+    if(own.has(genre))own.delete(genre);else{own.add(genre);other.delete(genre);}
+    renderCatalogGenreControls();scheduleCatalogDiscovery();
+  }
+  $('#includeGenreChips').addEventListener('click',event=>{const chip=event.target.closest('[data-genre-include]');if(chip)toggleCatalogGenre(chip.getAttribute('data-genre-include'),'include');});
+  $('#excludeGenreChips').addEventListener('click',event=>{const chip=event.target.closest('[data-genre-exclude]');if(chip)toggleCatalogGenre(chip.getAttribute('data-genre-exclude'),'exclude');});
   renderCatalogGenreControls();
   function rememberCatalogQuery(query){
     const q=String(query||'').trim();if(q.length<2)return;
@@ -775,15 +783,15 @@ body[data-page="manga"] #mangaView{display:block!important}
     $('#catalogSearchSuggestions').innerHTML=recentCatalogQueries.map(item=>'<option value="'+esc(item)+'"></option>').join('');
   }
   function catalogFilterValues(){
-    return {type:$('#filterMediaType').value,genre:$('#filterGenre').value,format:$('#filterFormat').value,status:$('#filterStatus').value,year:$('#filterYear').value,season:$('#filterSeason').value,score:Number($('#filterMinScore').value||0),sort:$('#filterSort').value};
+    return {type:$('#filterMediaType').value,genres:[...includedCatalogGenres],excludeGenres:[...excludedCatalogGenres],format:$('#filterFormat').value,status:$('#filterStatus').value,year:$('#filterYear').value,season:$('#filterSeason').value,score:Number($('#filterMinScore').value||0),sort:$('#filterSort').value};
   }
   function updateCatalogFilterChrome(){
     const f=catalogFilterValues();
     $('#filterScoreValue').textContent=f.score+'/10';
-    const active=[f.type!=='all',!!f.genre,!!f.format,!!f.status,!!f.year,!!f.season,f.score>0,f.sort!=='match'].filter(Boolean).length;
+    const active=[f.type!=='all',f.genres.length>0,f.excludeGenres.length>0,!!f.format,!!f.status,!!f.year,!!f.season,f.score>0,f.sort!=='match'].filter(Boolean).length;
     $('#activeFilterCount').textContent=active+' active';
     $('#filterMinScore').style.setProperty('--range-progress',(f.score/10*100)+'%');
-    $$('[data-genre-chip]').forEach(chip=>chip.setAttribute('aria-pressed',String(chip.dataset.genreChip===f.genre)));
+    $('[data-genre-include]').forEach(chip=>chip.setAttribute('aria-pressed',String(includedCatalogGenres.has(chip.getAttribute('data-genre-include')))));$('[data-genre-exclude]').forEach(chip=>chip.setAttribute('aria-pressed',String(excludedCatalogGenres.has(chip.getAttribute('data-genre-exclude')))));$('#includeGenreSummary').textContent=f.genres.length?f.genres.join(' · '):'No included genres';$('#excludeGenreSummary').textContent=f.excludeGenres.length?f.excludeGenres.join(' · '):'No excluded genres';
   }
   function renderFilteredCatalogResults(){
     updateCatalogFilterChrome();
@@ -791,7 +799,7 @@ body[data-page="manga"] #mangaView{display:block!important}
     if(!lastCatalogSearchItems.length){$('#filterResultCount').textContent='No results loaded yet.';$('#catalogLoadMoreWrap').classList.add('hidden');return;}
     let list=lastCatalogSearchItems.filter(m=>{
       if(f.type!=='all'&&m._catalogKind!==f.type)return false;
-      if(f.genre&&!(m.genres||[]).includes(f.genre))return false;
+      if(f.genres.length&&!f.genres.some(g=>(m.genres||[]).includes(g)))return false;if(f.excludeGenres.some(g=>(m.genres||[]).includes(g)))return false;
       if(f.format&&m.format!==f.format)return false;
       if(f.status&&m.status!==f.status)return false;
       const releaseYear=Number(m.startDate&&m.startDate.year||m.seasonYear||0);
@@ -822,7 +830,7 @@ body[data-page="manga"] #mangaView{display:block!important}
     const f=catalogFilterValues(),params=new URLSearchParams(),query=$('#catalogSearchInput').value.trim();
     if(query)params.set('q',query);
     params.set('page',String(page));params.set('type',f.type);
-    if(f.genre)params.set('genre',f.genre);
+    if(f.genres.length)params.set('genreIn',f.genres.join(','));if(f.excludeGenres.length)params.set('genreNotIn',f.excludeGenres.join(','));
     if(f.format)params.set('format',f.format);
     if(f.status)params.set('status',f.status);
     if(f.year)params.set('year',f.year);
@@ -879,7 +887,7 @@ body[data-page="manga"] #mangaView{display:block!important}
     control.addEventListener(control.tagName==='SELECT'?'change':'input',scheduleCatalogDiscovery);
   });
   $('#clearCatalogFilters').addEventListener('click',()=>{
-    $('#filterMediaType').value='all';$('#filterGenre').value='';$('#filterFormat').value='';$('#filterStatus').value='';
+    $('#filterMediaType').value='all';includedCatalogGenres.clear();excludedCatalogGenres.clear();renderCatalogGenreControls();$('#filterFormat').value='';$('#filterStatus').value='';
     $('#filterYear').value='';$('#filterSeason').value='';$('#filterMinScore').value='0';$('#filterSort').value='match';
     scheduleCatalogDiscovery();
   });
