@@ -175,7 +175,7 @@
     constructor(canvas,message,root,bubble){
       this.canvas=canvas;this.ctx=canvas.getContext('2d',{alpha:true});this.message=message;
       this.root=root;this.bubble=bubble;this.state='idle';this.target=null;this.face=1;
-      this.x=12;this.y=12;this.last=0;this.lastSpeech=0;this.speechUntil=0;
+      this.x=12;this.y=12;this.last=0;this.lastSpeech=0;this.speechUntil=0;this.lastObstacleCheck=0;
       this.stateUntil=0;this.walkFrame=0;this.stops=0;this.sleepCount=0;this.hiddenPause=false;
       this.reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       this.canvas.width=W;this.canvas.height=H;this.ctx.imageSmoothingEnabled=false;
@@ -217,7 +217,12 @@
       this.y=document.body.dataset.page==='home'
         ?Math.max(b.minY,Math.min(190,b.maxY))
         :b.maxY;
-      this.root.style.transform='translate3d('+Math.round(this.x)+'px,'+Math.round(this.y)+'px,0)';
+      if(this.blocked(this.x,this.y)){
+        const safe=this.findSpot();
+        this.x=safe.x;this.y=safe.y;
+      }
+      this.applyPosition();
+      this.setInteractable();
     }
     blocked(x,y){
       const area={left:x+21,right:x+140,top:y+20,bottom:y+166};
@@ -257,8 +262,11 @@
       this.face=next.x>=this.x?1:-1;this.canvas.style.transform=this.face<0?'scaleX(-1)':'none';
       this.canvas.style.pointerEvents='none';this.hideSpeech();
     }
+    setInteractable(){
+      this.canvas.style.pointerEvents=this.blocked(this.x,this.y)?'none':'auto';
+    }
     arrive(){
-      this.target=null;this.state='idle';this.stops++;this.canvas.style.pointerEvents='auto';
+      this.target=null;this.state='idle';this.stops++;this.setInteractable();
       this.root.classList.remove('is-sleeping');
       const now=performance.now();
       const shouldSleep=this.stops>=2&&Math.random()<.22;
@@ -268,7 +276,7 @@
     }
     sleep(now){
       this.state='sleep';this.sleepCount++;this.root.classList.add('is-sleeping');
-      this.canvas.style.pointerEvents='auto';this.canvas.style.transform='rotate(90deg)';
+      this.setInteractable();this.canvas.style.transform='rotate(90deg)';
       this.say(this.pick(['Just a tiny nap…','Wake me when there’s a new chapter.','Five more minutes…','Zzz…']),5200);
       this.stateUntil=now+8500+Math.random()*8000;
     }
@@ -313,6 +321,9 @@
     tick(time){
       if(document.hidden){requestAnimationFrame(t=>this.tick(t));return;}
       const dt=this.last?Math.min((time-this.last)/1000,.05):.016;this.last=time;
+      if(this.state!=='walk'&&time-this.lastObstacleCheck>900){
+        this.lastObstacleCheck=time;this.setInteractable();
+      }
       if(this.state==='walk'&&this.target){
         const dx=this.target.x-this.x,dy=this.target.y-this.y,dist=Math.hypot(dx,dy);
         if(dist<4)this.arrive();
@@ -320,7 +331,6 @@
           const step=Math.min(dist,62*dt);
           this.x+=dx/dist*step;this.y+=dy/dist*step;
           this.walkFrame=(this.walkFrame+1)%4;
-          if(this.blocked(this.x,this.y)&&dist>30){this.target=this.findSpot();this.face=this.target.x>=this.x?1:-1;}
           this.root.classList.toggle('face-left',this.face<0);
           this.canvas.style.transform=this.face<0?'scaleX(-1)':'none';
           this.canvas.style.pointerEvents='none';
