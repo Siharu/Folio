@@ -505,6 +505,7 @@ h1,h2,h3,.workspace-head h1,.catalog-heading h2,.showcase-copy h2{font-family:va
 .profile-recommend-empty{grid-column:1/-1;padding:18px;border:1px dashed var(--line);border-radius:10px;color:var(--muted);font-size:12px;text-align:center}
 .profile-recommend-card a{color:inherit;text-decoration:none}
 @media(max-width:760px){.profile-recommend-panel{padding:14px}.profile-recommend-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.profile-recommend-card img{height:135px}}
+.local-list-tools{margin:12px 0 5px;gap:7px;flex-wrap:wrap}.local-list-tools button{font-size:11px;padding:8px 11px}.local-list-status{margin:5px 0 12px;line-height:1.45}
 </style>
 
 <style>
@@ -645,13 +646,13 @@ body[data-page="manga"] #mangaView{display:block!important}
       <div class="toolbar"><div class="searchbox"><span>⌕</span><input id="malListSearch" placeholder="Filter your list…" autocomplete="off"></div><div class="filterrow" id="malStatusFilters"><button class="filter active" data-status="all">All</button><button class="filter" data-status="watching">Watching</button><button class="filter" data-status="completed">Completed</button><button class="filter" data-status="plan_to_watch">Plan to watch</button></div></div>
         <div class="panel" id="malConnectionNudge"><div class="panel-head"><div><h2>Connect your MAL account</h2><p class="muted small">Sign in on MyAnimeList to load and update your account. Hekomi has one app registration; your account authorization is private to you.</p></div><span class="pill-label">OAUTH</span></div><button class="btn-primary" id="malConnectInline">Sign in with MyAnimeList ↗</button></div>
         <div class="panel hidden" id="malRemoteWrap"><div class="panel-head"><div><h2>MyAnimeList account</h2><p class="muted small" id="malRemoteMeta">Not synced yet.</p></div><span class="pill-label" id="malRemoteCount">0 entries</span></div><div id="malRemoteList"></div></div>
-        <div class="panel"><div class="panel-head"><div><h2>Your local list</h2><p class="muted small">A device-only list that works independently of MAL.</p></div><button class="btn-secondary" id="addLocalAnimeBtn">＋ Add anime</button></div><div id="localSummaryList"></div></div>
+        <div class="panel"><div class="panel-head"><div><h2>Your local list</h2><p class="muted small">A device-only list that works independently of MAL.</p></div><button class="btn-secondary" id="addLocalAnimeBtn">＋ Add anime</button></div><div class="formrow mobile-stack local-list-tools"><button class="btn-primary" type="button" data-import-mal-local>↧ Scan &amp; import MAL list</button><button class="btn-secondary" type="button" data-export-local="txt">Export TXT</button><button class="btn-secondary" type="button" data-export-local="md">Export MD</button><button class="btn-secondary" type="button" data-export-local="pdf">Save PDF</button></div><p class="muted small local-list-status" id="localListToolStatus">Import your synced MyAnimeList entries into this device, or export your local list.</p><div id="localSummaryList"></div></div>
       </div>
       <div id="malSearchTab" class="hidden">
         <div class="panel"><div class="panel-head"><div><h2>Search MyAnimeList</h2><p class="muted small">Search the MAL catalog, then add a title to your account list or local list.</p></div></div><div class="formrow mobile-stack"><input id="malSearchInput" class="input" placeholder="e.g. Frieren, Mob Psycho 100…"><button class="btn-primary" id="malSearchBtn">Search</button></div><div id="malSearchStatus" class="small muted" style="margin-top:9px"></div><div id="malSearchResults" class="results"></div><div class="notice">Hekomi uses its app-wide MAL API registration. Sign in with your own account to sync your list; no API keys or tokens need to be pasted.</div></div>
       </div>
       <div id="malLocalTab" class="hidden">
-        <div class="panel"><div class="panel-head"><div><h2>Local anime list</h2><p class="muted small">Personal entries are saved in this browser and are not sent to MyAnimeList.</p></div><button class="btn-primary" id="addLocalAnimeBtn2">＋ Add anime</button></div><div id="fullLocalList"></div></div>
+        <div class="panel"><div class="panel-head"><div><h2>Local anime list</h2><p class="muted small">Personal entries are saved in this browser and are not sent to MyAnimeList.</p></div><button class="btn-primary" id="addLocalAnimeBtn2">＋ Add anime</button></div><div class="formrow mobile-stack local-list-tools"><button class="btn-primary" type="button" data-import-mal-local>↧ Scan &amp; import MAL list</button><button class="btn-secondary" type="button" data-export-local="txt">Export TXT</button><button class="btn-secondary" type="button" data-export-local="md">Export MD</button><button class="btn-secondary" type="button" data-export-local="pdf">Save PDF</button></div><p class="muted small local-list-status">Import your synced MyAnimeList entries into this device, or export your local list.</p><div id="fullLocalList"></div></div>
       </div>
       <div id="malAboutTab" class="hidden">
         <div class="panel"><h2>Connect your MyAnimeList account</h2><p class="muted small">Hekomi uses one developer-managed MAL application registration. When you sign in, MyAnimeList authorizes your own account only. Your access and refresh tokens are encrypted by the server and kept out of page JavaScript.</p><div class="notice warn">The app maintainer configures the shared Client ID and Client Secret on the host once. Users never need to create their own MAL app or paste tokens.</div><div class="formrow mobile-stack"><button class="btn-primary" id="malSignInBtn">Sign in with MyAnimeList ↗</button><button class="btn-secondary" id="malLogoutBtn">Sign out</button><button class="btn-secondary" id="malTestBtn">Check connection & load list</button></div><div id="malSetupStatus" class="small muted" style="margin-top:10px"></div></div>
@@ -1557,6 +1558,59 @@ function showProfileTab(tab){activeProfileTab=tab;$$('#profileTabs button').forE
       '<p class="muted small">'+esc((Array.isArray(a.genres)?a.genres.map(g=>typeof g==='string'?g:g&&g.name).filter(Boolean):[]).slice(0,4).join(' · '))+'</p></div>'+
       '<div class="controls"><button class="mini-btn" data-local-details="'+esc(a.id)+'">Details</button><button class="mini-btn" data-local-edit="'+esc(a.id)+'">Edit</button><button class="mini-btn btn-danger" data-local-delete="'+esc(a.id)+'">Remove</button></div></div>';
   }
+  function localAnimeExportRows(){
+    return localAnime.map(a=>({title:String(a.title||'Untitled anime'),status:humanizeAnimeValue(a.status||'plan_to_watch'),episodes:Number(a.episodes)||0,total:Number(a.totalEpisodes||a.num_episodes)||0,score:Number(a.score)||0,malId:Number(a.malId)||null,link:a.externalUrl||((a.malId||a.id)?'https://myanimelist.net/anime/'+Number(a.malId||String(a.id).replace(/^mal-/,'')||0):'')})).sort((a,b)=>a.title.localeCompare(b.title));
+  }
+  function localAnimeExportText(format){
+    const rows=localAnimeExportRows(),date=new Date().toLocaleString();
+    if(format==='md')return '# Hekomi — My Local Anime List\n\nExported: '+date+'\n\n**'+rows.length+' anime**\n\n| Anime | Status | Episodes | Score | MAL |\n|---|---|---:|---:|---|\n'+rows.map(x=>'| '+x.title.replace(/\\|/g,'\\\\|')+' | '+x.status+' | '+x.episodes+(x.total?' / '+x.total:'')+' | '+(x.score||'—')+' | '+(x.link?'[Open](<'+x.link+'>)':'—')+' |').join('\n')+'\n';
+    return 'HEKOMI — MY LOCAL ANIME LIST\nExported: '+date+'\nTotal anime: '+rows.length+'\n\n'+rows.map((x,i)=>(i+1)+'. '+x.title+'\n   Status: '+x.status+'\n   Episodes: '+x.episodes+(x.total?' / '+x.total:'')+'\n   Score: '+(x.score||'Not scored')+(x.link?'\n   MyAnimeList: '+x.link:'')).join('\n\n')+'\n';
+  }
+  function downloadLocalAnimeExport(format){
+    if(!localAnime.length){notify('Your local anime list is empty. Import MAL entries or add anime first.');return;}
+    const content=localAnimeExportText(format),blob=new Blob([content],{type:format==='md'?'text/markdown;charset=utf-8':'text/plain;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');
+    a.href=url;a.download='hekomi-anime-list.'+format;document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);notify('Your '+format.toUpperCase()+' list has been exported.');
+  }
+  function printLocalAnimePdf(){
+    if(!localAnime.length){notify('Your local anime list is empty. Import MAL entries or add anime first.');return;}
+    const rows=localAnimeExportRows(),escapeHtml=value=>esc(value);
+    const table=rows.map((x,i)=>'<tr><td>'+(i+1)+'</td><td>'+escapeHtml(x.title)+'</td><td>'+escapeHtml(x.status)+'</td><td>'+x.episodes+(x.total?' / '+x.total:'')+'</td><td>'+(x.score||'—')+'</td><td>'+(x.malId||'—')+'</td></tr>').join('');
+    const win=window.open('','_blank');if(!win){notify('Allow pop-ups to create your PDF.');return;}
+    win.document.write('<!doctype html><html><head><meta charset="utf-8"><title>Hekomi Anime List</title><style>body{font:12px Arial,sans-serif;color:#20232a;padding:28px}h1{font-size:22px}p{color:#626875}table{width:100%;border-collapse:collapse;margin-top:20px}th,td{border:1px solid #d9dce2;padding:8px;text-align:left}th{background:#f0f1f4}tr{break-inside:avoid}@media print{body{padding:0}}</style></head><body><h1>Hekomi — My Local Anime List</h1><p>Exported '+escapeHtml(new Date().toLocaleString())+' · '+rows.length+' anime</p><table><thead><tr><th>#</th><th>Anime</th><th>Status</th><th>Episodes</th><th>Score</th><th>MAL ID</th></tr></thead><tbody>'+table+'</tbody></table><script>window.onload=()=>window.print()<\/script></body></html>');
+    win.document.close();
+  }
+  async function importMalListToLocal(){
+    if(!malConnected){notify('Connect your MyAnimeList account first.');showMalTab('about');return;}
+    const buttons=$('[data-import-mal-local]');buttons.forEach(b=>{b.disabled=true;b.textContent='Scanning MAL list…';});
+    try{
+      if(!remoteReady||!malRemote.length)await loadRemoteList();
+      if(!remoteReady||!malRemote.length){if(!remoteReady)throw new Error('Could not load your MyAnimeList list.');}
+      if(!malRemote.length){notify('Your MyAnimeList list is empty.');return;}
+      let added=0,updated=0;
+      for(const item of malRemote){
+        const n=item.node||{},st=item.list_status||{},record=malAnimeRecord(n);
+        record.status=String(st.status||'plan_to_watch').replace(/-/g,'_');
+        record.episodes=Number(st.num_episodes_watched)||0;
+        record.score=Number(st.score)||0;
+        record.totalEpisodes=Number(n.num_episodes)||record.totalEpisodes||null;
+        record.updatedAt=st.updated_at||n.updated_at||'';
+        const existing=localAnime.find(x=>(record.malId&&Number(x.malId)===record.malId)||String(x.title||'').trim().toLowerCase()===record.title.trim().toLowerCase());
+        if(existing){Object.assign(existing,{...record,id:existing.id||record.id});updated++;}
+        else{localAnime.push(record);added++;}
+      }
+      if(!write(key.anime,localAnime))throw new Error('Browser storage could not save the imported list.');
+      renderLocalAnime();
+      $('[data-local-list-tool-status]').forEach(el=>el.textContent='Imported '+added+' new anime and updated '+updated+' existing entries from MyAnimeList.');
+      $('.local-list-status').forEach(el=>el.textContent='Imported '+added+' new anime and updated '+updated+' existing entries from MyAnimeList.');
+      notify('MAL scan complete: '+added+' added, '+updated+' updated.');
+    }catch(error){notify(error.message||'Could not import your MyAnimeList list.');}
+    finally{buttons.forEach(b=>{b.disabled=false;b.textContent='↧ Scan & import MAL list';});}
+  }
+  document.addEventListener('click',event=>{
+    const importButton=event.target.closest('[data-import-mal-local]');if(importButton){importMalListToLocal();return;}
+    const exportButton=event.target.closest('[data-export-local]');if(!exportButton)return;
+    if(exportButton.dataset.exportLocal==='pdf')printLocalAnimePdf();else downloadLocalAnimeExport(exportButton.dataset.exportLocal);
+  });
   function renderLocalAnime(){
     const html=localAnime.length?localAnime.map(localAnimeMarkup).join(''):'<div class="empty"><strong>Your local anime list is empty</strong>Add titles manually or save results from MAL search.</div>';
     $('#localSummaryList').innerHTML=html;$('#fullLocalList').innerHTML=html;
