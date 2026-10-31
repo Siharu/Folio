@@ -1691,7 +1691,7 @@ body[data-page="manga"] #mangaView #mangaDexSearchResults:empty{display:none}
     ).join('');
     const soundLabel=genreTransitionSoundEnabled?'On':'Off';
     openModal('<div class="modal-top"><div><h2>Appearance</h2><p class="theme-settings-copy">Choose your vibe. Switch moods any time — your choice is saved on this device.</p></div><button class="close" data-close aria-label="Close appearance settings">×</button></div><div class="theme-options">'+buttons+'</div><div class="genre-sound-setting"><div><strong>Genre transition sounds</strong><small>Optional short audio accents when opening anime. Off by default.</small></div><button type="button" class="btn-secondary" id="genreSoundToggle" aria-pressed="'+String(genreTransitionSoundEnabled)+'">Sound: '+soundLabel+'</button></div><p class="small muted" style="margin:14px 0 0">Device Settings updates automatically when your operating system switches between light and dark appearance.</p>');
-    $('#modalRoot [data-theme-choice]').forEach(button=>button.addEventListener('click',()=>applyTheme(button.dataset.themeChoice,true)));
+    $$('#modalRoot [data-theme-choice]').forEach(button=>button.addEventListener('click',()=>applyTheme(button.dataset.themeChoice,true)));
     $('#genreSoundToggle').addEventListener('click',()=>{
       genreTransitionSoundEnabled=!genreTransitionSoundEnabled;
       try{localStorage.setItem(genreSoundPreferenceKey,genreTransitionSoundEnabled?'1':'0');}catch{}
