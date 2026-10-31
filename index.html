@@ -470,6 +470,26 @@ h1,h2,h3,.workspace-head h1,.catalog-heading h2,.showcase-copy h2{font-family:va
   .genre-chip{font-size:9.5px;padding:5px 7px}
 }
 
+/* Profile watching and airing tables */
+.profile-watch-panel{margin:0 0 15px;min-width:0}
+.profile-table-wrap{width:100%;overflow-x:auto;overscroll-behavior-inline:contain}
+.profile-airing-table{width:100%;border-collapse:collapse;min-width:590px;font-size:12px}
+.profile-airing-table th{text-align:left;color:#929aaa;font-size:10px;letter-spacing:.08em;text-transform:uppercase;font-weight:750;padding:10px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+.profile-airing-table td{padding:11px 12px;border-bottom:1px solid #ffffff0b;color:#dce0e9;vertical-align:middle}
+.profile-airing-table tr:last-child td{border-bottom:0}
+.profile-airing-title{display:flex;align-items:center;gap:10px;min-width:190px}
+.profile-airing-cover{width:38px;height:52px;object-fit:cover;border-radius:6px;background:#242733;flex:0 0 auto}
+.profile-airing-title strong{display:block;max-width:250px;white-space:normal;line-height:1.35}
+.profile-airing-title small{display:block;color:var(--muted);margin-top:3px}
+.profile-progress{min-width:110px}
+.profile-progress-label{display:flex;justify-content:space-between;gap:8px;color:#c7cbd5;font-size:11px;margin-bottom:6px}
+.profile-progress-track{height:5px;border-radius:99px;background:#292d38;overflow:hidden}
+.profile-progress-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,#a993ff,#86dfcb)}
+.profile-airing-date{white-space:nowrap;font-variant-numeric:tabular-nums}
+.profile-airing-countdown{color:var(--mint);font-weight:750;white-space:nowrap}
+.profile-table-empty{text-align:center!important;color:var(--muted)!important;padding:22px!important}
+.profile-airing-footnote{font-size:10px;color:#818999;margin:12px 0 0;line-height:1.5}
+@media(max-width:760px){.profile-watch-panel{padding:14px}.profile-watch-panel .panel-head{align-items:flex-start}.profile-airing-table{min-width:560px}}
 </style>
 
 <style>
@@ -682,6 +702,15 @@ body[data-page="manga"] #mangaView{display:block!important}
       <nav class="subnav" id="profileTabs"><button class="active" data-profile-tab="overview">Profile</button><button data-profile-tab="settings">Settings</button><button data-profile-tab="privacy">Data &amp; privacy</button></nav>
       <div id="profileOverviewTab">
         <div class="profile-hero panel"><div class="profile-avatar" id="profileAvatarPreview" aria-hidden="true">H</div><div class="profile-identity"><span class="eyebrow">AFTER HOURS MEMBER</span><h2 id="profileDisplayName">Hekomi reader</h2><p id="profileHandleLabel" class="muted small">@reader</p><p id="profileBioLabel">A little corner for the stories that stay with you.</p><span class="profile-local-badge"><i></i> Local profile · This device only</span></div></div>
+        <section class="panel profile-watch-panel" aria-labelledby="profileWatchingHeading">
+          <div class="panel-head"><div><h2 id="profileWatchingHeading">Currently watching</h2><p class="muted small">Your active shows and episode progress from MyAnimeList.</p></div><span class="pill-label" id="profileWatchingCount">Not synced</span></div>
+          <div class="profile-table-wrap"><table class="profile-airing-table"><thead><tr><th>Anime</th><th>Progress</th><th>Next episode</th></tr></thead><tbody id="profileWatchingRows"><tr><td colspan="3" class="profile-table-empty">Connect and sync MyAnimeList to see your active shows here.</td></tr></tbody></table></div>
+        </section>
+        <section class="panel profile-watch-panel" aria-labelledby="profileAiringHeading">
+          <div class="panel-head"><div><h2 id="profileAiringHeading">Upcoming episodes</h2><p class="muted small">Confirmed next-episode dates for shows you're following.</p></div><span class="pill-label" id="profileAiringCount">—</span></div>
+          <div class="profile-table-wrap"><table class="profile-airing-table"><thead><tr><th>Anime</th><th>Episode</th><th>Airing date</th><th>Countdown</th></tr></thead><tbody id="profileAiringRows"><tr><td colspan="4" class="profile-table-empty">Upcoming episode dates will appear after your list is synced.</td></tr></tbody></table></div>
+          <p class="profile-airing-footnote">Airing dates are supplied by AniList when a matching title has a confirmed schedule. Titles without a confirmed episode date stay in the watching table.</p>
+        </section>
         <div class="profile-columns">
           <div class="panel"><div class="panel-head"><div><h2>About you</h2><p class="muted small">A name and a little personality go a long way.</p></div></div>
             <form id="profileForm" class="formstack">
@@ -1218,14 +1247,14 @@ function showProfileTab(tab){activeProfileTab=tab;$$('#profileTabs button').forE
       $('#malConnectInline').disabled=!malConfigured;$('#malSignInBtn').disabled=!malConfigured;
       $('#malConnectInline').textContent=malConnected?'Connected · '+(malUsername||'MyAnimeList'):'Sign in with MyAnimeList ↗';
       $('#malSignInBtn').classList.toggle('hidden',malConnected);$('#malLogoutBtn').classList.toggle('hidden',!malConnected);$('#malConnectionNudge').classList.toggle('hidden',malConnected);
-      if(malConnected&&currentPageFromPath()==='mal'&&!remoteReady)await loadRemoteList();
+      if(malConnected&&['mal','profile'].includes(currentPageFromPath())&&!remoteReady)await loadRemoteList();
     }catch(e){$('#malSetupStatus').textContent='Could not check the MAL connection: '+e.message;}
   }
   $('#malSettingsBtn').onclick=()=>{showMalTab('about');refreshMalAuthStatus();};$('#malConnectInline').onclick=beginMalLogin;$('#malSignInBtn').onclick=beginMalLogin;$('#malLoadBtn').onclick=()=>loadRemoteList();
   $('#malTestBtn').onclick=async()=>{await refreshMalAuthStatus();if(!malConnected){notify(malConfigured?'Sign in with MyAnimeList first.':'Hekomi MAL sign-in is not configured yet.');return;}$('#malSetupStatus').textContent='Checking your MyAnimeList connection…';try{const me=await api('/api/mal/me');malUsername=me.name||malUsername;$('#malSetupStatus').textContent='Connected as '+(malUsername||'your MAL account')+'. Loading list…';await loadRemoteList();showMalTab('mylist');notify('MyAnimeList connection successful.');}catch(e){$('#malSetupStatus').textContent=e.message;notify(e.message);}};
-  async function logoutMal(){try{await fetch('/api/mal/auth/logout',{method:'POST',credentials:'same-origin'});}catch{}malConnected=false;malUsername='';remoteReady=false;malRemote=[];$('#malRemoteWrap').classList.add('hidden');$('#malConnectionNudge').classList.remove('hidden');$('#malSetupStatus').textContent='Signed out of MyAnimeList.';await refreshMalAuthStatus();notify('Signed out of MyAnimeList.');}
+  async function logoutMal(){try{await fetch('/api/mal/auth/logout',{method:'POST',credentials:'same-origin'});}catch{}malConnected=false;malUsername='';remoteReady=false;malRemote=[];renderProfileWatchTables();$('#malRemoteWrap').classList.add('hidden');$('#malConnectionNudge').classList.remove('hidden');$('#malSetupStatus').textContent='Signed out of MyAnimeList.';await refreshMalAuthStatus();notify('Signed out of MyAnimeList.');}
   $('#malLogoutBtn').onclick=logoutMal;
-  async function loadRemoteList(){if(!malConnected){notify('Sign in with MyAnimeList first.');showMalTab('about');return;}$('#malLoadBtn').classList.add('loading');try{const data=await api('/api/mal/list');malRemote=(data.data||[]).map(x=>({node:x.node||{},list_status:x.list_status||{}}));remoteReady=true;renderRemoteList();$('#malConnectionNudge').classList.add('hidden');$('#malRemoteWrap').classList.remove('hidden');$('#malRemoteMeta').textContent='Synced '+new Date().toLocaleString()+(malUsername?' · '+malUsername:'');$('#malRemoteCount').textContent=`${malRemote.length} entries`;notify(`Loaded ${malRemote.length} MAL entries.`);}catch(e){notify(e.message);$('#malSetupStatus').textContent=e.message;showMalTab('about');}finally{$('#malLoadBtn').classList.remove('loading');}}
+  async function loadRemoteList(){if(!malConnected){notify('Sign in with MyAnimeList first.');showMalTab('about');return;}$('#malLoadBtn').classList.add('loading');try{const data=await api('/api/mal/list');malRemote=(data.data||[]).map(x=>({node:x.node||{},list_status:x.list_status||{}}));remoteReady=true;renderRemoteList();renderProfileWatchTables();$('#malConnectionNudge').classList.add('hidden');$('#malRemoteWrap').classList.remove('hidden');$('#malRemoteMeta').textContent='Synced '+new Date().toLocaleString()+(malUsername?' · '+malUsername:'');$('#malRemoteCount').textContent=`${malRemote.length} entries`;notify(`Loaded ${malRemote.length} MAL entries.`);}catch(e){notify(e.message);$('#malSetupStatus').textContent=e.message;showMalTab('about');}finally{$('#malLoadBtn').classList.remove('loading');}}
   function animeCover(item){return item.main_picture?.large||item.main_picture?.medium||item.picture||item.cover||'';}
   function metadataDate(value){
     if(!value)return '';
@@ -1734,8 +1763,46 @@ function mangaFeedCardMarkup(item,index){
       openModal('<div class="modal-top"><div><h2>'+esc(result.title)+'</h2><p class="muted small">Provider details unavailable</p></div><button class="close" data-close>×</button></div><div class="notice warn">'+esc(error.message||'Could not load manga details.')+'</div><div class="resultactions"><a class="mini-btn" href="'+esc(result.url)+'" target="_blank" rel="noreferrer">Open source ↗</a></div>');
     }
   }
+  const profileAiringCache=new Map();
+  function profileDateTime(timestamp){return new Date(Number(timestamp)*1000).toLocaleString(undefined,{dateStyle:'medium',timeStyle:'short'});}
+  function profileCountdown(timestamp){
+    const diff=Number(timestamp)*1000-Date.now();if(diff<=0)return 'Airing now / aired';
+    const days=Math.floor(diff/86400000),hours=Math.floor(diff%86400000/3600000),minutes=Math.floor(diff%3600000/60000);
+    return days?days+'d '+hours+'h':hours?hours+'h '+minutes+'m':minutes+'m';
+  }
+  function renderProfileWatchTables(){
+    const watching=remoteReady?malRemote.filter(x=>(x.list_status&&x.list_status.status)==='watching'):[];
+    const watchingRoot=$('#profileWatchingRows'),airingRoot=$('#profileAiringRows');
+    if(!watchingRoot||!airingRoot)return;
+    $('#profileWatchingCount').textContent=remoteReady?watching.length+' shows':'Not synced';
+    if(!remoteReady){watchingRoot.innerHTML='<tr><td colspan="3" class="profile-table-empty">Connect and sync MyAnimeList to see your active shows here.</td></tr>';airingRoot.innerHTML='<tr><td colspan="4" class="profile-table-empty">Sync your list to check upcoming episode dates.</td></tr>';$('#profileAiringCount').textContent='—';return;}
+    if(!watching.length){watchingRoot.innerHTML='<tr><td colspan="3" class="profile-table-empty">Nothing is marked as currently watching on your MAL list.</td></tr>';airingRoot.innerHTML='<tr><td colspan="4" class="profile-table-empty">No followed shows to check for upcoming episodes.</td></tr>';$('#profileAiringCount').textContent='0 scheduled';return;}
+    watchingRoot.innerHTML=watching.map(item=>{
+      const n=item.node||{},st=item.list_status||{},total=Number(n.num_episodes)||0,done=Number(st.num_episodes_watched)||0,percent=total?Math.min(100,done/total*100):0;
+      const cover=animeCover(n),title=n.title||'Untitled anime';
+      return '<tr><td><div class="profile-airing-title">'+(cover?'<img class="profile-airing-cover" src="'+esc(cover)+'" alt="" loading="lazy" onerror="this.remove()">':'<div class="profile-airing-cover"></div>')+'<div><strong>'+esc(title)+'</strong><small>'+esc(humanizeAnimeValue(n.status||''))+'</small></div></div></td><td><div class="profile-progress"><div class="profile-progress-label"><span>'+done+' / '+(total||'?')+'</span><span>'+ (total?Math.round(percent)+'%':'—')+'</span></div><div class="profile-progress-track"><div class="profile-progress-fill" style="width:'+percent+'%"></div></div></div></td><td id="profile-next-'+Number(n.id)+'"><span class="muted small">Checking…</span></td></tr>';
+    }).join('');
+    const candidates=watching.filter(item=>Number(item.node&&item.node.id)>0);
+    Promise.all(candidates.map(async item=>{
+      const id=Number(item.node.id);if(!profileAiringCache.has(id)){try{const media=await api('/api/catalog/mal-detail?id='+id);profileAiringCache.set(id,media.nextAiringEpisode||null);}catch{profileAiringCache.set(id,null);}}
+      return {item,next:profileAiringCache.get(id)};
+    })).then(results=>{
+      if(!remoteReady)return;
+      results.forEach(({item,next})=>{
+        const cell=$('#profile-next-'+Number(item.node.id));if(!cell)return;
+        cell.innerHTML=next&&next.episode&&next.airingAt?'<strong>Episode '+Number(next.episode)+'</strong><small class="muted" style="display:block;margin-top:3px">'+esc(profileDateTime(next.airingAt))+'</small>':'<span class="muted small">No confirmed date</span>';
+      });
+      const scheduled=results.filter(x=>x.next&&x.next.airingAt&&x.next.episode).sort((a,b)=>a.next.airingAt-b.next.airingAt);
+      $('#profileAiringCount').textContent=scheduled.length+' scheduled';
+      airingRoot.innerHTML=scheduled.length?scheduled.map(({item,next})=>{
+        const n=item.node||{},cover=animeCover(n);
+        return '<tr><td><div class="profile-airing-title">'+(cover?'<img class="profile-airing-cover" src="'+esc(cover)+'" alt="" loading="lazy" onerror="this.remove()">':'<div class="profile-airing-cover"></div>')+'<div><strong>'+esc(n.title||'Untitled anime')+'</strong></div></div></td><td>Episode '+Number(next.episode)+'</td><td class="profile-airing-date">'+esc(profileDateTime(next.airingAt))+'</td><td class="profile-airing-countdown">'+esc(profileCountdown(next.airingAt))+'</td></tr>';
+      }).join(''):'<tr><td colspan="4" class="profile-table-empty">No confirmed upcoming episode dates found for your currently watching shows.</td></tr>';
+    });
+  }
   function renderProfileOverview(){
     if(!$('#profileView'))return;
+    renderProfileWatchTables();
     const name=String(profileData.displayName||'Hekomi reader').trim()||'Hekomi reader';
     const handle=String(profileData.handle||'reader').trim().replace(/^@/,'')||'reader';
     const bio=String(profileData.bio||'').trim()||'A little corner for the stories that stay with you.';
