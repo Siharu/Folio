@@ -507,6 +507,7 @@ h1,h2,h3,.workspace-head h1,.catalog-heading h2,.showcase-copy h2{font-family:va
 @media(max-width:760px){.profile-recommend-panel{padding:14px}.profile-recommend-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.profile-recommend-card img{height:135px}}
 .local-list-tools{margin:12px 0 5px;gap:7px;flex-wrap:wrap}.local-list-tools button{font-size:11px;padding:8px 11px}.local-list-status{margin:5px 0 12px;line-height:1.45}
 .profile-mal-card{margin:0 0 14px;padding:13px 16px}.profile-mal-main{display:flex;justify-content:space-between;align-items:center;gap:12px}.profile-mal-main strong{font-size:13px}.profile-mal-main p{margin:3px 0 0}.profile-mal-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}.profile-mal-actions button{font-size:11px;padding:8px 12px}
+.profile-notify-card{margin:0 0 12px;padding:12px 15px}.profile-notify-row{display:flex;align-items:center;justify-content:space-between;gap:12px}.profile-notify-row strong{font-size:13px}.profile-notify-row p{font-size:11px;margin:3px 0 0}.profile-notify-row button{font-size:11px;padding:8px 12px;white-space:nowrap}
 </style>
 
 <style>
@@ -728,6 +729,9 @@ body[data-page="manga"] #mangaView{display:block!important}
           <div class="profile-recommend-group"><div class="profile-recommend-heading"><strong>Already in your list</strong><span class="muted small">You saved these — maybe it's time to watch them</span></div><div id="profileRecommendationsInList" class="profile-recommend-grid"><div class="profile-recommend-empty">Sync your MyAnimeList account to get started.</div></div></div>
           <div class="profile-recommend-group"><div class="profile-recommend-heading"><strong>Discover something new</strong><span class="muted small">Similar anime you haven't added yet</span></div><div id="profileRecommendationsOutside" class="profile-recommend-grid"><div class="profile-recommend-empty">Your recommendations will appear here.</div></div></div>
           <p class="profile-airing-footnote">Similarity is an estimate based on AniList community recommendations and how many of your recent titles point to the same series. It is not an AI-generated taste score.</p>
+        </section>
+        <section class="panel profile-notify-card" aria-label="Episode notifications">
+          <div class="profile-notify-row"><div><strong>Episode notifications</strong><p class="muted small" id="profileNotifyStatus">Get notified when a followed episode is due to air.</p></div><button class="btn-secondary" type="button" id="profileNotifyToggle">Enable</button></div>
         </section>
         <section class="panel profile-watch-panel" aria-labelledby="profileWatchingHeading">
           <div class="panel-head"><div><h2 id="profileWatchingHeading">Currently watching</h2><p class="muted small">Your active shows and episode progress from MyAnimeList.</p></div><span class="pill-label" id="profileWatchingCount">Not synced</span></div>
@@ -1283,7 +1287,7 @@ function showProfileTab(tab){activeProfileTab=tab;$$('#profileTabs button').forE
   $('#malTestBtn').onclick=async()=>{await refreshMalAuthStatus();if(!malConnected){notify(malConfigured?'Sign in with MyAnimeList first.':'Hekomi MAL sign-in is not configured yet.');return;}$('#malSetupStatus').textContent='Checking your MyAnimeList connection…';try{const me=await api('/api/mal/me');malUsername=me.name||malUsername;$('#malSetupStatus').textContent='Connected as '+(malUsername||'your MAL account')+'. Loading list…';await loadRemoteList();showMalTab('mylist');notify('MyAnimeList connection successful.');}catch(e){$('#malSetupStatus').textContent=e.message;notify(e.message);}};
   async function logoutMal(){try{await fetch('/api/mal/auth/logout',{method:'POST',credentials:'same-origin'});}catch{}malConnected=false;malUsername='';remoteReady=false;malRemote=[];profileRecommendationsLoaded=false;renderProfileWatchTables();renderProfileRecommendations();$('#malRemoteWrap').classList.add('hidden');$('#malConnectionNudge').classList.remove('hidden');$('#malSetupStatus').textContent='Signed out of MyAnimeList.';await refreshMalAuthStatus();notify('Signed out of MyAnimeList.');}
   $('#malLogoutBtn').onclick=logoutMal;
-  async function loadRemoteList(){if(!malConnected){notify('Sign in with MyAnimeList first.');showMalTab('about');return;}$('#malLoadBtn').classList.add('loading');try{const data=await api('/api/mal/list');malRemote=(data.data||[]).map(x=>({node:x.node||{},list_status:x.list_status||{}}));remoteReady=true;profileRecommendationsLoaded=false;renderRemoteList();renderProfileWatchTables();renderProfileRecommendations();$('#malConnectionNudge').classList.add('hidden');$('#malRemoteWrap').classList.remove('hidden');$('#malRemoteMeta').textContent='Synced '+new Date().toLocaleString()+(malUsername?' · '+malUsername:'');$('#malRemoteCount').textContent=`${malRemote.length} entries`;notify(`Loaded ${malRemote.length} MAL entries.`);}catch(e){notify(e.message);$('#malSetupStatus').textContent=e.message;showMalTab('about');}finally{$('#malLoadBtn').classList.remove('loading');}}
+  async function loadRemoteList(){if(!malConnected){notify('Sign in with MyAnimeList first.');showMalTab('about');return;}$('#malLoadBtn').classList.add('loading');try{const data=await api('/api/mal/list');malRemote=(data.data||[]).map(x=>({node:x.node||{},list_status:x.list_status||{}}));remoteReady=true;profileRecommendationsLoaded=false;renderRemoteList();renderProfileWatchTables();renderProfileRecommendations();if(episodeNotifyEnabled())checkEpisodeNotifications();$('#malConnectionNudge').classList.add('hidden');$('#malRemoteWrap').classList.remove('hidden');$('#malRemoteMeta').textContent='Synced '+new Date().toLocaleString()+(malUsername?' · '+malUsername:'');$('#malRemoteCount').textContent=`${malRemote.length} entries`;notify(`Loaded ${malRemote.length} MAL entries.`);}catch(e){notify(e.message);$('#malSetupStatus').textContent=e.message;showMalTab('about');}finally{$('#malLoadBtn').classList.remove('loading');}}
   function animeCover(item){return item.main_picture?.large||item.main_picture?.medium||item.picture||item.cover||'';}
   function metadataDate(value){
     if(!value)return '';
@@ -1876,6 +1880,48 @@ function mangaFeedCardMarkup(item,index){
     });
   }
   $('#refreshProfileRecommendations')?.addEventListener('click',()=>renderProfileRecommendations(true));
+  const episodeNotifyKey='hekomi_episode_notifications_v1';
+  const episodeSentKey='hekomi_episode_notifications_sent_v1';
+  let episodeNotifyTimer=null;
+  function episodeNotifyEnabled(){try{return localStorage.getItem(episodeNotifyKey)==='1';}catch{return false;}}
+  function episodeSent(){try{return new Set(JSON.parse(localStorage.getItem(episodeSentKey)||'[]'));}catch{return new Set();}}
+  function saveEpisodeSent(set){try{localStorage.setItem(episodeSentKey,JSON.stringify([...set].slice(-300)));}catch{}}
+  function updateEpisodeNotifyUI(){
+    const button=$('#profileNotifyToggle'),status=$('#profileNotifyStatus');if(!button||!status)return;
+    const enabled=episodeNotifyEnabled(),supported='Notification' in window;
+    button.textContent=enabled?'Disable':'Enable';
+    status.textContent=!supported?'This browser does not support notifications.':Notification.permission==='denied'?'Notifications are blocked in browser settings.':enabled?'Notifications enabled for upcoming episodes.':'Get notified when a followed episode is due to air.';
+    button.disabled=!supported||(Notification.permission==='denied'&&!enabled);
+  }
+  async function toggleEpisodeNotifications(){
+    if(!('Notification' in window)){notify('This browser does not support notifications.');return;}
+    if(episodeNotifyEnabled()){localStorage.setItem(episodeNotifyKey,'0');updateEpisodeNotifyUI();notify('Episode notifications disabled.');return;}
+    const permission=await Notification.requestPermission();
+    if(permission!=='granted'){updateEpisodeNotifyUI();notify('Allow notifications in your browser to enable episode alerts.');return;}
+    localStorage.setItem(episodeNotifyKey,'1');updateEpisodeNotifyUI();checkEpisodeNotifications(true);notify('Episode notifications enabled.');
+  }
+  async function checkEpisodeNotifications(showUpcoming=false){
+    if(!episodeNotifyEnabled()||Notification.permission!=='granted'||!malConnected||!remoteReady)return;
+    const watching=malRemote.filter(x=>(x.list_status&&x.list_status.status)==='watching');
+    const now=Math.floor(Date.now()/1000),sent=episodeSent();
+    for(const item of watching){
+      const id=Number(item.node&&item.node.id);if(!id)continue;
+      try{
+        let next=profileAiringCache.get(id);
+        if(next===undefined){const media=await api('/api/catalog/mal-detail?id='+id);next=media.nextAiringEpisode||null;profileAiringCache.set(id,next);}
+        if(!next||!next.airingAt||!next.episode)continue;
+        const key=id+':'+Number(next.episode)+':'+Number(next.airingAt);
+        if(Number(next.airingAt)>now||sent.has(key))continue;
+        const title=(item.node&&item.node.title)||'An anime you follow';
+        new Notification('New episode: '+title,{body:'Episode '+Number(next.episode)+' is scheduled to air now.',tag:'hekomi-'+key,icon:'/ico'});
+        sent.add(key);saveEpisodeSent(sent);
+      }catch(error){/* Keep checking other shows if one provider lookup fails. */}
+    }
+  }
+  $('#profileNotifyToggle')?.addEventListener('click',toggleEpisodeNotifications);
+  updateEpisodeNotifyUI();
+  if(episodeNotifyEnabled())episodeNotifyTimer=setInterval(()=>checkEpisodeNotifications(),5*60*1000);
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden)checkEpisodeNotifications();});
   const profileAiringCache=new Map();
   function profileDateTime(timestamp){return new Date(Number(timestamp)*1000).toLocaleString(undefined,{dateStyle:'medium',timeStyle:'short'});}
   function profileCountdown(timestamp){
