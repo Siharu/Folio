@@ -1146,6 +1146,39 @@ body[data-page="manga"] #mangaView #mangaDexSearchResults:empty{display:none}
 @media(max-width:760px){.anime-list-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.anime-list-card .catalog-card-body{padding:9px;gap:6px}.anime-list-card .catalog-card-actions{gap:5px}.anime-list-card .catalog-card-actions .mini-btn{font-size:9px;padding:6px 6px}}
 @media(prefers-reduced-motion:reduce){.anime-list-progress-track span{transition:none}}
 </style>
+<style>
+.genre-sound-setting{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:16px;padding:13px;border:1px solid var(--line);border-radius:13px;background:var(--panel)}
+.genre-sound-setting strong,.genre-sound-setting small{display:block}.genre-sound-setting strong{font-size:13px}.genre-sound-setting small{margin-top:4px;color:var(--muted);font-size:11px}
+.anime-list-cover-link{display:block;text-decoration:none;color:inherit}.anime-list-title-link{color:inherit;text-decoration:none}.anime-list-title-link:hover{color:var(--violet)}
+#genreTransitionOverlay{--transition-glow:#b9a6ff;position:fixed;inset:0;z-index:9999;pointer-events:none;visibility:hidden;opacity:0;overflow:hidden;background:radial-gradient(ellipse at 50% 50%,color-mix(in srgb,var(--transition-glow) 28%,transparent),transparent 65%),#090a10}
+#genreTransitionOverlay.is-active{visibility:visible;animation:hkGenreFade .48s cubic-bezier(.2,.72,.18,1) both}
+#genreTransitionOverlay:before,#genreTransitionOverlay:after{content:"";position:absolute;inset:-35%;pointer-events:none}
+#genreTransitionOverlay:before{background:radial-gradient(circle at 50% 50%,color-mix(in srgb,var(--transition-glow) 62%,transparent),transparent 44%);filter:blur(14px);transform:scale(.28);opacity:0}
+#genreTransitionOverlay.is-active:before{animation:hkGenreBloom .5s ease-out both}
+#genreTransitionOverlay:after{inset:0;background:linear-gradient(110deg,transparent 32%,color-mix(in srgb,var(--transition-glow) 38%,transparent) 49%,transparent 66%);transform:translateX(-110%);opacity:.7}
+#genreTransitionOverlay.is-active:after{animation:hkGenreSweep .48s ease-out both}
+#genreTransitionOverlay[data-genre="action"]{--transition-glow:#ff684f}
+#genreTransitionOverlay[data-genre="romance"]{--transition-glow:#ff91c7}
+#genreTransitionOverlay[data-genre="fantasy"]{--transition-glow:#a98bff}
+#genreTransitionOverlay[data-genre="horror"]{--transition-glow:#d83e56}
+#genreTransitionOverlay[data-genre="scifi"]{--transition-glow:#66e8ed}
+#genreTransitionOverlay[data-genre="mystery"]{--transition-glow:#7289df}
+#genreTransitionOverlay[data-genre="comedy"]{--transition-glow:#f7d56a}
+#genreTransitionOverlay[data-genre="slice"]{--transition-glow:#8de0bd}
+#genreTransitionOverlay[data-genre="sports"]{--transition-glow:#f6a55d}
+#genreTransitionOverlay[data-genre="drama"]{--transition-glow:#b2a1d8}
+#genreTransitionOverlay[data-genre="dream"]{--transition-glow:#a9f0db}
+#genreTransitionOverlay[data-genre="action"]:after{background:repeating-linear-gradient(115deg,transparent 0 12%,#ffb18d55 12.2% 12.6%,transparent 13% 27%)}
+#genreTransitionOverlay[data-genre="horror"].is-active{animation:hkGenreFlicker .48s steps(5,end) both}
+#genreTransitionOverlay[data-genre="fantasy"]:after{background:radial-gradient(circle at 25% 45%,#fff9 0 1px,transparent 3px),radial-gradient(circle at 70% 35%,#fff8 0 1px,transparent 3px),radial-gradient(circle at 56% 75%,#d9caffaa 0 2px,transparent 4px),linear-gradient(110deg,transparent 35%,#a98bff55,transparent 70%)}
+#genreTransitionOverlay[data-genre="scifi"]:after{background:linear-gradient(90deg,transparent 49.7%,#66e8ed66 50%,transparent 50.3%),linear-gradient(0deg,transparent 49.7%,#66e8ed66 50%,transparent 50.3%);background-size:48px 48px}
+@keyframes hkGenreFade{0%{opacity:0}18%{opacity:1}78%{opacity:.9}100%{opacity:0}}
+@keyframes hkGenreBloom{0%{opacity:0;transform:scale(.2)}35%{opacity:.8}100%{opacity:0;transform:scale(1.25)}}
+@keyframes hkGenreSweep{0%{transform:translateX(-110%)}100%{transform:translateX(110%)}}
+@keyframes hkGenreFlicker{0%,100%{opacity:0}18%{opacity:.95}35%{opacity:.2}48%{opacity:.8}62%{opacity:.35}80%{opacity:.85}}
+@media(prefers-reduced-motion:reduce){#genreTransitionOverlay.is-active,#genreTransitionOverlay.is-active:before,#genreTransitionOverlay.is-active:after{animation-duration:.08s!important}}
+@media(max-width:520px){.genre-sound-setting{align-items:flex-start;flex-direction:column}.genre-sound-setting button{width:100%}}
+</style>
 </head>
 <body data-page="__HEKOMI_PAGE__">
 <div class="app-scroll-progress" aria-hidden="true"><span id="appScrollProgressBar"></span></div>
@@ -1367,6 +1400,7 @@ body[data-page="manga"] #mangaView #mangaDexSearchResults:empty{display:none}
   <footer class="footer"><span>HEKOMI · personal manga & anime workspace</span><span>Local-first · Use sources responsibly</span></footer>
 </div>
 <div id="modalRoot"></div><div id="toast" class="toast hidden" role="status"></div>
+<div id="genreTransitionOverlay" aria-hidden="true"></div>
 <script>
 (() => {
   const $ = s => document.querySelector(s); const $$ = s => [...document.querySelectorAll(s)];
@@ -1392,18 +1426,33 @@ body[data-page="manga"] #mangaView #mangaDexSearchResults:empty{display:none}
   function catalogYear(m){return m.seasonYear||(m.startDate&&m.startDate.year)||'';}
   function catalogGenres(m){return Array.isArray(m.genres)?m.genres.slice(0,2):[];}
   function catalogDetailUrl(m,kind){return '/series/'+kind+'/'+Number(m.id)+'-'+slug(catalogTitle(m));}
+  function genreTransitionTheme(genres){
+    const main=String(Array.isArray(genres)?genres[0]||'':genres||'').toLowerCase().trim();
+    if(/horror|thriller|psychological/.test(main))return 'horror';
+    if(/romance/.test(main))return 'romance';
+    if(/fantasy|magic|myth/.test(main))return 'fantasy';
+    if(/science fiction|sci-fi|science-fiction|cyberpunk|space/.test(main))return 'scifi';
+    if(/mystery|suspense/.test(main))return 'mystery';
+    if(/comedy|parody/.test(main))return 'comedy';
+    if(/slice of life/.test(main))return 'slice';
+    if(/sports/.test(main))return 'sports';
+    if(/action|adventure|martial arts|mecha/.test(main))return 'action';
+    if(/drama/.test(main))return 'drama';
+    return 'dream';
+  }
   function catalogKindLabel(m,kind){if(kind==='ANIME')return 'Anime';if(m.countryOfOrigin==='KR')return 'Manhwa';if(m.countryOfOrigin==='CN')return 'Manhua';if(m.format==='ONE_SHOT')return 'One-shot';return 'Manga';}
   function catalogCardMarkup(m,kind){
     const title=catalogTitle(m),cover=catalogCover(m),detail=catalogDetailUrl(m,kind),score=Number(m.averageScore)>0?(Number(m.averageScore)/10).toFixed(1):'—',typeLabel=catalogKindLabel(m,kind);
     const meta=[m.format||typeLabel,catalogYear(m),catalogStatus(m.status)].filter(Boolean).join(' · ');
     const genres=catalogGenres(m).map(g=>'<span class="catalog-genre">'+esc(g)+'</span>').join('');
     const desc=String(m.description||'').replace(/\s+/g,' ').trim();
-    return '<article class="catalog-card" itemscope itemtype="https://schema.org/CreativeWork"><a class="catalog-cover-link" href="'+detail+'" aria-label="View details for '+esc(title)+'"><div class="catalog-cover'+(cover?'':' no-cover')+'">'+
+    const transitionAttrs=kind==='ANIME'?' data-genre-transition="'+genreTransitionTheme(m.genres)+'" data-anilist-id="'+Number(m.id)+'" data-mal-id="'+(Number(m.idMal)||0)+'" data-anime-title="'+esc(title)+'"':'';
+    return '<article class="catalog-card" itemscope itemtype="https://schema.org/CreativeWork"><a class="catalog-cover-link" href="'+detail+'" aria-label="View details for '+esc(title)+'"'+transitionAttrs+'><div class="catalog-cover'+(cover?'':' no-cover')+'">'+
       (cover?'<img src="'+esc(cover)+'" alt="Cover artwork for '+esc(title)+' ('+typeLabel+')" width="280" height="420" loading="lazy" decoding="async" referrerpolicy="no-referrer">':'')+
       '<div class="catalog-cover-badges"><span class="catalog-badge">'+esc(typeLabel)+'</span><span class="catalog-badge score">★ '+score+'</span></div></div></a>'+
-      '<div class="catalog-card-body"><h4 itemprop="name"><a href="'+detail+'">'+esc(title)+'</a></h4><div class="catalog-card-meta">'+esc(meta)+(kind==='ANIME'&&m.episodes?' · '+Number(m.episodes)+' eps':'')+(kind==='MANGA'&&m.volumes?' · '+Number(m.volumes)+' vols':'')+'</div>'+
+      '<div class="catalog-card-body"><h4 itemprop="name"><a href="'+detail+'"'+transitionAttrs+'>'+esc(title)+'</a></h4><div class="catalog-card-meta">'+esc(meta)+(kind==='ANIME'&&m.episodes?' · '+Number(m.episodes)+' eps':'')+(kind==='MANGA'&&m.volumes?' · '+Number(m.volumes)+' vols':'')+'</div>'+
       '<div class="catalog-genres">'+genres+'</div><p class="catalog-synopsis" itemprop="description">'+esc(desc||'Open the details page for available series information.')+'</p>'+
-      '<div class="catalog-card-actions"><a class="mini-btn catalog-detail-link" href="'+detail+'">Details ↗</a><button type="button" class="mini-btn" data-catalog-add="1" data-catalog-kind="'+kind+'" data-id="'+Number(m.id)+'" data-title="'+esc(title)+'" data-cover="'+esc(cover)+'" data-description="'+esc(desc)+'" data-format="'+esc(m.format||'')+'" data-origin="'+esc(m.countryOfOrigin||'')+'" data-detail="'+detail+'">'+(kind==='ANIME'?'＋ Local list':'＋ Manga shelf')+'</button></div></div></article>';
+      '<div class="catalog-card-actions"><a class="mini-btn catalog-detail-link" href="'+detail+'"'+transitionAttrs+'>Details ↗</a><button type="button" class="mini-btn" data-catalog-add="1" data-catalog-kind="'+kind+'" data-id="'+Number(m.id)+'" data-title="'+esc(title)+'" data-cover="'+esc(cover)+'" data-description="'+esc(desc)+'" data-format="'+esc(m.format||'')+'" data-origin="'+esc(m.countryOfOrigin||'')+'" data-detail="'+detail+'">'+(kind==='ANIME'?'＋ Local list':'＋ Manga shelf')+'</button></div></div></article>';
   }
   function renderCatalogGrid(container,items,kind){const target=typeof container==='string'?$(container):container;if(!target)return;target.innerHTML=items&&items.length?items.map(m=>catalogCardMarkup(m,kind)).join(''):'<div class="catalog-loading">No matching titles were found. Try another search.</div>';}
 
@@ -1605,6 +1654,9 @@ body[data-page="manga"] #mangaView #mangaDexSearchResults:empty{display:none}
   });
 
   const themePreferenceKey = 'hekomi_theme_preference_v1';
+  const genreSoundPreferenceKey='hekomi_genre_transition_sound_v1';
+  let genreTransitionSoundEnabled=(()=>{try{return localStorage.getItem(genreSoundPreferenceKey)==='1';}catch{return false;}})();
+  let genreAudioContext=null,genreNavigationPending=false;
   const themeModes = new Set(['midnight','late-night','dawn','device']);
   const themeModeNames = {midnight:'Neon Glass', 'late-night':'Cinematic Anime', dawn:'Minimal Elegance', device:'Device Settings'};
   const themeSystemQuery = window.matchMedia('(prefers-color-scheme: light)');
@@ -1637,8 +1689,17 @@ body[data-page="manga"] #mangaView #mangaDexSearchResults:empty{display:none}
         '<span class="theme-option-text"><strong>'+option.title+'</strong><small>'+option.description+'</small></span>'+
         '<span class="theme-check" aria-hidden="true">✓</span></button>'
     ).join('');
-    openModal('<div class="modal-top"><div><h2>Appearance</h2><p class="theme-settings-copy">Choose your vibe. Switch moods any time — your choice is saved on this device.</p></div><button class="close" data-close aria-label="Close appearance settings">×</button></div><div class="theme-options">'+buttons+'</div><p class="small muted" style="margin:14px 0 0">Device Settings updates automatically when your operating system switches between light and dark appearance.</p>');
-    $$('#modalRoot [data-theme-choice]').forEach(button=>button.addEventListener('click',()=>applyTheme(button.dataset.themeChoice,true)));
+    const soundLabel=genreTransitionSoundEnabled?'On':'Off';
+    openModal('<div class="modal-top"><div><h2>Appearance</h2><p class="theme-settings-copy">Choose your vibe. Switch moods any time — your choice is saved on this device.</p></div><button class="close" data-close aria-label="Close appearance settings">×</button></div><div class="theme-options">'+buttons+'</div><div class="genre-sound-setting"><div><strong>Genre transition sounds</strong><small>Optional short audio accents when opening anime. Off by default.</small></div><button type="button" class="btn-secondary" id="genreSoundToggle" aria-pressed="'+String(genreTransitionSoundEnabled)+'">Sound: '+soundLabel+'</button></div><p class="small muted" style="margin:14px 0 0">Device Settings updates automatically when your operating system switches between light and dark appearance.</p>');
+    $('#modalRoot [data-theme-choice]').forEach(button=>button.addEventListener('click',()=>applyTheme(button.dataset.themeChoice,true)));
+    $('#genreSoundToggle').addEventListener('click',()=>{
+      genreTransitionSoundEnabled=!genreTransitionSoundEnabled;
+      try{localStorage.setItem(genreSoundPreferenceKey,genreTransitionSoundEnabled?'1':'0');}catch{}
+      const toggle=$('#genreSoundToggle');
+      toggle.textContent='Sound: '+(genreTransitionSoundEnabled?'On':'Off');
+      toggle.setAttribute('aria-pressed',String(genreTransitionSoundEnabled));
+      notify('Genre transition sounds '+(genreTransitionSoundEnabled?'enabled':'disabled')+'.');
+    });
   }
   applyTheme(themePreference);
   const syncDeviceTheme=()=>{if(themePreference==='device')applyTheme('device');};
@@ -1744,6 +1805,73 @@ body[data-page="manga"] #mangaView #mangaDexSearchResults:empty{display:none}
     }else renderPage(page);
     window.scrollTo({top:0,behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
   }
+  const genreSoundProfiles={
+    action:[{frequency:250,end:62,type:'sawtooth',delay:0,duration:.22,level:.035},{frequency:125,end:70,type:'triangle',delay:.04,duration:.2,level:.022}],
+    romance:[{frequency:659,end:784,type:'sine',delay:0,duration:.22,level:.025},{frequency:880,end:1046,type:'sine',delay:.12,duration:.28,level:.018}],
+    fantasy:[{frequency:523,end:523,type:'sine',delay:0,duration:.2,level:.021},{frequency:784,end:784,type:'sine',delay:.09,duration:.23,level:.018},{frequency:1046,end:1046,type:'sine',delay:.18,duration:.3,level:.014}],
+    horror:[{frequency:98,end:49,type:'triangle',delay:0,duration:.34,level:.035},{frequency:103,end:52,type:'sawtooth',delay:.04,duration:.28,level:.012}],
+    scifi:[{frequency:280,end:620,type:'triangle',delay:0,duration:.28,level:.023},{frequency:420,end:840,type:'sine',delay:.08,duration:.3,level:.014}],
+    mystery:[{frequency:392,end:330,type:'sine',delay:0,duration:.28,level:.02},{frequency:294,end:247,type:'sine',delay:.15,duration:.3,level:.014}],
+    comedy:[{frequency:660,end:880,type:'square',delay:0,duration:.11,level:.012},{frequency:990,end:1180,type:'square',delay:.1,duration:.13,level:.01}],
+    slice:[{frequency:523,end:587,type:'sine',delay:0,duration:.25,level:.018},{frequency:659,end:698,type:'sine',delay:.13,duration:.28,level:.012}],
+    sports:[{frequency:330,end:494,type:'triangle',delay:0,duration:.18,level:.022},{frequency:494,end:659,type:'triangle',delay:.13,duration:.22,level:.016}],
+    drama:[{frequency:293,end:261,type:'sine',delay:0,duration:.28,level:.02},{frequency:220,end:196,type:'sine',delay:.14,duration:.3,level:.014}],
+    dream:[{frequency:587,end:698,type:'sine',delay:0,duration:.27,level:.018},{frequency:784,end:880,type:'sine',delay:.15,duration:.3,level:.012}]
+  };
+  function playGenreTransitionSound(theme){
+    if(!genreTransitionSoundEnabled)return;
+    const AudioContextClass=window.AudioContext||window.webkitAudioContext;
+    if(!AudioContextClass)return;
+    try{
+      if(!genreAudioContext)genreAudioContext=new AudioContextClass();
+      const context=genreAudioContext;
+      if(context.state==='suspended')context.resume().catch(()=>{});
+      const notes=genreSoundProfiles[theme]||genreSoundProfiles.dream;
+      const now=context.currentTime;
+      notes.forEach(note=>{
+        const oscillator=context.createOscillator(),gain=context.createGain(),start=now+note.delay,end=start+note.duration;
+        oscillator.type=note.type;
+        oscillator.frequency.setValueAtTime(note.frequency,start);
+        oscillator.frequency.exponentialRampToValueAtTime(Math.max(20,note.end),end);
+        gain.gain.setValueAtTime(.0001,start);
+        gain.gain.exponentialRampToValueAtTime(note.level,start+.025);
+        gain.gain.exponentialRampToValueAtTime(.0001,end);
+        oscillator.connect(gain);gain.connect(context.destination);
+        oscillator.start(start);oscillator.stop(end+.02);
+      });
+      window.setTimeout(()=>{if(context.state==='running')context.suspend().catch(()=>{});},900);
+    }catch(error){console.warn('Hekomi genre sound could not play:',error);}
+  }
+  function startGenreTransition(theme,title){
+    const overlay=$('#genreTransitionOverlay');
+    if(!overlay)return;
+    overlay.dataset.genre=theme||'dream';
+    overlay.setAttribute('aria-label','Opening '+(title||'anime'));
+    overlay.classList.remove('is-active');
+    void overlay.offsetWidth;
+    overlay.classList.add('is-active');
+    window.setTimeout(()=>{overlay.classList.remove('is-active');},520);
+  }
+  document.addEventListener('click',event=>{
+    const link=event.target.closest('a[data-genre-transition]');
+    if(!link||event.defaultPrevented||event.button!==0||event.metaKey||event.ctrlKey||event.shiftKey||event.altKey||link.target==='_blank')return;
+    const href=link.getAttribute('href')||'';
+    if(!href||href==='#')return;
+    event.preventDefault();
+    if(genreNavigationPending)return;
+    genreNavigationPending=true;
+    const theme=link.dataset.genreTransition||'dream';
+    const title=link.dataset.animeTitle||link.getAttribute('aria-label')||'anime';
+    const anilistId=Number(link.dataset.anilistId)||0,malId=Number(link.dataset.malId)||0;
+    const fallback=href;
+    const destination=anilistId?Promise.resolve('/series/anime/'+anilistId+'-'+slug(title)):malId
+      ?api('/api/catalog/mal-detail?id='+encodeURIComponent(malId)).then(media=>catalogDetailUrl(media,'anime')).catch(()=>fallback)
+      :Promise.resolve(fallback);
+    playGenreTransitionSound(theme);
+    startGenreTransition(theme,title);
+    const delay=window.matchMedia('(prefers-reduced-motion: reduce)').matches?70:430;
+    window.setTimeout(()=>destination.then(url=>{window.location.assign(url);}).catch(()=>window.location.assign(fallback)),delay);
+  });
   document.addEventListener('click',event=>{const a=event.target.closest('a[href]');if(!a||event.defaultPrevented||a.target==='_blank'||event.metaKey||event.ctrlKey||event.shiftKey||event.altKey)return;let destination;try{destination=new URL(a.href,window.location.href);}catch{return;}if(destination.origin!==window.location.origin)return;const route=(destination.pathname!=='/'&&destination.pathname.endsWith('/')?destination.pathname.slice(0,-1):destination.pathname)||'/';if(route==='/anime'||route==='/manga'||route==='/profile'){event.preventDefault();setMode(route==='/manga'?'manga':route==='/profile'?'profile':'mal');}});
   $$('[data-enter]').forEach(el=>{el.addEventListener('click',()=>setMode(el.dataset.enter));el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();setMode(el.dataset.enter);}})});$('#headerHome').addEventListener('click',()=>setMode(null));$('#profileBtn').addEventListener('click',()=>setMode('profile'));$('#themeSettingsBtn').addEventListener('click',openThemeSettings);
   renderPage(currentPageFromPath());
@@ -2009,16 +2137,20 @@ function showProfileTab(tab){activeProfileTab=tab;$$('#profileTabs button').forE
     const total=Math.max(0,Number(data.total)||0);
     const score=Math.max(0,Math.min(10,Number(data.score)||0));
     const percent=total?Math.min(100,Math.round(watched/total*100)):0;
-    const genres=(Array.isArray(data.genres)?data.genres:[]).map(g=>typeof g==='string'?g:g&&g.name).filter(Boolean).slice(0,4);
+    const rawGenres=Array.isArray(data.genres)?data.genres:[];
+    const genres=rawGenres.map(g=>typeof g==='string'?g:g&&g.name).filter(Boolean).slice(0,4);
     const genreHtml=genres.map(genre=>'<span class="catalog-genre">'+esc(genre)+'</span>').join('');
     const synopsis=String(data.synopsis||'').replace(/\s+/g,' ').trim();
+    const anilistId=Number(data.anilistId)||0,malId=Number(data.malId)||0;
+    const detailHref=anilistId?'/series/anime/'+anilistId+'-'+slug(title):malId?'https://myanimelist.net/anime/'+malId:(safeImageUrl(data.externalUrl)||'#');
+    const transitionAttrs=' data-genre-transition="'+genreTransitionTheme(rawGenres)+'" data-anilist-id="'+anilistId+'" data-mal-id="'+malId+'" data-anime-title="'+esc(title)+'"';
     const progress=total
       ? '<div class="anime-list-progress" aria-label="'+watched+' of '+total+' episodes watched"><div class="anime-list-progress-meta"><span>WATCH PROGRESS</span><strong>'+watched+' / '+total+'</strong></div><div class="anime-list-progress-track"><span style="width:'+percent+'%"></span></div></div>'
       : '<div class="anime-list-progress-note">'+watched+' episode'+(watched===1?'':'s')+' watched · Total not listed</div>';
     return '<article class="catalog-card anime-list-card">'+
-      '<div class="catalog-cover'+(cover?'':' no-cover')+'">'+(cover?'<img src="'+esc(cover)+'" alt="'+esc('Cover artwork for '+title)+'" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.remove()">':'')+
-      '<div class="catalog-cover-badges"><span class="catalog-badge anime-list-status">'+esc(status)+'</span><span class="catalog-badge score">'+(score?'★ '+score+'/10':'UNSCORED')+'</span></div></div>'+
-      '<div class="catalog-card-body"><h4>'+esc(title)+'</h4><div class="catalog-card-meta">'+esc(data.meta||'Anime · Details available')+'</div>'+
+      '<a class="anime-list-cover-link" href="'+esc(detailHref)+'" aria-label="Open anime details for '+esc(title)+'"'+transitionAttrs+'><div class="catalog-cover'+(cover?'':' no-cover')+'">'+(cover?'<img src="'+esc(cover)+'" alt="'+esc('Cover artwork for '+title)+'" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.remove()">':'')+
+      '<div class="catalog-cover-badges"><span class="catalog-badge anime-list-status">'+esc(status)+'</span><span class="catalog-badge score">'+(score?'★ '+score+'/10':'UNSCORED')+'</span></div></div></a>'+
+      '<div class="catalog-card-body"><h4><a class="anime-list-title-link" href="'+esc(detailHref)+'"'+transitionAttrs+'>'+esc(title)+'</a></h4><div class="catalog-card-meta">'+esc(data.meta||'Anime · Details available')+'</div>'+
       '<div class="catalog-genres">'+(genreHtml||'<span class="catalog-genre">Anime</span>')+'</div>'+
       '<p class="catalog-synopsis">'+esc(synopsis?synopsis.slice(0,240):'No synopsis is available for this title yet.')+(synopsis.length>240?'…':'')+'</p>'+
       progress+
@@ -2042,6 +2174,7 @@ function showProfileTab(tab){activeProfileTab=tab;$$('#profileTabs button').forE
         meta:[release,date].filter(Boolean).join(' · ')||'Release details unavailable',
         synopsis:n.synopsis||'',
         genres:n.genres,
+        malId:id,
         actions:'<button type="button" class="mini-btn" data-remote-details="'+id+'">Details</button><button type="button" class="mini-btn" data-remote-edit="'+id+'">Edit</button><a class="mini-btn" href="https://myanimelist.net/anime/'+id+'" target="_blank" rel="noopener noreferrer">MAL ↗</a>'
       });
     }).join('')+'</div>':'<div class="empty"><strong>No entries to show</strong>Sync your list or change the filter.</div>';
@@ -2240,6 +2373,9 @@ function showProfileTab(tab){activeProfileTab=tab;$$('#profileTabs button').forE
       meta:meta||'Saved to your local anime list',
       synopsis:a.description||a.synopsis||'',
       genres:a.genres,
+      anilistId:a.anilistId,
+      malId:a.malId,
+      externalUrl:a.externalUrl,
       actions:'<button type="button" class="mini-btn" data-local-details="'+esc(a.id)+'">Details</button><button type="button" class="mini-btn" data-local-edit="'+esc(a.id)+'">Edit</button><button type="button" class="mini-btn btn-danger" data-local-delete="'+esc(a.id)+'">Remove</button>'
     });
   }
