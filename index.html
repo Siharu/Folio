@@ -490,6 +490,21 @@ h1,h2,h3,.workspace-head h1,.catalog-heading h2,.showcase-copy h2{font-family:va
 .profile-table-empty{text-align:center!important;color:var(--muted)!important;padding:22px!important}
 .profile-airing-footnote{font-size:10px;color:#818999;margin:12px 0 0;line-height:1.5}
 @media(max-width:760px){.profile-watch-panel{padding:14px}.profile-watch-panel .panel-head{align-items:flex-start}.profile-airing-table{min-width:560px}}
+/* Taste-based anime recommendations */
+.profile-recommend-panel{margin:0 0 15px;min-width:0}
+.profile-recommend-group{margin-top:18px}
+.profile-recommend-heading{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.profile-recommend-heading strong{font-size:13px}
+.profile-recommend-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:10px}
+.profile-recommend-card{min-width:0;overflow:hidden;border:1px solid var(--line);border-radius:12px;background:var(--panel2)}
+.profile-recommend-card img{display:block;width:100%;height:150px;object-fit:cover;background:#242733}
+.profile-recommend-card-body{padding:9px}
+.profile-recommend-card strong{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-size:11px;line-height:1.35;min-height:30px}
+.profile-recommend-meta{display:flex;align-items:center;justify-content:space-between;gap:5px;margin-top:8px;font-size:10px;color:var(--muted)}
+.profile-similarity{color:var(--mint);font-weight:800;white-space:nowrap}
+.profile-recommend-empty{grid-column:1/-1;padding:18px;border:1px dashed var(--line);border-radius:10px;color:var(--muted);font-size:12px;text-align:center}
+.profile-recommend-card a{color:inherit;text-decoration:none}
+@media(max-width:760px){.profile-recommend-panel{padding:14px}.profile-recommend-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.profile-recommend-card img{height:135px}}
 </style>
 
 <style>
@@ -702,6 +717,12 @@ body[data-page="manga"] #mangaView{display:block!important}
       <nav class="subnav" id="profileTabs"><button class="active" data-profile-tab="overview">Profile</button><button data-profile-tab="settings">Settings</button><button data-profile-tab="privacy">Data &amp; privacy</button></nav>
       <div id="profileOverviewTab">
         <div class="profile-hero panel"><div class="profile-avatar" id="profileAvatarPreview" aria-hidden="true">H</div><div class="profile-identity"><span class="eyebrow">AFTER HOURS MEMBER</span><h2 id="profileDisplayName">Hekomi reader</h2><p id="profileHandleLabel" class="muted small">@reader</p><p id="profileBioLabel">A little corner for the stories that stay with you.</p><span class="profile-local-badge"><i></i> Local profile · This device only</span></div></div>
+        <section class="panel profile-recommend-panel" aria-labelledby="profileRecommendationsHeading">
+          <div class="panel-head"><div><h2 id="profileRecommendationsHeading">Picked for your taste</h2><p class="muted small">Recommendations based on the anime you updated most recently.</p></div><button class="btn-secondary" type="button" id="refreshProfileRecommendations">Refresh picks</button></div>
+          <div class="profile-recommend-group"><div class="profile-recommend-heading"><strong>Already in your list</strong><span class="muted small">You saved these — maybe it's time to watch them</span></div><div id="profileRecommendationsInList" class="profile-recommend-grid"><div class="profile-recommend-empty">Sync your MyAnimeList account to get started.</div></div></div>
+          <div class="profile-recommend-group"><div class="profile-recommend-heading"><strong>Discover something new</strong><span class="muted small">Similar anime you haven't added yet</span></div><div id="profileRecommendationsOutside" class="profile-recommend-grid"><div class="profile-recommend-empty">Your recommendations will appear here.</div></div></div>
+          <p class="profile-airing-footnote">Similarity is an estimate based on AniList community recommendations and how many of your recent titles point to the same series. It is not an AI-generated taste score.</p>
+        </section>
         <section class="panel profile-watch-panel" aria-labelledby="profileWatchingHeading">
           <div class="panel-head"><div><h2 id="profileWatchingHeading">Currently watching</h2><p class="muted small">Your active shows and episode progress from MyAnimeList.</p></div><span class="pill-label" id="profileWatchingCount">Not synced</span></div>
           <div class="profile-table-wrap"><table class="profile-airing-table"><thead><tr><th>Anime</th><th>Progress</th><th>Next episode</th></tr></thead><tbody id="profileWatchingRows"><tr><td colspan="3" class="profile-table-empty">Connect and sync MyAnimeList to see your active shows here.</td></tr></tbody></table></div>
@@ -1252,9 +1273,9 @@ function showProfileTab(tab){activeProfileTab=tab;$$('#profileTabs button').forE
   }
   $('#malSettingsBtn').onclick=()=>{showMalTab('about');refreshMalAuthStatus();};$('#malConnectInline').onclick=beginMalLogin;$('#malSignInBtn').onclick=beginMalLogin;$('#malLoadBtn').onclick=()=>loadRemoteList();
   $('#malTestBtn').onclick=async()=>{await refreshMalAuthStatus();if(!malConnected){notify(malConfigured?'Sign in with MyAnimeList first.':'Hekomi MAL sign-in is not configured yet.');return;}$('#malSetupStatus').textContent='Checking your MyAnimeList connection…';try{const me=await api('/api/mal/me');malUsername=me.name||malUsername;$('#malSetupStatus').textContent='Connected as '+(malUsername||'your MAL account')+'. Loading list…';await loadRemoteList();showMalTab('mylist');notify('MyAnimeList connection successful.');}catch(e){$('#malSetupStatus').textContent=e.message;notify(e.message);}};
-  async function logoutMal(){try{await fetch('/api/mal/auth/logout',{method:'POST',credentials:'same-origin'});}catch{}malConnected=false;malUsername='';remoteReady=false;malRemote=[];renderProfileWatchTables();$('#malRemoteWrap').classList.add('hidden');$('#malConnectionNudge').classList.remove('hidden');$('#malSetupStatus').textContent='Signed out of MyAnimeList.';await refreshMalAuthStatus();notify('Signed out of MyAnimeList.');}
+  async function logoutMal(){try{await fetch('/api/mal/auth/logout',{method:'POST',credentials:'same-origin'});}catch{}malConnected=false;malUsername='';remoteReady=false;malRemote=[];profileRecommendationsLoaded=false;renderProfileWatchTables();renderProfileRecommendations();$('#malRemoteWrap').classList.add('hidden');$('#malConnectionNudge').classList.remove('hidden');$('#malSetupStatus').textContent='Signed out of MyAnimeList.';await refreshMalAuthStatus();notify('Signed out of MyAnimeList.');}
   $('#malLogoutBtn').onclick=logoutMal;
-  async function loadRemoteList(){if(!malConnected){notify('Sign in with MyAnimeList first.');showMalTab('about');return;}$('#malLoadBtn').classList.add('loading');try{const data=await api('/api/mal/list');malRemote=(data.data||[]).map(x=>({node:x.node||{},list_status:x.list_status||{}}));remoteReady=true;renderRemoteList();renderProfileWatchTables();$('#malConnectionNudge').classList.add('hidden');$('#malRemoteWrap').classList.remove('hidden');$('#malRemoteMeta').textContent='Synced '+new Date().toLocaleString()+(malUsername?' · '+malUsername:'');$('#malRemoteCount').textContent=`${malRemote.length} entries`;notify(`Loaded ${malRemote.length} MAL entries.`);}catch(e){notify(e.message);$('#malSetupStatus').textContent=e.message;showMalTab('about');}finally{$('#malLoadBtn').classList.remove('loading');}}
+  async function loadRemoteList(){if(!malConnected){notify('Sign in with MyAnimeList first.');showMalTab('about');return;}$('#malLoadBtn').classList.add('loading');try{const data=await api('/api/mal/list');malRemote=(data.data||[]).map(x=>({node:x.node||{},list_status:x.list_status||{}}));remoteReady=true;profileRecommendationsLoaded=false;renderRemoteList();renderProfileWatchTables();renderProfileRecommendations();$('#malConnectionNudge').classList.add('hidden');$('#malRemoteWrap').classList.remove('hidden');$('#malRemoteMeta').textContent='Synced '+new Date().toLocaleString()+(malUsername?' · '+malUsername:'');$('#malRemoteCount').textContent=`${malRemote.length} entries`;notify(`Loaded ${malRemote.length} MAL entries.`);}catch(e){notify(e.message);$('#malSetupStatus').textContent=e.message;showMalTab('about');}finally{$('#malLoadBtn').classList.remove('loading');}}
   function animeCover(item){return item.main_picture?.large||item.main_picture?.medium||item.picture||item.cover||'';}
   function metadataDate(value){
     if(!value)return '';
@@ -1763,6 +1784,37 @@ function mangaFeedCardMarkup(item,index){
       openModal('<div class="modal-top"><div><h2>'+esc(result.title)+'</h2><p class="muted small">Provider details unavailable</p></div><button class="close" data-close>×</button></div><div class="notice warn">'+esc(error.message||'Could not load manga details.')+'</div><div class="resultactions"><a class="mini-btn" href="'+esc(result.url)+'" target="_blank" rel="noreferrer">Open source ↗</a></div>');
     }
   }
+  let profileRecommendationRequest=0,profileRecommendationsLoaded=false;
+  function renderProfileRecommendations(force=false){
+    const inside=$('#profileRecommendationsInList'),outside=$('#profileRecommendationsOutside');
+    if(!inside||!outside)return;
+    if(!remoteReady){inside.innerHTML='<div class="profile-recommend-empty">Connect and sync MyAnimeList to get recommendations.</div>';outside.innerHTML='<div class="profile-recommend-empty">Your recommendations will appear here once your list is synced.</div>';return;}
+    const recent=[...malRemote].sort((a,b)=>new Date((b.list_status&&b.list_status.updated_at)||b.node&&b.node.updated_at||0)-new Date((a.list_status&&a.list_status.updated_at)||a.node&&a.node.updated_at||0)).slice(0,6);
+    const ids=recent.map(x=>Number(x.node&&x.node.id)).filter(id=>id>0);
+    if(!ids.length){inside.innerHTML='<div class="profile-recommend-empty">Add a few anime to your MyAnimeList first.</div>';outside.innerHTML=inside.innerHTML;return;}
+    if(profileRecommendationsLoaded&&!force)return;
+    const request=++profileRecommendationRequest;
+    inside.innerHTML='<div class="profile-recommend-empty">Finding anime related to your recent list activity…</div>';
+    outside.innerHTML=inside.innerHTML;
+    const listIds=malRemote.map(x=>Number(x.node&&x.node.id)).filter(id=>id>0);
+    api('/api/catalog/recommendations?ids='+ids.join(',')+'&list='+listIds.join(',')).then(data=>{
+      if(request!==profileRecommendationRequest)return;
+      const cards=Array.isArray(data.recommendations)?data.recommendations:[];
+      const render=items=>items.slice(0,8).map(item=>{
+        const cover=safeImageUrl(item.cover||''),url='/series/anime/'+Number(item.id)+'-'+String(item.title||'anime').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+        return '<article class="profile-recommend-card"><a href="'+esc(url)+'">'+(cover?'<img src="'+esc(cover)+'" alt="" loading="lazy" onerror="this.remove()">':'<div style="height:135px"></div>')+'<div class="profile-recommend-card-body"><strong>'+esc(item.title||'Untitled anime')+'</strong><div class="profile-recommend-meta"><span class="profile-similarity">'+Number(item.similarity||0)+'% match</span><span>'+Number(item.matchedSeeds||0)+' shared picks</span></div></div></a></article>';
+      }).join('');
+      const inList=cards.filter(x=>x.inList),newTitles=cards.filter(x=>!x.inList);
+      inside.innerHTML=render(inList)||'<div class="profile-recommend-empty">No related titles from your list surfaced yet.</div>';
+      outside.innerHTML=render(newTitles)||'<div class="profile-recommend-empty">No new matches found. Try refreshing after watching more anime.</div>';
+      profileRecommendationsLoaded=true;
+    }).catch(error=>{
+      if(request!==profileRecommendationRequest)return;
+      const message=esc(error.message||'Could not load recommendations.');
+      inside.innerHTML='<div class="profile-recommend-empty">'+message+'</div>';outside.innerHTML='<div class="profile-recommend-empty">Try refreshing your recommendations in a moment.</div>';
+    });
+  }
+  $('#refreshProfileRecommendations')?.addEventListener('click',()=>renderProfileRecommendations(true));
   const profileAiringCache=new Map();
   function profileDateTime(timestamp){return new Date(Number(timestamp)*1000).toLocaleString(undefined,{dateStyle:'medium',timeStyle:'short'});}
   function profileCountdown(timestamp){
@@ -1803,6 +1855,7 @@ function mangaFeedCardMarkup(item,index){
   function renderProfileOverview(){
     if(!$('#profileView'))return;
     renderProfileWatchTables();
+    renderProfileRecommendations();
     const name=String(profileData.displayName||'Hekomi reader').trim()||'Hekomi reader';
     const handle=String(profileData.handle||'reader').trim().replace(/^@/,'')||'reader';
     const bio=String(profileData.bio||'').trim()||'A little corner for the stories that stay with you.';
