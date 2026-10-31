@@ -123,10 +123,12 @@
     ctx.clearRect(0,0,W,H);
     const dy=frame.bob;
     blocks(ctx,BACK_HAIR,dy);
-    blocks(ctx,LEGS,dy);
+    if(frame.walking) drawWalkLegs(ctx,frame.step,dy);
+    else blocks(ctx,LEGS,dy);
     blocks(ctx,TORSO,dy);
-    drawLeftArm(ctx,dy);
-    drawWaveArm(ctx,frame.wave,dy);
+    if(frame.sleeping) drawSleepArms(ctx,dy);
+    else if(frame.walking) drawWalkArms(ctx,frame.step,dy);
+    else { drawLeftArm(ctx,dy); drawWaveArm(ctx,frame.wave,dy); }
     blocks(ctx,FACE,dy);
     blocks(ctx,FRINGE,dy);
     blocks(ctx,[
@@ -141,57 +143,225 @@
       [26,49,2,1,'shirt3'],[37,56,2,1,'shirt3'],[23,66,2,1,'pant2'],[37,66,2,1,'pant2']
     ],dy);
   }
-  class HekomiChan{
-    constructor(canvas,message){
+
+  function drawWalkLegs(ctx,step,dy){
+    const poses=[
+      [[20,61,25,5,'ink'],[21,65,9,7,'pant0'],[35,65,9,7,'pant0'],[21,70,9,3,'pant1'],[36,70,8,3,'pant1'],[17,74,14,4,'shoe0'],[36,74,13,4,'shoe0'],[20,74,9,2,'shoe1'],[38,74,8,2,'shoe1'],[30,65,4,10,'ink']],
+      [[21,61,24,5,'ink'],[21,65,9,8,'pant0'],[34,65,9,6,'pant0'],[18,71,10,3,'pant1'],[38,69,8,3,'pant1'],[14,74,14,4,'shoe0'],[38,72,12,4,'shoe0'],[17,74,9,2,'shoe1'],[40,72,8,2,'shoe1'],[30,65,4,10,'ink']],
+      [[20,61,25,5,'ink'],[22,65,8,7,'pant0'],[34,65,9,8,'pant0'],[24,70,8,3,'pant1'],[33,72,9,3,'pant1'],[23,73,12,4,'shoe0'],[33,74,14,4,'shoe0'],[25,73,8,2,'shoe1'],[36,74,9,2,'shoe1'],[30,65,4,10,'ink']],
+      [[20,61,25,5,'ink'],[20,65,9,6,'pant0'],[35,65,9,8,'pant0'],[16,69,10,3,'pant1'],[38,72,8,3,'pant1'],[12,72,14,4,'shoe0'],[37,74,13,4,'shoe0'],[15,72,9,2,'shoe1'],[39,74,8,2,'shoe1'],[30,65,4,10,'ink']]
+    ];
+    blocks(ctx,poses[step%4],dy);
+  }
+  function drawWalkArms(ctx,step,dy){
+    const poses=[
+      [[14,48,7,11,'ink'],[15,49,5,8,'shirt0'],[16,50,4,5,'shirt2'],[14,57,5,7,'skin0'],[15,59,5,5,'skin1'],[41,47,9,11,'ink'],[43,48,6,8,'shirt0'],[44,49,4,6,'shirt2'],[46,56,5,7,'skin0'],[46,58,5,5,'skin1']],
+      [[13,48,7,12,'ink'],[14,49,5,8,'shirt0'],[15,50,4,5,'shirt2'],[13,59,5,7,'skin0'],[12,62,5,4,'skin1'],[42,47,8,10,'ink'],[44,48,5,7,'shirt0'],[45,49,4,5,'shirt2'],[47,55,5,7,'skin0'],[48,58,5,4,'skin1']],
+      [[14,48,7,11,'ink'],[15,49,5,8,'shirt0'],[16,50,4,5,'shirt2'],[14,57,5,7,'skin0'],[13,60,6,5,'skin1'],[41,47,9,11,'ink'],[43,48,6,8,'shirt0'],[44,49,4,6,'shirt2'],[46,56,5,7,'skin0'],[46,59,5,4,'skin1']],
+      [[15,48,7,10,'ink'],[16,49,5,7,'shirt0'],[17,50,4,5,'shirt2'],[15,56,5,7,'skin0'],[15,59,5,5,'skin1'],[40,47,9,12,'ink'],[42,48,6,9,'shirt0'],[43,49,4,6,'shirt2'],[45,57,5,7,'skin0'],[45,60,5,4,'skin1']]
+    ];
+    blocks(ctx,poses[step%4],dy);
+  }
+  function drawSleepArms(ctx,dy){
+    blocks(ctx,[
+      [14,48,7,11,'ink'],[15,49,5,8,'shirt0'],[16,50,4,5,'shirt2'],
+      [17,54,5,8,'skin0'],[19,56,5,5,'skin1'],[40,48,8,10,'ink'],
+      [42,49,5,7,'shirt0'],[43,50,4,5,'shirt2'],[38,55,5,7,'skin0'],
+      [36,57,5,5,'skin1'],[25,49,4,2,'skin2'],[35,49,4,2,'skin2']
+    ],dy);
+  }
+
+  class HekomiWanderer{
+    constructor(canvas,message,root,bubble){
       this.canvas=canvas;this.ctx=canvas.getContext('2d',{alpha:true});this.message=message;
-      this.mood='idle';this.lockedMood=null;this.lastPaint=0;this.reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      this.canvas.width=W;this.canvas.height=H;this.ctx.imageSmoothingEnabled=false;this.canvas.style.imageRendering='pixelated';
-      this.canvas.setAttribute('role','button');this.canvas.setAttribute('tabindex','0');
-      this.canvas.setAttribute('aria-label','Hekomi-chan. Activate to change her expression.');this.canvas.title='Say hi to Hekomi-chan';
-      this.canvas.addEventListener('pointerenter',()=>{
-        if(!this.lockedMood){this.mood='wave';this.say('Oh! Hi there!');this.paint(performance.now(),true);}
+      this.root=root;this.bubble=bubble;this.state='idle';this.target=null;this.face=1;
+      this.x=12;this.y=12;this.last=0;this.lastSpeech=0;this.speechUntil=0;
+      this.stateUntil=0;this.walkFrame=0;this.stops=0;this.sleepCount=0;this.hiddenPause=false;
+      this.reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      this.canvas.width=W;this.canvas.height=H;this.ctx.imageSmoothingEnabled=false;
+      this.canvas.style.imageRendering='pixelated';this.canvas.setAttribute('role','button');
+      this.canvas.setAttribute('tabindex','0');this.canvas.setAttribute('aria-label','Hekomi-chan, wandering around Hekomi. Activate to say hello.');
+      this.canvas.title='Say hi to Hekomi-chan';
+      this.lines=this.dialogueForPage();
+      this.root.addEventListener('click',event=>{
+        if(event.target===this.canvas||event.target.closest('#hekomiCompanion'))this.interact();
       });
-      this.canvas.addEventListener('pointerleave',()=>{
-        if(!this.lockedMood){this.mood='idle';this.say('Oh, you’re here!');this.paint(performance.now(),true);}
-      });
-      this.canvas.addEventListener('click',()=>this.nextMood());
       this.canvas.addEventListener('keydown',event=>{
-        if(event.key==='Enter'||event.key===' '){event.preventDefault();this.nextMood();}
+        if(event.key==='Enter'||event.key===' '){event.preventDefault();this.interact();}
       });
-      document.addEventListener('visibilitychange',()=>{if(!document.hidden)this.paint(performance.now(),true);});
+      window.addEventListener('resize',()=>this.onResize(),{passive:true});
+      window.addEventListener('scroll',()=>this.onScroll(),{passive:true});
+      document.addEventListener('visibilitychange',()=>{if(!document.hidden){this.last=performance.now();this.paint(this.last,true);}});
+      this.placeInitially();
+      this.say(this.pick(['Hey! I live here now.','Oh, a visitor!','Psst… need a guide?']),4200);
       this.paint(performance.now(),true);
-      if(!this.reduced)requestAnimationFrame(time=>this.tick(time));
+      if(!this.reduced){this.stateUntil=performance.now()+1600;requestAnimationFrame(time=>this.tick(time));}
     }
-    say(text){if(this.message)this.message.textContent=text;}
-    nextMood(){
-      const moods=['happy','surprised','sleepy','wave'];
-      const index=moods.indexOf(this.lockedMood||'idle');
-      this.lockedMood=moods[(index+1)%moods.length];this.mood=this.lockedMood;
-      const messages={happy:'Hehe. You found me!',surprised:'Eh?! A new visitor!',sleepy:'Five more minutes…',wave:'Come on in, friend!'};
-      this.say(messages[this.mood]);this.paint(performance.now(),true);
+
+    dialogueForPage(){
+      const path=location.pathname.toLowerCase();
+      if(path.startsWith('/manga'))return ['One more chapter?','The best pages are read slowly.','I found a quiet corner.','Don’t forget to rest your eyes!'];
+      if(path.startsWith('/anime'))return ['What are we watching tonight?','I saved you a seat.','That opening song is stuck in my head.','Your watchlist misses you.'];
+      if(path.startsWith('/discover'))return ['There’s a whole world in here.','Shall we find something lovely?','I like this little corner.','Look at all those stories!'];
+      if(path.startsWith('/profile'))return ['Keeping your little corner tidy?','Your collection has a personality.','I’ll watch over your shelf.'];
+      return ['Hey! I live here now.','Oh, a visitor!','Psst… need a guide?','Take your time. Stories can wait.','I found a quiet corner.','The night is good for one more chapter.'];
+    }
+    pick(items){return items[Math.floor(Math.random()*items.length)];}
+    bounds(){
+      const w=this.root.offsetWidth||160,h=this.root.offsetHeight||180;
+      return {minX:8,maxX:Math.max(8,innerWidth-w-8),minY:74,maxY:Math.max(74,innerHeight-h-10),w,h};
+    }
+    placeInitially(){
+      const b=this.bounds();
+      this.x=Math.max(b.minX,b.maxX-(document.body.dataset.page==='home'?24:8));
+      this.y=document.body.dataset.page==='home'
+        ?Math.max(b.minY,Math.min(190,b.maxY))
+        :b.maxY;
+      this.root.style.transform='translate3d('+Math.round(this.x)+'px,'+Math.round(this.y)+'px,0)';
+    }
+    blocked(x,y){
+      const area={left:x+21,right:x+140,top:y+20,bottom:y+166};
+      const nodes=document.querySelectorAll('a,button,input,select,textarea,[role="button"],.topbar,.modal,.reader-modal,.chapter-pages,.back-top');
+      for(const node of nodes){
+        if(this.root.contains(node))continue;
+        const style=getComputedStyle(node);
+        if(style.display==='none'||style.visibility==='hidden'||style.pointerEvents==='none'||Number(style.opacity)===0)continue;
+        const r=node.getBoundingClientRect();
+        if(r.width<2||r.height<2||r.bottom<0||r.top>innerHeight||r.right<0||r.left>innerWidth)continue;
+        const overlapW=Math.min(area.right,r.right)-Math.max(area.left,r.left);
+        const overlapH=Math.min(area.bottom,r.bottom)-Math.max(area.top,r.top);
+        if(overlapW>14&&overlapH>16)return true;
+      }
+      return false;
+    }
+    findSpot(){
+      const b=this.bounds();
+      for(let i=0;i<28;i++){
+        const x=b.minX+Math.random()*Math.max(1,b.maxX-b.minX);
+        const y=b.minY+Math.random()*Math.max(1,b.maxY-b.minY);
+        if(!this.blocked(x,y))return {x,y};
+      }
+      // A slim fallback lane along the bottom edge remains usable on dense pages.
+      const y=b.maxY;
+      for(let i=0;i<12;i++){
+        const x=b.minX+Math.random()*Math.max(1,b.maxX-b.minX);
+        if(!this.blocked(x,y))return {x,y};
+      }
+      return {x:b.maxX,y:b.maxY};
+    }
+    moveToNext(){
+      const next=this.findSpot();
+      const distance=Math.hypot(next.x-this.x,next.y-this.y);
+      if(distance<50){this.arrive();return;}
+      this.target=next;this.state='walk';this.root.classList.remove('is-sleeping');
+      this.face=next.x>=this.x?1:-1;this.canvas.style.transform=this.face<0?'scaleX(-1)':'none';
+      this.canvas.style.pointerEvents='none';this.hideSpeech();
+    }
+    arrive(){
+      this.target=null;this.state='idle';this.stops++;this.canvas.style.pointerEvents='auto';
+      this.root.classList.remove('is-sleeping');
+      const now=performance.now();
+      const shouldSleep=this.stops>=2&&Math.random()<.22;
+      if(shouldSleep){this.sleep(now);return;}
+      if(Math.random()<.72)this.say(this.pick(this.lines),3000+Math.random()*900);
+      this.stateUntil=now+2200+Math.random()*3500;
+    }
+    sleep(now){
+      this.state='sleep';this.sleepCount++;this.root.classList.add('is-sleeping');
+      this.canvas.style.pointerEvents='auto';this.canvas.style.transform='rotate(90deg)';
+      this.say(this.pick(['Just a tiny nap…','Wake me when there’s a new chapter.','Five more minutes…','Zzz…']),5200);
+      this.stateUntil=now+8500+Math.random()*8000;
+    }
+    wake(now){
+      this.state='wake';this.root.classList.remove('is-sleeping');this.canvas.style.transform=this.face<0?'scaleX(-1)':'none';
+      this.say(this.pick(['Mmm… good morning.','I’m awake! I think.','That was a very important nap.']),3200);
+      this.stateUntil=now+1500;
+    }
+    say(text,duration=3000){
+      if(!this.message)return;
+      this.message.textContent=text;this.speechUntil=performance.now()+duration;
+      this.bubble.classList.add('is-visible');
+      this.lastSpeech=performance.now();
+    }
+    hideSpeech(){
+      if(performance.now()>this.speechUntil)this.bubble.classList.remove('is-visible');
+    }
+    interact(){
+      const now=performance.now();
+      if(this.state==='sleep'){this.say('Huh?! I wasn’t sleeping!');this.wake(now);return;}
+      const line=this.pick(['Hehe! You noticed me!','Need a little company?','I like it here.','Let’s explore!','I was just stretching.']);
+      this.state='greet';this.say(line,3800);this.stateUntil=now+2600;
+      this.canvas.style.pointerEvents='auto';
+      this.paint(now,true);
+    }
+    onResize(){
+      const b=this.bounds();this.x=Math.max(b.minX,Math.min(this.x,b.maxX));this.y=Math.max(b.minY,Math.min(this.y,b.maxY));
+      if(this.target){this.target.x=Math.max(b.minX,Math.min(this.target.x,b.maxX));this.target.y=Math.max(b.minY,Math.min(this.target.y,b.maxY));}
+      this.applyPosition();
+    }
+    onScroll(){
+      if(this.state==='walk'||this.state==='sleep')return;
+      if(Math.random()<.28)this.say(this.pick(['Oh! We’re going somewhere?','This page is bigger than my room.','I’ll keep up!']),2600);
+      if(this.state==='idle')this.stateUntil=Math.min(this.stateUntil,performance.now()+900);
+    }
+    applyPosition(){
+      const b=this.bounds(),x=Math.max(b.minX,Math.min(this.x,b.maxX)),y=Math.max(b.minY,Math.min(this.y,b.maxY));
+      this.x=x;this.y=y;
+      this.root.style.transform='translate3d('+Math.round(x)+'px,'+Math.round(y)+'px,0)';
+      this.root.classList.toggle('face-left',this.face<0);
     }
     tick(time){
-      if(document.hidden){requestAnimationFrame(next=>this.tick(next));return;}
-      if(time-this.lastPaint>115)this.paint(time,false);
-      requestAnimationFrame(next=>this.tick(next));
+      if(document.hidden){requestAnimationFrame(t=>this.tick(t));return;}
+      const dt=this.last?Math.min((time-this.last)/1000,.05):.016;this.last=time;
+      if(this.state==='walk'&&this.target){
+        const dx=this.target.x-this.x,dy=this.target.y-this.y,dist=Math.hypot(dx,dy);
+        if(dist<4)this.arrive();
+        else{
+          const step=Math.min(dist,62*dt);
+          this.x+=dx/dist*step;this.y+=dy/dist*step;
+          this.walkFrame=(this.walkFrame+1)%4;
+          if(this.blocked(this.x,this.y)&&dist>30){this.target=this.findSpot();this.face=this.target.x>=this.x?1:-1;}
+          this.root.classList.toggle('face-left',this.face<0);
+          this.canvas.style.transform=this.face<0?'scaleX(-1)':'none';
+          this.canvas.style.pointerEvents='none';
+          this.applyPosition();
+        }
+      }else if(time>=this.stateUntil){
+        if(this.state==='sleep')this.wake(time);
+        else if(this.state==='wake'||this.state==='greet'||this.state==='idle')this.moveToNext();
+      }
+      this.hideSpeech();
+      if(this.state!=='walk')this.canvas.style.pointerEvents='auto';
+      this.paint(time,false);
+      requestAnimationFrame(t=>this.tick(t));
     }
     paint(time,force){
-      if(!force&&time-this.lastPaint<110)return;
+      if(!force&&this.state!=='walk'&&time-this.lastPaint<150)return;
       this.lastPaint=time;
-      const cycle=Math.floor(time/150);
-      const idleWave=this.mood==='idle'?(Math.floor(time/1350)%4===0?cycle%4:0):cycle%4;
-      const blink=this.mood==='idle'&&(time%4700<115||time%4700>4320);
-      const expression=this.mood==='happy'?'happy':this.mood==='sleepy'?'sleepy':this.mood==='surprised'?'surprised':'normal';
-      const bob=this.mood==='sleepy'?1:(Math.floor(time/460)%2);
-      drawSprite(this.ctx,{expression,blink:blink||(this.mood==='sleepy'&&cycle%20<2),wave:idleWave,bob});
+      const walking=this.state==='walk',sleeping=this.state==='sleep';
+      const frame=Math.floor(time/130);
+      const blink=sleeping||(this.state==='idle'&&time%5200<115);
+      const expression=sleeping?'sleepy':this.state==='greet'?'happy':this.state==='wake'?'sleepy':'normal';
+      const bob=sleeping?(Math.floor(time/700)%2):walking?frame%2:(Math.floor(time/520)%2);
+      drawSprite(this.ctx,{expression,blink,walking,sleeping,step:frame%4,wave:frame%4,bob});
     }
   }
-  function boot(){
+
+    function boot(){
     const canvas=document.getElementById('hekomiChanCanvas');
     if(!canvas||canvas.dataset.hekomiReady)return;
     canvas.dataset.hekomiReady='true';
-    const companion=new HekomiChan(canvas,document.getElementById('hekomiChanMessage'));
-    window.hekomiChan=companion;window.HekomiChan=HekomiChan;
+    const visual=canvas.closest('.home-visual');
+    const bubble=visual&&visual.querySelector('.home-mascot-bubble');
+    const root=document.createElement('div');
+    root.id='hekomiCompanion';root.className='hekomi-companion';
+    root.setAttribute('aria-label','Hekomi-chan, your wandering pixel companion');
+    if(bubble){root.appendChild(bubble);bubble.classList.remove('is-visible');}
+    const zzz=document.createElement('span');zzz.className='hekomi-zzz';zzz.textContent='Z z z';zzz.setAttribute('aria-hidden','true');
+    root.appendChild(zzz);root.appendChild(canvas);document.body.appendChild(root);
+    if(visual)visual.remove();
+    const companion=new HekomiWanderer(canvas,document.getElementById('hekomiChanMessage'),root,bubble);
+    window.hekomiChan=companion;window.HekomiChan=HekomiWanderer;
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();

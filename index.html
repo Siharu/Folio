@@ -1407,6 +1407,58 @@ body[data-page="home"] .home-hero .hero-art,body[data-page="home"] .home-proof{d
   .home-mascot-star.star-b{right:8%;bottom:23%}
 }
 @media(prefers-reduced-motion:reduce){.home-mascot-bubble,.home-mascot-star{animation:none!important}}
+
+/* Hekomi-chan leaves her portrait and wanders the live viewport. */
+body[data-page="home"] .home-hero{grid-template-columns:minmax(0,1fr)}
+body[data-page="home"] .home-hero .hero-copy{max-width:780px}
+#hekomiCompanion{
+  position:fixed;left:0;top:0;width:160px;height:180px;z-index:66;
+  pointer-events:none;will-change:transform;contain:layout style;isolation:isolate;
+  transition:filter .25s ease;filter:drop-shadow(0 9px 13px color-mix(in srgb,var(--bg) 40%,transparent));
+}
+#hekomiCompanion canvas.home-mascot{
+  position:absolute;left:16px;top:10px;display:block;width:128px;height:160px;max-width:none;
+  image-rendering:pixelated;image-rendering:crisp-edges;object-fit:fill;cursor:pointer;
+  pointer-events:auto;transform-origin:50% 50%;outline-offset:5px;
+}
+#hekomiCompanion .home-mascot-bubble{
+  position:absolute;z-index:2;top:-38px;right:-24px;left:auto;display:grid;gap:3px;
+  width:max-content;max-width:194px;padding:9px 12px;
+  border:1px solid color-mix(in srgb,var(--violet) 33%,var(--line));
+  border-radius:13px 13px 4px 13px;
+  background:color-mix(in srgb,var(--panel) 76%,transparent);color:var(--text);
+  -webkit-backdrop-filter:blur(14px) saturate(140%);backdrop-filter:blur(14px) saturate(140%);
+  box-shadow:0 9px 24px color-mix(in srgb,var(--bg) 30%,transparent);
+  opacity:0;translate:0 5px;transition:opacity .2s ease,translate .2s ease;
+  pointer-events:none;animation:none;
+}
+#hekomiCompanion .home-mascot-bubble.is-visible{opacity:1;translate:0 0}
+#hekomiCompanion .home-mascot-bubble span{font-size:7px;letter-spacing:.15em;color:var(--mint);font-weight:800}
+#hekomiCompanion .home-mascot-bubble strong{font-size:11px;line-height:1.45;white-space:normal;color:var(--text)}
+#hekomiCompanion.face-left .home-mascot-bubble{left:-24px;right:auto;border-radius:13px 13px 13px 4px}
+#hekomiCompanion .hekomi-zzz{
+  position:absolute;right:3px;top:-10px;z-index:3;font-family:Georgia,serif;
+  font-size:16px;font-weight:700;letter-spacing:2px;color:var(--violet);
+  opacity:0;transform:translateY(6px) rotate(-8deg);transition:opacity .25s ease,transform .25s ease;
+  pointer-events:none;text-shadow:0 2px 12px color-mix(in srgb,var(--violet) 50%,transparent);
+}
+#hekomiCompanion.is-sleeping .hekomi-zzz{opacity:1;transform:translateY(0) rotate(-8deg);animation:hekomiZzz 2.2s ease-in-out infinite}
+#hekomiCompanion.is-sleeping canvas.home-mascot{transform:rotate(90deg)!important}
+#hekomiCompanion .home-mascot:focus-visible{outline:2px solid var(--mint);border-radius:4px}
+@keyframes hekomiZzz{0%,100%{translate:0 3px;opacity:.55}50%{translate:0 -7px;opacity:1}}
+@media(max-width:760px){
+  #hekomiCompanion{width:144px;height:164px}
+  #hekomiCompanion canvas.home-mascot{left:16px;top:8px;width:112px;height:140px}
+  #hekomiCompanion .home-mascot-bubble{max-width:164px;top:-34px;padding:8px 10px;right:-16px}
+  #hekomiCompanion.face-left .home-mascot-bubble{left:-16px;right:auto}
+  #hekomiCompanion .home-mascot-bubble span{font-size:6px}
+  #hekomiCompanion .home-mascot-bubble strong{font-size:10px}
+}
+@media(prefers-reduced-motion:reduce){
+  #hekomiCompanion,#hekomiCompanion *{transition:none!important;animation:none!important}
+  #hekomiCompanion canvas.home-mascot{transform:none!important}
+}
+
 /* The Hekomi account dialog is a modal, never a page section at the bottom. */
 #hkAuthBackdrop{display:none}
 #hkAuthBackdrop.open{display:grid}

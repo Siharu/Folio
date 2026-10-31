@@ -64,8 +64,8 @@ jobs:
           for (const required of ['MAL Client', 'Manga Library', 'animeCatalogGrid', 'mangaCatalogGrid', 'airingCatalogGrid', 'showcaseAddButton', 'og:image', 'application/ld+json', 'catalogDiscoverButton', 'filterGenre', 'function editLocalAnime', 'animeListCardMarkup', 'anime-list-grid', 'genreTransitionTheme', 'data-genre-transition', 'data-transition-image', 'hk-transition-poster', 'HEKOMI / YOUR PERSONAL ANIME &amp; MANGA SPACE', 'Choose what you\'re here for.', '--hk-accent-ink', '.home-visual', 'assets/hekomi-chan.js', 'id="hekomiChanCanvas"', 'id="hekomiChanMessage"', '.home-mascot', 'HEKOMI-CHAN', 'backdrop-filter:blur(22px) saturate(150%)', '#hkAuthBackdrop{display:none}', 'genreSoundToggle']) {
             if (!html.includes(required)) throw new Error('Required Hekomi UI/SEO hook is missing: ' + required);
           }
-          for (const required of ['class HekomiChan', 'drawSprite', 'imageSmoothingEnabled=false', 'pointerenter', 'nextMood', 'prefers-reduced-motion']) {
-            if (!mascotJs.includes(required)) throw new Error('Hekomi-chan renderer is missing: ' + required);
+          for (const required of ['class HekomiWanderer', 'drawSprite', 'drawWalkLegs', 'drawSleepArms', 'findSpot()', 'sleep(now)', 'dialogueForPage()', 'requestAnimationFrame', 'prefers-reduced-motion']) {
+            if (!mascotJs.includes(required)) throw new Error('Hekomi-chan roaming behavior is missing: ' + required);
           }
           for (const required of ['detail-art-backdrop', 'data-detail-genre', 'detailVisualStyles']) {
             if (!server.includes(required)) throw new Error('Required Hekomi detail-page hook is missing: ' + required);
@@ -93,6 +93,6 @@ jobs:
           curl -fsS http://127.0.0.1:4173/ >/tmp/hekomi-home.html
           grep -q 'Hekomi' /tmp/hekomi-home.html
           curl -fsS http://127.0.0.1:4173/assets/hekomi-chan.js >/tmp/hekomi-chan.js
-          grep -q 'class HekomiChan' /tmp/hekomi-chan.js
+          grep -q 'class HekomiWanderer' /tmp/hekomi-chan.js
           curl -fsS http://127.0.0.1:4173/robots.txt >/tmp/hekomi-robots.txt
           grep -q 'Sitemap:' /tmp/hekomi-robots.txt
