@@ -574,6 +574,52 @@ body[data-page="manga"] #mangaView{display:block!important}
 <style>
 .advanced-source-tools{display:none!important}
 </style>
+
+<style>
+/* Distinct media identities: anime is a broadcast archive; manga is an ink-and-paper library. */
+body[data-page="anime"] #malView,
+body[data-page="manga"] #mangaView{position:relative;isolation:isolate}
+body[data-page="anime"] #malView:before,
+body[data-page="manga"] #mangaView:before{content:"";position:absolute;z-index:-1;pointer-events:none;inset:-24px -22px auto;height:390px;opacity:.7}
+body[data-page="anime"] #malView:before{background:radial-gradient(ellipse at 86% 4%,color-mix(in srgb,var(--violet) 24%,transparent),transparent 44%),radial-gradient(ellipse at 12% 25%,color-mix(in srgb,var(--mint) 12%,transparent),transparent 36%),repeating-linear-gradient(0deg,transparent 0 27px,color-mix(in srgb,var(--violet) 5%,transparent) 28px)}
+body[data-page="manga"] #mangaView:before{background:radial-gradient(ellipse at 88% 0%,color-mix(in srgb,var(--mint) 19%,transparent),transparent 42%),radial-gradient(ellipse at 8% 24%,color-mix(in srgb,var(--violet) 13%,transparent),transparent 38%),repeating-linear-gradient(135deg,transparent 0 18px,color-mix(in srgb,var(--mint) 4%,transparent) 19px)}
+/* Anime: broadcast / episode archive language */
+body[data-page="anime"] #malView .workspace-head{position:relative;overflow:hidden;border-radius:5px 22px 5px 22px;border-color:color-mix(in srgb,var(--violet) 42%,var(--line));background:linear-gradient(110deg,color-mix(in srgb,var(--panel) 95%,#111 5%),color-mix(in srgb,var(--panel2) 78%,var(--violet) 22%));box-shadow:inset 4px 0 0 var(--violet),0 18px 44px #0002}
+body[data-page="anime"] #malView .workspace-head:after{content:"ON AIR  /  HEKOMI ANIME ARCHIVE";position:absolute;right:24px;bottom:15px;color:var(--muted);font:700 9px/1.2 ui-monospace,monospace;letter-spacing:.2em;opacity:.7}
+body[data-page="anime"] #malView .mode-label{display:inline-flex;align-items:center;gap:8px;color:var(--mint);letter-spacing:.2em}
+body[data-page="anime"] #malView .mode-label:before{content:"";width:7px;height:7px;border-radius:50%;background:var(--mint);box-shadow:0 0 13px var(--mint)}
+body[data-page="anime"] #malView .mode-banner{border-radius:4px 14px 4px 14px;border-left:3px solid var(--mint);background:linear-gradient(90deg,color-mix(in srgb,var(--mint) 10%,var(--panel)),var(--panel) 72%);letter-spacing:.08em}
+body[data-page="anime"] #malView .subnav{border-radius:4px;padding:5px;background:color-mix(in srgb,var(--panel) 88%,transparent);border:1px solid var(--line)}
+body[data-page="anime"] #malView .subnav button{border-radius:3px 10px 3px 10px;text-transform:uppercase;font-size:10px;letter-spacing:.08em}
+body[data-page="anime"] #malView .panel{border-radius:7px 17px 7px 17px}
+body[data-page="anime"] #malView .weeb-stats{background:linear-gradient(145deg,color-mix(in srgb,var(--panel) 92%,var(--violet) 8%),var(--panel));border-top:1px solid color-mix(in srgb,var(--violet) 40%,var(--line))}
+body[data-page="anime"] #malView .weeb-metric strong{font-variant-numeric:tabular-nums;letter-spacing:-.06em}
+/* Manga: tactile reading shelf / inked panel language */
+body[data-page="manga"] #mangaView .workspace-head{position:relative;overflow:hidden;border-radius:24px 5px 24px 5px;border-color:color-mix(in srgb,var(--mint) 38%,var(--line));background:linear-gradient(120deg,color-mix(in srgb,var(--panel) 95%,var(--mint) 5%),color-mix(in srgb,var(--panel2) 82%,var(--mint) 18%));box-shadow:inset 4px 0 0 var(--mint),0 18px 44px #0002}
+body[data-page="manga"] #mangaView .workspace-head:after{content:"余白  /  THE READING ROOM";position:absolute;right:24px;bottom:14px;color:var(--muted);font:italic 12px Georgia,serif;letter-spacing:.1em;opacity:.8}
+body[data-page="manga"] #mangaView .mode-label{color:var(--mint);font:italic 12px Georgia,serif;letter-spacing:.16em}
+body[data-page="manga"] #mangaView .mode-banner{border-radius:18px 4px 18px 4px;border:1px solid color-mix(in srgb,var(--mint) 30%,var(--line));background:linear-gradient(105deg,color-mix(in srgb,var(--mint) 10%,var(--panel)),var(--panel) 76%);font-family:Georgia,serif}
+body[data-page="manga"] #mangaView .subnav{border:0;border-bottom:1px solid var(--line);border-radius:0;padding:0 4px;background:transparent;gap:18px}
+body[data-page="manga"] #mangaView .subnav button{border-radius:0;padding:12px 5px;border-bottom:2px solid transparent;font-family:Georgia,serif;font-size:14px}
+body[data-page="manga"] #mangaView .subnav button.active{border-bottom-color:var(--mint);background:transparent}
+body[data-page="manga"] #mangaView .panel{border-radius:18px 5px 18px 5px}
+body[data-page="manga"] #mangaView .catalog-card,
+body[data-page="manga"] #mangaView .manga-card{border-radius:5px 16px 5px 16px;overflow:hidden;box-shadow:0 12px 30px #0002}
+body[data-page="manga"] #mangaView .catalog-card img,
+body[data-page="manga"] #mangaView .manga-card img{filter:saturate(.88);transition:filter .35s,transform .5s}
+body[data-page="manga"] #mangaView .catalog-card:hover img,
+body[data-page="manga"] #mangaView .manga-card:hover img{filter:saturate(1.08);transform:scale(1.035)}
+body[data-page="manga"] #mangaView .searchbox,
+body[data-page="manga"] #mangaView .input{border-radius:4px 12px 4px 12px}
+body[data-page="manga"] #mangaView .filter{border-radius:3px 10px 3px 10px}
+@media(max-width:650px){
+ body[data-page="anime"] #malView .workspace-head:after,
+ body[data-page="manga"] #mangaView .workspace-head:after{right:13px;bottom:10px;font-size:8px}
+ body[data-page="anime"] #malView .workspace-head,
+ body[data-page="manga"] #mangaView .workspace-head{padding:20px 17px}
+}
+@media(prefers-reduced-motion:reduce){body[data-page="manga"] #mangaView .catalog-card img,body[data-page="manga"] #mangaView .manga-card img{transition:none}}
+</style>
 </head>
 <body data-page="__HEKOMI_PAGE__">
 <div class="app-scroll-progress" aria-hidden="true"><span id="appScrollProgressBar"></span></div>
