@@ -493,7 +493,7 @@ function mangaScrapeNormalizeDetails(provider, id, rawSourceKind, item) {
   const sourceKind = mangaScrapeSourceKind(provider, rawSourceKind || item.source);
   const title = mangaScrapeTitleText(item.title || item.name) || 'Untitled manga';
   const rawChapters = provider === 'mangahook' ? item.chapterList : item.chapters;
-  const chapters = (Array.isArray(rawChapters) ? rawChapters : []).slice(0, 300).map(chapter => {
+  const chapters = (Array.isArray(rawChapters) ? rawChapters : []).map(chapter => {
     let chapterId = '';
     try { chapterId = mangaScrapeId(chapter && (chapter.id || chapter.chapterId || chapter.chapter)); } catch { return null; }
     return {
