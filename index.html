@@ -1195,6 +1195,122 @@ body[data-page="manga"] #mangaView #mangaDexSearchResults:empty{display:none}
 @keyframes hkTransitionCopy{to{opacity:1;transform:translateY(0)}}
 @media(prefers-reduced-motion:reduce){#genreTransitionOverlay.is-active .hk-transition-backdrop,#genreTransitionOverlay.is-active .hk-transition-poster,#genreTransitionOverlay.is-active .hk-transition-copy{animation-duration:.08s!important;animation-delay:0s!important}}
 @media(max-width:520px){#genreTransitionOverlay .hk-transition-poster{width:min(56vw,220px);max-height:55vh}#genreTransitionOverlay .hk-transition-copy{bottom:26px}}
+
+/* Hekomi theme contract — one palette drives every surface, action and accent. */
+:root{
+  --hk-accent-ink:#171222;
+  --hk-mint-ink:#08201d;
+  --hk-home-wash:color-mix(in srgb,var(--violet) 12%,var(--bg));
+  --hk-home-wash-2:color-mix(in srgb,var(--mint) 10%,var(--bg));
+  --hk-home-border:color-mix(in srgb,var(--line) 78%,var(--violet) 22%);
+  --hk-home-shadow:color-mix(in srgb,var(--bg) 82%,#000 18%);
+  --hk-home-grid:color-mix(in srgb,var(--violet) 9%,transparent);
+}
+html[data-theme="late-night"]{--hk-accent-ink:#241622;--hk-mint-ink:#241d12;--hk-home-grid:color-mix(in srgb,var(--violet) 8%,transparent)}
+html[data-theme="dawn"]{--hk-accent-ink:#fff;--hk-mint-ink:#fff;--hk-home-shadow:#6b52701a;--hk-home-grid:color-mix(in srgb,var(--violet) 9%,transparent)}
+/* Global controls inherit the selected mode instead of retaining midnight colors. */
+html{scrollbar-color:var(--line) var(--bg)}
+::selection{background:color-mix(in srgb,var(--violet) 35%,transparent);color:var(--text)}
+:focus-visible{outline-color:var(--violet)!important}
+.topbar{border-bottom-color:var(--line)}
+.primary-nav a{color:var(--muted)}
+.primary-nav a:hover{color:var(--text);background:var(--panel2);border-color:var(--line)}
+.primary-nav a[aria-current="page"]{color:var(--text);background:color-mix(in srgb,var(--violet) 13%,var(--panel));border-color:color-mix(in srgb,var(--violet) 42%,var(--line))}
+body[data-page="manga"] .primary-nav a[aria-current="page"]{color:var(--mint);background:color-mix(in srgb,var(--mint) 12%,var(--panel));border-color:color-mix(in srgb,var(--mint) 40%,var(--line))}
+.iconbtn,.btn,.btn-secondary,.mini-btn,.filter,.input,select.input,.searchbox{background:var(--panel);border-color:var(--line);color:var(--text)}
+.btn-primary,.showcase-primary{background:var(--violet);border-color:var(--violet);color:var(--hk-accent-ink)}
+.btn-primary:hover,.showcase-primary:hover{background:color-mix(in srgb,var(--violet) 88%,white);border-color:var(--violet)}
+.btn-mint{background:var(--mint);border-color:var(--mint);color:var(--hk-mint-ink)}
+.btn-secondary:hover,.iconbtn:hover,.mini-btn:hover{background:var(--panel2);border-color:var(--violet);color:var(--text)}
+/* Homepage: a deliberate editorial hierarchy with one hero, one spotlight and two portals. */
+body[data-page="home"] .home-hero{
+  display:block;max-width:1120px;margin:clamp(34px,5vw,62px) auto clamp(26px,4vw,44px);
+  padding:0;text-align:left
+}
+body[data-page="home"] .home-hero .hero-copy{max-width:850px;margin:0}
+body[data-page="home"] .home-hero .hero-kicker{display:flex;align-items:center;justify-content:flex-start;gap:9px;flex-wrap:wrap;color:var(--muted);font-size:10px;letter-spacing:.12em}
+body[data-page="home"] .home-hero .hero-kicker .hero-edition{margin-left:8px;color:var(--muted);border-left:1px solid var(--line);padding-left:14px}
+body[data-page="home"] .home-hero .eyebrow{margin-top:27px;color:var(--mint)}
+body[data-page="home"] .home-hero h1{max-width:850px;margin:13px 0 17px;font-size:clamp(48px,7.2vw,82px);line-height:.96;letter-spacing:-.078em;color:var(--text);text-wrap:balance}
+body[data-page="home"] .home-hero h1 em{color:var(--violet);font-family:Georgia,serif;font-weight:500}
+body[data-page="home"] .home-hero p{max-width:620px;margin:0;color:var(--muted);font-size:clamp(15px,1.35vw,17px);line-height:1.72}
+body[data-page="home"] .home-hero-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:23px}
+body[data-page="home"] .home-hero-actions a,body[data-page="home"] .home-hero-actions button{min-height:45px;text-decoration:none}
+body[data-page="home"] .home-hero .hero-art{display:none}
+body[data-page="home"] .home-proof{display:none}
+body[data-page="home"] #animeShowcase{max-width:1120px;margin:0 auto 34px}
+body[data-page="home"] .home-section-heading{max-width:1120px;margin:0 auto 15px;align-items:flex-end}
+body[data-page="home"] .home-section-heading h2{color:var(--text)}
+body[data-page="home"] .home-section-heading p{color:var(--muted)}
+body[data-page="home"] .choice-grid{max-width:1120px;gap:14px;margin:0 auto 14px}
+body[data-page="home"] .choice{
+  min-height:205px;padding:23px;border-color:var(--hk-home-border);
+  background:radial-gradient(ellipse at 100% 0%,color-mix(in srgb,var(--violet) 15%,transparent),transparent 58%),linear-gradient(145deg,var(--panel2),var(--panel));
+  box-shadow:0 14px 38px var(--hk-home-shadow)
+}
+body[data-page="home"] .choice.manga{
+  background:radial-gradient(ellipse at 100% 0%,color-mix(in srgb,var(--mint) 17%,transparent),transparent 58%),linear-gradient(145deg,var(--panel2),var(--panel))
+}
+body[data-page="home"] .choice:hover{border-color:var(--violet);box-shadow:0 18px 42px var(--hk-home-shadow)}
+body[data-page="home"] .choice.manga:hover{border-color:var(--mint)}
+body[data-page="home"] .choice:after{border-color:color-mix(in srgb,var(--violet) 22%,transparent);box-shadow:0 0 0 20px color-mix(in srgb,var(--violet) 4%,transparent),0 0 0 40px color-mix(in srgb,var(--violet) 3%,transparent)}
+body[data-page="home"] .choice.manga:after{border-color:color-mix(in srgb,var(--mint) 24%,transparent);box-shadow:0 0 0 20px color-mix(in srgb,var(--mint) 5%,transparent),0 0 0 40px color-mix(in srgb,var(--mint) 3%,transparent)}
+body[data-page="home"] .choice-icon{background:color-mix(in srgb,var(--violet) 12%,var(--panel));color:var(--violet);border-color:color-mix(in srgb,var(--violet) 35%,var(--line))}
+body[data-page="home"] .choice.manga .choice-icon{background:color-mix(in srgb,var(--mint) 13%,var(--panel));color:var(--mint);border-color:color-mix(in srgb,var(--mint) 35%,var(--line))}
+body[data-page="home"] .choice h2{color:var(--text)}
+body[data-page="home"] .choice p,body[data-page="home"] .choice-foot{color:var(--muted)}
+body[data-page="home"] .choice .dot{background:var(--violet)}
+body[data-page="home"] .choice.manga .dot{background:var(--mint)}
+body[data-page="home"] .landing-footer,body[data-page="home"] .statusline{color:var(--muted)}
+body[data-page="home"] .statusline .led{background:var(--mint);box-shadow:0 0 10px color-mix(in srgb,var(--mint) 50%,transparent)}
+/* Spotlight and seasonal catalogue surfaces use the active theme palette. */
+.anime-showcase{
+  border-color:var(--hk-home-border);
+  background:radial-gradient(ellipse at 76% 42%,color-mix(in srgb,var(--violet) 19%,transparent),transparent 36%),radial-gradient(ellipse at 94% 8%,color-mix(in srgb,var(--mint) 13%,transparent),transparent 34%),linear-gradient(112deg,var(--panel2),var(--panel));
+  box-shadow:0 22px 58px var(--hk-home-shadow)
+}
+.anime-showcase:before{background-image:linear-gradient(var(--hk-home-grid) 1px,transparent 1px),linear-gradient(90deg,var(--hk-home-grid) 1px,transparent 1px)}
+.showcase-kicker{color:var(--violet)}
+.showcase-kicker i{background:var(--mint);box-shadow:0 0 12px color-mix(in srgb,var(--mint) 55%,transparent)}
+.showcase-copy h2{color:var(--text)}
+.showcase-copy h2 em{color:var(--violet)}
+.showcase-copy p{color:var(--muted)}
+.showcase-tags span{color:var(--text);border-color:var(--line);background:color-mix(in srgb,var(--panel) 84%,transparent)}
+.showcase-index{color:var(--muted)}
+.showcase-dot.active{background:var(--violet)}
+.showcase-primary{color:var(--hk-accent-ink)}
+.showcase-add{background:color-mix(in srgb,var(--panel) 86%,transparent);color:var(--text);border-color:var(--line)}
+.anime-showcase.has-feature-banner{
+  background-image:linear-gradient(90deg,color-mix(in srgb,var(--bg) 96%,transparent) 0%,color-mix(in srgb,var(--bg) 86%,transparent) 31%,color-mix(in srgb,var(--bg) 45%,transparent) 66%,color-mix(in srgb,var(--bg) 16%,transparent) 100%),linear-gradient(0deg,color-mix(in srgb,var(--bg) 78%,transparent),transparent 64%),var(--featured-banner,url("assets/folio-night-scene.svg"));
+  border-color:var(--featured-accent,var(--hk-home-border));box-shadow:0 24px 70px var(--hk-home-shadow)
+}
+.anime-showcase.has-feature-banner:before{opacity:.08}
+.anime-showcase.has-feature-banner .showcase-copy h2{color:var(--text)}
+.anime-showcase.has-feature-banner .showcase-copy p{color:var(--muted)}
+.anime-showcase.has-feature-banner .showcase-tags span{background:color-mix(in srgb,var(--panel) 76%,transparent);border-color:var(--line);color:var(--text)}
+.anime-showcase.has-feature-banner .showcase-index{color:var(--muted)}
+.seasonal-shelf{border-color:var(--hk-home-border);background:radial-gradient(ellipse at 90% 0%,color-mix(in srgb,var(--violet) 14%,transparent),transparent 38%),linear-gradient(125deg,var(--panel2),var(--panel));box-shadow:inset 0 1px color-mix(in srgb,var(--text) 4%,transparent)}
+.seasonal-shelf .eyebrow{color:var(--violet)}
+.season-picker-select{background:var(--panel);border-color:var(--line);color:var(--text)}
+.season-picker select:focus{outline-color:var(--violet);border-color:var(--violet)}
+@media(max-width:760px){
+ body[data-page="home"] .home-hero{margin:28px auto 29px}
+ body[data-page="home"] .home-hero .hero-kicker{font-size:9px;line-height:1.5}
+ body[data-page="home"] .home-hero .hero-kicker .hero-edition{margin-left:0;padding-left:0;border:0}
+ body[data-page="home"] .home-hero .eyebrow{margin-top:23px}
+ body[data-page="home"] .home-hero h1{font-size:clamp(44px,12vw,66px);margin-bottom:14px}
+ body[data-page="home"] .home-hero-actions{display:flex;gap:8px}
+ body[data-page="home"] .home-hero-actions>*{width:auto;flex:1;min-width:0;padding-inline:12px}
+ body[data-page="home"] #animeShowcase{margin-bottom:28px}
+ body[data-page="home"] .home-section-heading{margin-bottom:12px}
+ body[data-page="home"] .choice-grid{grid-template-columns:1fr;gap:10px}
+ body[data-page="home"] .choice{min-height:0;padding:19px;border-radius:18px}
+ body[data-page="home"] .choice h2{font-size:22px;margin:15px 0 6px}
+ body[data-page="home"] .choice-foot{margin-top:12px}
+ .anime-showcase.has-feature-banner{background-image:linear-gradient(90deg,color-mix(in srgb,var(--bg) 95%,transparent),color-mix(in srgb,var(--bg) 42%,transparent)),linear-gradient(0deg,color-mix(in srgb,var(--bg) 78%,transparent),transparent 60%),var(--featured-banner,url("assets/folio-night-scene.svg"))}
+}
+@media(max-width:420px){body[data-page="home"] .home-hero-actions{display:grid;grid-template-columns:1fr}.theme-mode .topbar{flex-wrap:wrap}}
+@media(prefers-reduced-motion:reduce){body[data-page="home"] .home-hero *{animation:none!important;transition:none!important}}
 </style>
 </head>
 <body data-page="__HEKOMI_PAGE__">
@@ -1213,7 +1329,18 @@ body[data-page="manga"] #mangaView #mangaDexSearchResults:empty{display:none}
   </header>
   <main>
     <section id="landing">
-      <div class="hero home-hero"><div class="hero-copy"><div class="hero-kicker"><span class="hero-signal"></span> YOUR OWN LITTLE ANIME INTERNET <span class="hero-edition">VOL. 001 / OPEN EVERY NIGHT</span></div><div class="eyebrow">A PERSONAL SPACE FOR YOUR NEXT OBSESSION</div><h1>Less scrolling.<br><em>More feeling.</em></h1><p>Keep the shows you love close, fall into a new manga rabbit hole, and make your own little corner of the anime internet.</p><div class="home-hero-actions"><a class="btn-primary" href="/discover">Explore the catalog <span aria-hidden="true">↗</span></a><button class="btn-secondary" type="button" id="homeChooseMode">Choose your space <span aria-hidden="true">↓</span></button></div><div class="home-proof"><span><i></i> Anime tracking</span><span><i></i> Manga discovery</span><span><i></i> Your local library</span></div></div><div class="hero-art" aria-hidden="true"><div class="hero-art-orbit orbit-a"></div><div class="hero-art-orbit orbit-b"></div><div class="hero-art-moon"></div><div class="hero-art-spark spark-a">✳</div><div class="hero-art-spark spark-b">✦</div><div class="hero-art-label">夜更かし / YOFUKASHI</div><div class="hero-art-bottom"><span>AFTER HOURS CLUB</span><strong>STAY A LITTLE<br>LONGER.</strong><small>HEKOMI · PERSONAL MEDIA SPACE</small></div></div></div>
+      <div class="hero home-hero">
+        <div class="hero-copy">
+          <div class="hero-kicker"><span class="hero-signal"></span> HEKOMI / YOUR PERSONAL ANIME &amp; MANGA SPACE <span class="hero-edition">DISCOVER · TRACK · READ</span></div>
+          <div class="eyebrow">YOUR STORIES. YOUR PACE.</div>
+          <h1>Less scrolling.<br><em>More feeling.</em></h1>
+          <p>Keep the shows you love close, discover your next manga, and bring all your favourite worlds into one calm little corner.</p>
+          <div class="home-hero-actions">
+            <a class="btn-primary" href="/discover">Explore the catalog <span aria-hidden="true">↗</span></a>
+            <button class="btn-secondary" type="button" id="homeChooseMode">Choose your space <span aria-hidden="true">↓</span></button>
+          </div>
+        </div>
+      </div>
       <section class="anime-showcase" id="animeShowcase" data-slide="0" aria-label="Featured anime-inspired carousel">
         <div class="showcase-orbit orbit-one"></div><div class="showcase-orbit orbit-two"></div>
         <div class="showcase-copy" aria-live="polite"><span class="showcase-kicker"><i></i> <span id="showcaseKicker">HEKOMI ANIME TRANSMISSION</span></span><h2 id="showcaseTitle">Find your <em>next obsession.</em></h2><p id="showcaseDescription">New worlds. Strange signals. One more chapter before sleep.</p><div class="showcase-tags" id="showcaseTags"><span>ANIME</span><span>MANGA</span><span>AFTER HOURS</span></div><div class="showcase-actions"><a id="showcaseDetailsLink" class="showcase-primary hidden" href="/" tabindex="-1">View series details ↗</a><button id="showcaseAddButton" class="showcase-add hidden" type="button">＋ Add to my shelf</button></div></div>
@@ -1225,12 +1352,12 @@ body[data-page="manga"] #mangaView #mangaDexSearchResults:empty{display:none}
         </div>
         <div class="showcase-scan"></div><div class="showcase-index" id="showcaseIndex">HEKOMI / 001 — YOUR PRIVATE ANIME SPACE</div><div class="showcase-controls" aria-label="Featured banners"><button class="showcase-arrow" id="showcasePrev" aria-label="Previous banner">‹</button><div class="showcase-dots" id="showcaseDots"><button class="showcase-dot active" data-showcase-slide="0" aria-label="Banner 1"></button><button class="showcase-dot" data-showcase-slide="1" aria-label="Banner 2"></button><button class="showcase-dot" data-showcase-slide="2" aria-label="Banner 3"></button></div><button class="showcase-arrow" id="showcaseNext" aria-label="Next banner">›</button></div>
       </section>
-      <div class="home-section-heading" id="homeModeHeading"><div><span class="eyebrow">PICK YOUR PORTAL</span><h2>What are we getting into?</h2></div><p>Two different moods. One home base.</p></div>
+      <div class="home-section-heading" id="homeModeHeading"><div><span class="eyebrow">YOUR SPACES</span><h2>Choose what you're here for.</h2></div><p>One place to track anime and discover manga.</p></div>
   <div class="choice-grid">
         <article class="choice mal" data-card-number="01" data-enter="mal" tabindex="0" role="button" aria-label="Open MAL Client"><div class="choice-top"><div class="choice-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4.5h10.2A2.8 2.8 0 0 1 18 7.3v12.2H7.4A2.4 2.4 0 0 1 5 17.1V4.5Z"/><path d="M7.5 8h7M7.5 11.5h7M7.5 15h4.5M18 8.5h2v11h-2"/></svg></div><div class="arrow">↗</div></div><h2>MAL Client</h2><p>Your anime list, on your terms. Search shows, update watched episodes, score titles, and sync changes with your MyAnimeList account.</p><div class="choice-foot"><span class="dot"></span> Anime tracking & account sync</div></article>
         <article class="choice manga" data-card-number="02" data-enter="manga" tabindex="0" role="button" aria-label="Open Manga Library"><div class="choice-top"><div class="choice-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 5.5c3.2-1.4 6.1-1.1 8.5.8v13c-2.4-1.9-5.3-2.2-8.5-.8v-13Z"/><path d="M20.5 5.5c-3.2-1.4-6.1-1.1-8.5.8v13c2.4-1.9 5.3-2.2 8.5-.8v-13Z"/><path d="M6.3 8.5h2.8M6.3 11.3h2.8M14.8 8.5h2.8M14.8 11.3h2.8"/></svg></div><div class="arrow">↗</div></div><h2>Manga Library</h2><p>Discover manga, manhwa, and manhua from supported websites. Collect covers, inspect chapter links, and build your own reading library.</p><div class="choice-foot"><span class="dot"></span> Website discovery & reading library</div></article>
       </div>
-      <div class="landing-footer">This is your private workspace — choose a mode to get started.</div>
+      <div class="landing-footer">Your library stays yours. Pick up wherever you left off.</div>
       <div class="statusline"><span class="led"></span><span id="healthLabel">Checking local services…</span><span>·</span><span>Library data stays in this browser</span></div>
 
 <section class="catalog-discovery" id="discoverCatalog" aria-labelledby="catalogTitle">
