@@ -1581,7 +1581,7 @@ function showProfileTab(tab){activeProfileTab=tab;$$('#profileTabs button').forE
   }
   async function importMalListToLocal(){
     if(!malConnected){notify('Connect your MyAnimeList account first.');showMalTab('about');return;}
-    const buttons=$('[data-import-mal-local]');buttons.forEach(b=>{b.disabled=true;b.textContent='Scanning MAL list…';});
+    const buttons=Array.from(document.querySelectorAll('[data-import-mal-local]'));buttons.forEach(b=>{b.disabled=true;b.textContent='Scanning MAL list…';});
     try{
       if(!remoteReady||!malRemote.length)await loadRemoteList();
       if(!remoteReady||!malRemote.length){if(!remoteReady)throw new Error('Could not load your MyAnimeList list.');}
@@ -1600,8 +1600,8 @@ function showProfileTab(tab){activeProfileTab=tab;$$('#profileTabs button').forE
       }
       if(!write(key.anime,localAnime))throw new Error('Browser storage could not save the imported list.');
       renderLocalAnime();
-      $('[data-local-list-tool-status]').forEach(el=>el.textContent='Imported '+added+' new anime and updated '+updated+' existing entries from MyAnimeList.');
-      $('.local-list-status').forEach(el=>el.textContent='Imported '+added+' new anime and updated '+updated+' existing entries from MyAnimeList.');
+      Array.from(document.querySelectorAll('[data-local-list-tool-status]')).forEach(el=>el.textContent='Imported '+added+' new anime and updated '+updated+' existing entries from MyAnimeList.');
+      Array.from(document.querySelectorAll('.local-list-status')).forEach(el=>el.textContent='Imported '+added+' new anime and updated '+updated+' existing entries from MyAnimeList.');
       notify('MAL scan complete: '+added+' added, '+updated+' updated.');
     }catch(error){notify(error.message||'Could not import your MyAnimeList list.');}
     finally{buttons.forEach(b=>{b.disabled=false;b.textContent='↧ Scan & import MAL list';});}
