@@ -1276,14 +1276,13 @@ function showProfileTab(tab){activeProfileTab=tab;$$('#profileTabs button').forE
       malConfigured=!!data.configured;malConnected=!!data.connected;malUsername=data.username||'';
       $('#malSetupStatus').textContent=!malConfigured?'Hekomi owner setup needed: configure MAL_CLIENT_ID, MAL_CLIENT_SECRET, and FOLIO_SESSION_SECRET on the host.':malConnected?'Connected as '+(malUsername||'your MyAnimeList account')+'. Your session is private to this browser.':'Not connected. Sign in with MyAnimeList to sync your account.';
       $('#profileMalStatus').textContent=!malConfigured?'Sign-in unavailable':malConnected?'Connected as '+(malUsername||'your MAL account'):'Not connected';$('#profileMalBadge').textContent=malConnected?'CONNECTED':'NOT CONNECTED';$('#profileMalBadge').classList.toggle('active',malConnected);
-      $('#malConnectInline').disabled=!malConfigured;$('#malSignInBtn').disabled=!malConfigured;
-      $('#malConnectInline').textContent=malConnected?'Connected · '+(malUsername||'MyAnimeList'):'Sign in with MyAnimeList ↗';
+      $('#malSignInBtn').disabled=!malConfigured;
       $('#malSignInBtn').classList.toggle('hidden',malConnected);$('#malLogoutBtn').classList.toggle('hidden',!malConnected);$('#malConnectionNudge').classList.toggle('hidden',malConnected);
       if(malConnected&&['mal','profile'].includes(currentPageFromPath())&&!remoteReady)await loadRemoteList();
     }catch(e){$('#malSetupStatus').textContent='Could not check the MAL connection: '+e.message;}
   }
   $('#malSettingsBtn').onclick=()=>{location.href='/profile';};
-  $('#profileMalSyncBtn').onclick=()=>loadRemoteList();$('#malConnectInline').onclick=beginMalLogin;$('#malSignInBtn').onclick=beginMalLogin;$('#malLoadBtn').onclick=()=>loadRemoteList();
+  if($('#profileMalSyncBtn'))$('#profileMalSyncBtn').onclick=()=>loadRemoteList();$('#malSignInBtn').onclick=beginMalLogin;$('#malLoadBtn').onclick=()=>loadRemoteList();
   $('#malTestBtn').onclick=async()=>{await refreshMalAuthStatus();if(!malConnected){notify(malConfigured?'Sign in with MyAnimeList first.':'Hekomi MAL sign-in is not configured yet.');return;}$('#malSetupStatus').textContent='Checking your MyAnimeList connection…';try{const me=await api('/api/mal/me');malUsername=me.name||malUsername;$('#malSetupStatus').textContent='Connected as '+(malUsername||'your MAL account')+'. Loading list…';await loadRemoteList();showMalTab('mylist');notify('MyAnimeList connection successful.');}catch(e){$('#malSetupStatus').textContent=e.message;notify(e.message);}};
   async function logoutMal(){try{await fetch('/api/mal/auth/logout',{method:'POST',credentials:'same-origin'});}catch{}malConnected=false;malUsername='';remoteReady=false;malRemote=[];profileRecommendationsLoaded=false;renderProfileWatchTables();renderProfileRecommendations();$('#malRemoteWrap').classList.add('hidden');$('#malConnectionNudge').classList.remove('hidden');$('#malSetupStatus').textContent='Signed out of MyAnimeList.';await refreshMalAuthStatus();notify('Signed out of MyAnimeList.');}
   $('#malLogoutBtn').onclick=logoutMal;
