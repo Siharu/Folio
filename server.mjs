@@ -1288,6 +1288,7 @@ const server=http.createServer(async(req,res)=>{
   const origin=req.headers.origin;
   if(origin && !origin.startsWith(`http://localhost:${PORT}`) && !origin.startsWith(`http://127.0.0.1:${PORT}`)) { /* no permissive cross-origin access */ }
   const url=new URL(req.url,`http://${req.headers.host||'localhost'}`);
+  if(req.method==='GET' && url.pathname==='/api/config') return send(res,200,{supabaseUrl:process.env.SUPABASE_URL||'',supabasePublishableKey:process.env.SUPABASE_PUBLISHABLE_KEY||''},{'Cache-Control':'no-store'});
   if(req.method==='GET' && url.pathname==='/api/health') return send(res,200,{ok:true,app:'Hekomi',crawler:'robots-aware chapter image extractor',malProxy:true});
 
   if(req.method==='GET' && url.pathname==='/robots.txt') {
