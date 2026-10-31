@@ -508,6 +508,25 @@ h1,h2,h3,.workspace-head h1,.catalog-heading h2,.showcase-copy h2{font-family:va
 .local-list-tools{margin:12px 0 5px;gap:7px;flex-wrap:wrap}.local-list-tools button{font-size:11px;padding:8px 11px}.local-list-status{margin:5px 0 12px;line-height:1.45}
 .profile-mal-card{margin:0 0 14px;padding:13px 16px}.profile-mal-main{display:flex;justify-content:space-between;align-items:center;gap:12px}.profile-mal-main strong{font-size:13px}.profile-mal-main p{margin:3px 0 0}.profile-mal-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}.profile-mal-actions button{font-size:11px;padding:8px 12px}
 .profile-notify-card{margin:0 0 12px;padding:12px 15px}.profile-notify-row{display:flex;align-items:center;justify-content:space-between;gap:12px}.profile-notify-row strong{font-size:13px}.profile-notify-row p{font-size:11px;margin:3px 0 0}.profile-notify-row button{font-size:11px;padding:8px 12px;white-space:nowrap}
+
+/* Hekomi account layer */
+.hk-auth-backdrop{position:fixed;inset:0;z-index:9998;background:rgba(5,7,15,.76);backdrop-filter:blur(14px);display:none;place-items:center;padding:20px}
+.hk-auth-backdrop.open{display:grid}
+.hk-auth-card{width:min(460px,100%);background:var(--panel,#111827);color:var(--text,#f4f3f8);border:1px solid rgba(180,170,220,.2);border-radius:24px;padding:26px;box-shadow:0 28px 100px #0009;position:relative}
+.hk-auth-card h2{font-family:Georgia,serif;font-size:30px;font-weight:500;margin:6px 0}
+.hk-auth-card p{color:var(--muted,#aaa);line-height:1.55}
+.hk-auth-card label{display:block;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted,#aaa);margin:15px 0 7px}
+.hk-auth-card input{width:100%;box-sizing:border-box;padding:13px 14px;border-radius:12px;border:1px solid var(--line,#333);background:rgba(255,255,255,.045);color:inherit;font:inherit;outline:none}
+.hk-auth-card input:focus{border-color:#a9f0db;box-shadow:0 0 0 3px #a9f0db20}
+.hk-auth-actions{display:flex;gap:9px;margin-top:18px;flex-wrap:wrap}
+.hk-auth-actions button{border:1px solid var(--line,#444);border-radius:12px;padding:12px 15px;background:transparent;color:inherit;cursor:pointer;font:inherit}
+.hk-auth-actions .primary{background:#a9f0db;color:#101b1a;border-color:#a9f0db;font-weight:700;flex:1}
+.hk-auth-close{position:absolute;right:17px;top:15px;border:0;background:transparent;color:inherit;font-size:25px;cursor:pointer}
+.hk-auth-status{min-height:22px;font-size:13px;margin-top:13px;color:#a9f0db}
+.hk-account-state{display:flex;align-items:center;gap:10px;padding:13px;border-radius:14px;background:rgba(169,240,219,.07);margin:16px 0}
+.hk-account-dot{width:9px;height:9px;border-radius:50%;background:#a9f0db;box-shadow:0 0 12px #a9f0db}
+.hk-auth-foot{font-size:12px!important;margin-top:16px}
+
 </style>
 
 <style>
@@ -1641,7 +1660,80 @@ function showProfileTab(tab){activeProfileTab=tab;$$('#profileTabs button').forE
     const rows=localAnimeExportRows(),escapeHtml=value=>esc(value);
     const table=rows.map((x,i)=>'<tr><td>'+(i+1)+'</td><td>'+escapeHtml(x.title)+'</td><td>'+escapeHtml(x.status)+'</td><td>'+x.episodes+(x.total?' / '+x.total:'')+'</td><td>'+(x.score||'—')+'</td><td>'+(x.malId||'—')+'</td></tr>').join('');
     const win=window.open('','_blank');if(!win){notify('Allow pop-ups to create your PDF.');return;}
-    win.document.write('<!doctype html><html><head><meta charset="utf-8"><title>Hekomi Anime List</title><style>body{font:12px Arial,sans-serif;color:#20232a;padding:28px}h1{font-size:22px}p{color:#626875}table{width:100%;border-collapse:collapse;margin-top:20px}th,td{border:1px solid #d9dce2;padding:8px;text-align:left}th{background:#f0f1f4}tr{break-inside:avoid}@media print{body{padding:0}}</style></head><body><h1>Hekomi — My Local Anime List</h1><p>Exported '+escapeHtml(new Date().toLocaleString())+' · '+rows.length+' anime</p><table><thead><tr><th>#</th><th>Anime</th><th>Status</th><th>Episodes</th><th>Score</th><th>MAL ID</th></tr></thead><tbody>'+table+'</tbody></table><script>window.onload=()=>window.print()<\/script></body></html>');
+    win.document.write('<!doctype html><html><head><meta charset="utf-8"><title>Hekomi Anime List</title><style>body{font:12px Arial,sans-serif;color:#20232a;padding:28px}h1{font-size:22px}p{color:#626875}table{width:100%;border-collapse:collapse;margin-top:20px}th,td{border:1px solid #d9dce2;padding:8px;text-align:left}th{background:#f0f1f4}tr{break-inside:avoid}@media print{body{padding:0}}</style></head><body><h1>Hekomi — My Local Anime List</h1><p>Exported '+escapeHtml(new Date().toLocaleString())+' · '+rows.length+' anime</p><table><thead><tr><th>#</th><th>Anime</th><th>Status</th><th>Episodes</th><th>Score</th><th>MAL ID</th></tr></thead><tbody>'+table+'</tbody></table><script>window.onload=()=>window.print()<\/script>
+<div class="hk-auth-backdrop" id="hkAuthBackdrop" aria-hidden="true">
+ <section class="hk-auth-card" role="dialog" aria-modal="true" aria-labelledby="hkAuthTitle">
+  <button class="hk-auth-close" id="hkAuthClose" aria-label="Close">×</button>
+  <div class="eyebrow">HEKOMI ACCOUNT / CLOUD SYNC</div>
+  <h2 id="hkAuthTitle">Your shelf, everywhere.</h2>
+  <p id="hkAuthIntro">Sign in to keep your profile and personal library connected across devices. Your current local library stays on this device.</p>
+  <div id="hkAuthSignedIn" hidden>
+   <div class="hk-account-state"><span class="hk-account-dot"></span><div><strong id="hkAuthEmail"></strong><div class="small muted">Signed in · Cloud account</div></div></div>
+   <div class="hk-auth-actions"><button class="primary" id="hkAuthSignOut">Sign out</button></div>
+  </div>
+  <form id="hkAuthForm">
+   <label for="hkAuthEmailInput">Email address</label><input id="hkAuthEmailInput" type="email" autocomplete="email" required maxlength="254" placeholder="you@example.com">
+   <label for="hkAuthPassword">Password</label><input id="hkAuthPassword" type="password" autocomplete="current-password" minlength="8" required placeholder="At least 8 characters">
+   <div class="hk-auth-actions"><button class="primary" type="submit" id="hkAuthSubmit">Sign in</button><button type="button" id="hkAuthCreate">Create account</button></div>
+  </form>
+  <div class="hk-auth-status" id="hkAuthStatus" role="status" aria-live="polite"></div>
+  <p class="hk-auth-foot">Guest mode still works. Signing in won't erase your existing device library.</p>
+ </section>
+</div>
+
+<script>
+/* Supabase Auth bootstrap: public publishable key only; all user data remains protected by RLS. */
+(function(){
+ let client=null, user=null, mode='signin';
+ const $=id=>document.getElementById(id);
+ const backdrop=$('hkAuthBackdrop'),form=$('hkAuthForm'),status=$('hkAuthStatus');
+ function say(message){if(status)status.textContent=message||'';}
+ function open(){backdrop.classList.add('open');backdrop.setAttribute('aria-hidden','false');say('');$('hkAuthEmailInput').focus();}
+ function close(){backdrop.classList.remove('open');backdrop.setAttribute('aria-hidden','true');}
+ function paint(){
+  const signed=!!user;
+  $('hkAuthSignedIn').hidden=!signed;form.hidden=signed;
+  $('hkAuthIntro').textContent=signed?'Your Hekomi account is connected. Cloud library sync is being prepared.':'Sign in to keep your profile and personal library connected across devices. Your current local library stays on this device.';
+  $('hkAuthTitle').textContent=signed?'Welcome back.':'Your shelf, everywhere.';
+  $('hkAuthEmail').textContent=user?.email||'';
+  const button=$('profileBtn');if(button){button.title=signed?'Account: '+user.email:'Sign in to Hekomi';button.setAttribute('aria-label',button.title);button.dataset.authState=signed?'signed-in':'guest';}
+ }
+ async function boot(){
+  try{
+   const config=await fetch('/api/config',{headers:{accept:'application/json'}}).then(r=>r.ok?r.json():Promise.reject(new Error('Account service is not configured.')));
+   if(!config.supabaseUrl||!config.supabasePublishableKey)throw new Error('Account service is not configured yet.');
+   await new Promise((resolve,reject)=>{if(window.supabase?.createClient)return resolve();const script=document.createElement('script');script.src='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';script.onload=resolve;script.onerror=()=>reject(new Error('Could not load the account service.'));document.head.appendChild(script);});
+   client=window.supabase.createClient(config.supabaseUrl,config.supabasePublishableKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
+   const {data,error}=await client.auth.getSession();if(error)throw error;user=data.session?.user||null;paint();
+   client.auth.onAuthStateChange((_event,session)=>{user=session?.user||null;paint();});
+  }catch(error){say(error.message||'Account service is unavailable.');}
+ }
+ $('profileBtn')?.addEventListener('click',open);
+ $('hkAuthClose').addEventListener('click',close);
+ backdrop.addEventListener('click',e=>{if(e.target===backdrop)close();});
+ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&backdrop.classList.contains('open'))close();});
+ $('hkAuthCreate').addEventListener('click',async()=>{
+  if(!client){say('Account service is still loading.');return;}
+  mode='signup';const email=$('hkAuthEmailInput').value.trim(),password=$('hkAuthPassword').value;
+  if(!email||password.length<8){say('Enter an email and a password with at least 8 characters.');return;}
+  $('hkAuthCreate').disabled=true;$('hkAuthSubmit').disabled=true;say('Creating your account…');
+  try{const {data,error}=await client.auth.signUp({email,password});if(error)throw error;if(data.session){user=data.user;paint();say('Account created. Welcome to Hekomi!');}else say('Check your email to confirm your account, then sign in.');}
+  catch(error){say(error.message||'Could not create account.');}
+  finally{$('hkAuthCreate').disabled=false;$('hkAuthSubmit').disabled=false;}
+ });
+ form.addEventListener('submit',async e=>{
+  e.preventDefault();if(!client){say('Account service is still loading.');return;}
+  const email=$('hkAuthEmailInput').value.trim(),password=$('hkAuthPassword').value;
+  $('hkAuthSubmit').disabled=true;say('Signing in…');
+  try{const {data,error}=await client.auth.signInWithPassword({email,password});if(error)throw error;user=data.user;paint();say('Signed in. Welcome back!');}
+  catch(error){say(error.message||'Sign-in failed.');}
+  finally{$('hkAuthSubmit').disabled=false;}
+ });
+ $('hkAuthSignOut').addEventListener('click',async()=>{if(!client)return;const {error}=await client.auth.signOut();if(error){say(error.message);return;}user=null;paint();say('Signed out. Your local library is still here.');});
+ boot();
+})();
+</script>
+</body></html>');
     win.document.close();
   }
   async function importMalListToLocal(){
