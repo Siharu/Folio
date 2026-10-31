@@ -1372,7 +1372,7 @@ body[data-page="home"] .home-hero .hero-art,body[data-page="home"] .home-proof{d
 .home-visual:after{content:"";position:absolute;left:50%;top:55%;z-index:-1;width:220px;height:220px;border-radius:50%;background:radial-gradient(circle,color-mix(in srgb,var(--violet) 15%,transparent),color-mix(in srgb,var(--mint) 8%,transparent) 48%,transparent 72%);filter:blur(10px);transform:translate(-50%,-50%)}
 .home-mascot-halo{position:absolute;left:50%;top:52%;width:228px;height:228px;border:1px solid color-mix(in srgb,var(--violet) 22%,transparent);border-radius:50%;transform:translate(-50%,-50%);box-shadow:0 0 0 18px color-mix(in srgb,var(--violet) 3%,transparent),0 0 0 38px color-mix(in srgb,var(--mint) 2.5%,transparent)}
 .home-mascot-stage{position:relative;z-index:2;width:min(100%,310px);height:322px;display:flex;align-items:center;justify-content:center}
-.home-mascot{display:block;position:relative;z-index:2;height:300px;width:auto;max-width:82%;object-fit:contain;image-rendering:pixelated;filter:drop-shadow(0 13px 22px color-mix(in srgb,var(--bg) 40%,transparent))}
+.home-mascot{display:block;position:relative;z-index:2;width:256px;height:320px;max-width:86%;object-fit:contain;image-rendering:pixelated;image-rendering:crisp-edges;filter:drop-shadow(0 13px 22px color-mix(in srgb,var(--bg) 40%,transparent));cursor:pointer;outline-offset:6px}.home-mascot:focus-visible{outline:2px solid var(--mint);border-radius:4px}
 .home-mascot-bubble{position:absolute;z-index:4;top:24px;right:22px;display:grid;gap:3px;padding:10px 13px;border:1px solid color-mix(in srgb,var(--violet) 32%,var(--line));border-radius:13px 13px 4px 13px;background:color-mix(in srgb,var(--panel) 64%,transparent);-webkit-backdrop-filter:blur(15px) saturate(140%);backdrop-filter:blur(15px) saturate(140%);box-shadow:0 10px 28px color-mix(in srgb,var(--bg) 18%,transparent);animation:hkMascotBubble 5s ease-in-out infinite}
 .home-mascot-bubble span{font-size:7px;letter-spacing:.17em;color:var(--mint);font-weight:800}
 .home-mascot-bubble strong{font-size:12px;letter-spacing:-.02em;color:var(--text);white-space:nowrap}
@@ -1395,7 +1395,7 @@ body[data-page="home"] .home-hero .hero-art,body[data-page="home"] .home-proof{d
   body[data-page="home"] .home-hero-actions>*{flex:1;min-width:0;padding-inline:10px;font-size:11px}
   .home-visual{min-height:270px;border-radius:17px}
   .home-mascot-stage{height:258px}
-  .home-mascot{height:244px;max-width:76%}
+  .home-mascot{width:204px;height:255px;max-width:76%}
   .home-mascot-halo{width:184px;height:184px;top:53%}
   .home-mascot-bubble{top:13px;right:11px;padding:8px 10px}
   .home-mascot-bubble span{font-size:6px}
@@ -1411,6 +1411,7 @@ body[data-page="home"] .home-hero .hero-art,body[data-page="home"] .home-proof{d
 #hkAuthBackdrop{display:none}
 #hkAuthBackdrop.open{display:grid}
 </style>
+<script defer src="/assets/hekomi-chan.js"></script>
 </head>
 <body data-page="__HEKOMI_PAGE__">
 <div class="app-scroll-progress" aria-hidden="true"><span id="appScrollProgressBar"></span></div>
@@ -1442,9 +1443,9 @@ body[data-page="home"] .home-hero .hero-art,body[data-page="home"] .home-proof{d
         <div class="home-visual" aria-label="Meet Hekomi-chan, the pixel-art mascot who lives in your Hekomi space.">
           <div class="home-visual-grid" aria-hidden="true"></div>
           <div class="home-mascot-halo" aria-hidden="true"></div>
-          <div class="home-mascot-bubble" aria-hidden="true"><span>HEKOMI-CHAN / ONLINE</span><strong>Oh, you're here!</strong></div>
+          <div class="home-mascot-bubble"><span>HEKOMI-CHAN / ONLINE</span><strong id="hekomiChanMessage" aria-live="polite">Oh, you're here!</strong></div>
           <div class="home-mascot-stage">
-            <img class="home-mascot" src="/assets/hekomi-chan.svg" alt="Hekomi-chan, a waving pixel-art girl with long midnight hair, lilac eyes, a violet shirt and dark trousers." width="240" height="300" decoding="async">
+            <canvas class="home-mascot" id="hekomiChanCanvas" width="64" height="80" role="img" aria-label="Hekomi-chan, the pixel-art Hekomi mascot.">Hekomi-chan</canvas>
           </div>
           <div class="home-mascot-tag" aria-hidden="true"><span>YOUR PIXEL GUIDE</span><strong>HEKOMI-CHAN</strong></div>
           <span class="home-mascot-star star-a" aria-hidden="true">✦</span>
