@@ -1355,35 +1355,62 @@ body[data-page="home"] .home-hero p{max-width:510px;margin:0;color:var(--muted);
 body[data-page="home"] .home-hero-actions{display:flex;flex-wrap:wrap;gap:9px;margin-top:21px}
 body[data-page="home"] .home-hero-actions a,body[data-page="home"] .home-hero-actions button{min-height:42px;text-decoration:none}
 body[data-page="home"] .home-hero .hero-art,body[data-page="home"] .home-proof{display:none}
-/* Hekomi-chan: the little pixel guide in the glass. */
+/* Animated signal sculpture: subtle enough to sit beside the headline, alive enough to fill the space. */
 .home-visual{
-  --visual-line:color-mix(in srgb,var(--violet) 26%,var(--line));
-  position:relative;z-index:1;isolation:isolate;min-width:0;min-height:340px;overflow:hidden;
-  display:grid;place-items:center;border:1px solid color-mix(in srgb,var(--line) 58%,var(--violet) 42%);
-  border-radius:24px;
+  --visual-line:color-mix(in srgb,var(--violet) 28%,var(--line));
+  position:relative;z-index:1;isolation:isolate;min-width:0;min-height:300px;overflow:hidden;
+  border:1px solid color-mix(in srgb,var(--line) 60%,var(--violet) 40%);
+  border-radius:22px;
   background:
-    radial-gradient(ellipse at 50% 69%,color-mix(in srgb,var(--mint) 15%,transparent),transparent 46%),
-    radial-gradient(ellipse at 48% 31%,color-mix(in srgb,var(--violet) 18%,transparent),transparent 48%),
-    color-mix(in srgb,var(--panel) 34%,transparent);
-  -webkit-backdrop-filter:blur(20px) saturate(145%);backdrop-filter:blur(20px) saturate(145%);
-  box-shadow:inset 0 1px color-mix(in srgb,var(--text) 8%,transparent),0 18px 42px color-mix(in srgb,var(--bg) 24%,transparent)
+    radial-gradient(ellipse at 50% 46%,color-mix(in srgb,var(--violet) 15%,transparent),transparent 42%),
+    radial-gradient(ellipse at 85% 88%,color-mix(in srgb,var(--mint) 12%,transparent),transparent 45%),
+    color-mix(in srgb,var(--panel) 36%,transparent);
+  -webkit-backdrop-filter:blur(18px) saturate(135%);
+  backdrop-filter:blur(18px) saturate(135%);
+  box-shadow:inset 0 1px color-mix(in srgb,var(--text) 7%,transparent),0 18px 42px color-mix(in srgb,var(--bg) 22%,transparent)
 }
-.home-visual-grid{position:absolute;inset:0;z-index:-1;opacity:.3;background-image:linear-gradient(color-mix(in srgb,var(--violet) 8%,transparent) 1px,transparent 1px),linear-gradient(90deg,color-mix(in srgb,var(--violet) 8%,transparent) 1px,transparent 1px);background-size:22px 22px;mask-image:radial-gradient(ellipse at 50% 55%,#000,transparent 78%)}
-.home-visual:after{content:"";position:absolute;left:50%;top:55%;z-index:-1;width:220px;height:220px;border-radius:50%;background:radial-gradient(circle,color-mix(in srgb,var(--violet) 15%,transparent),color-mix(in srgb,var(--mint) 8%,transparent) 48%,transparent 72%);filter:blur(10px);transform:translate(-50%,-50%)}
-.home-mascot-halo{position:absolute;left:50%;top:52%;width:228px;height:228px;border:1px solid color-mix(in srgb,var(--violet) 22%,transparent);border-radius:50%;transform:translate(-50%,-50%);box-shadow:0 0 0 18px color-mix(in srgb,var(--violet) 3%,transparent),0 0 0 38px color-mix(in srgb,var(--mint) 2.5%,transparent)}
-.home-mascot-stage{position:relative;z-index:2;width:min(100%,310px);height:322px;display:flex;align-items:center;justify-content:center}
-.home-mascot{display:block;position:relative;z-index:2;width:256px;height:320px;max-width:86%;object-fit:contain;image-rendering:pixelated;image-rendering:crisp-edges;filter:drop-shadow(0 13px 22px color-mix(in srgb,var(--bg) 40%,transparent));cursor:pointer;outline-offset:6px}.home-mascot:focus-visible{outline:2px solid var(--mint);border-radius:4px}
-.home-mascot-bubble{position:absolute;z-index:4;top:24px;right:22px;display:grid;gap:3px;padding:10px 13px;border:1px solid color-mix(in srgb,var(--violet) 32%,var(--line));border-radius:13px 13px 4px 13px;background:color-mix(in srgb,var(--panel) 64%,transparent);-webkit-backdrop-filter:blur(15px) saturate(140%);backdrop-filter:blur(15px) saturate(140%);box-shadow:0 10px 28px color-mix(in srgb,var(--bg) 18%,transparent);animation:hkMascotBubble 5s ease-in-out infinite}
-.home-mascot-bubble span{font-size:7px;letter-spacing:.17em;color:var(--mint);font-weight:800}
-.home-mascot-bubble strong{font-size:12px;letter-spacing:-.02em;color:var(--text);white-space:nowrap}
-.home-mascot-tag{position:absolute;z-index:4;left:19px;bottom:17px;display:grid;gap:3px}
-.home-mascot-tag span{font-size:7px;letter-spacing:.2em;color:var(--muted)}
-.home-mascot-tag strong{font-size:10px;letter-spacing:.16em;color:var(--violet)}
-.home-mascot-star{position:absolute;z-index:3;color:var(--violet);text-shadow:0 0 16px color-mix(in srgb,var(--violet) 55%,transparent);animation:hkMascotTwinkle 3.8s ease-in-out infinite;pointer-events:none}
-.home-mascot-star.star-a{left:16%;top:26%;font-size:19px}
-.home-mascot-star.star-b{right:17%;bottom:25%;font-size:14px;color:var(--mint);animation-delay:-1.9s}
-@keyframes hkMascotBubble{0%,100%{translate:0 0}50%{translate:0 -5px}}
-@keyframes hkMascotTwinkle{0%,100%{opacity:.35;transform:scale(.86) rotate(-5deg)}50%{opacity:1;transform:scale(1.12) rotate(9deg)}}
+.home-visual-grid{position:absolute;inset:0;opacity:.45;background-image:linear-gradient(color-mix(in srgb,var(--violet) 8%,transparent) 1px,transparent 1px),linear-gradient(90deg,color-mix(in srgb,var(--violet) 8%,transparent) 1px,transparent 1px);background-size:22px 22px;mask-image:radial-gradient(ellipse at 50% 50%,#000,transparent 78%)}
+.home-visual-glow{position:absolute;left:50%;top:48%;width:205px;height:205px;border-radius:50%;background:radial-gradient(circle,color-mix(in srgb,var(--violet) 22%,transparent),color-mix(in srgb,var(--mint) 9%,transparent) 44%,transparent 72%);filter:blur(9px);transform:translate(-50%,-50%);animation:hkVisualBreathe 7s ease-in-out infinite}
+.home-visual-orbit{position:absolute;left:50%;top:47%;border:1px solid var(--visual-line);border-radius:50%;transform:translate(-50%,-50%);pointer-events:none}
+.home-visual-orbit.orbit-a{width:210px;height:210px;animation:hkVisualOrbit 22s linear infinite}
+.home-visual-orbit.orbit-b{width:268px;height:142px;transform:translate(-50%,-50%) rotate(-38deg);border-color:color-mix(in srgb,var(--mint) 28%,var(--line));animation:hkVisualOrbitReverse 27s linear infinite}
+.home-visual-orbit.orbit-c{width:164px;height:164px;border-style:dashed;border-color:color-mix(in srgb,var(--violet) 23%,transparent);animation:hkVisualOrbit 34s linear infinite}
+.home-visual-orbit i{position:absolute;left:50%;top:-4px;width:8px;height:8px;border-radius:50%;background:var(--mint);box-shadow:0 0 14px color-mix(in srgb,var(--mint) 70%,transparent)}
+.home-visual-orbit.orbit-b i{left:14%;top:50%;background:var(--violet);box-shadow:0 0 14px color-mix(in srgb,var(--violet) 70%,transparent)}
+.home-visual-core{
+  position:absolute;left:50%;top:47%;width:94px;height:94px;border:1px solid color-mix(in srgb,var(--violet) 48%,var(--line));
+  border-radius:28px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+  color:var(--text);background:linear-gradient(145deg,color-mix(in srgb,var(--panel) 74%,transparent),color-mix(in srgb,var(--panel2) 52%,transparent));
+  -webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);
+  box-shadow:0 0 42px color-mix(in srgb,var(--violet) 18%,transparent),inset 0 1px color-mix(in srgb,var(--text) 12%,transparent);
+  transform:translate(-50%,-50%) rotate(-7deg);animation:hkVisualCore 6s ease-in-out infinite
+}
+.home-visual-core span{font-family:Georgia,serif;font-size:42px;font-style:italic;line-height:.9;color:var(--violet);text-shadow:0 0 22px color-mix(in srgb,var(--violet) 35%,transparent)}
+.home-visual-core small{font-size:7px;letter-spacing:.16em;color:var(--muted)}
+.home-visual-card{
+  position:absolute;z-index:2;display:grid;gap:4px;min-width:0;padding:11px 13px;
+  border:1px solid color-mix(in srgb,var(--line) 56%,var(--violet) 44%);border-radius:13px;
+  background:color-mix(in srgb,var(--panel) 54%,transparent);color:var(--text);
+  -webkit-backdrop-filter:blur(16px) saturate(145%);backdrop-filter:blur(16px) saturate(145%);
+  box-shadow:0 12px 30px color-mix(in srgb,var(--bg) 25%,transparent);
+  animation:hkVisualFloat 7s ease-in-out infinite
+}
+.home-visual-card small{font-size:8px;letter-spacing:.16em;color:var(--mint);font-weight:800}
+.home-visual-card strong{font-size:12px;line-height:1.2;letter-spacing:-.02em}
+.home-visual-card span{font-size:8px;color:var(--muted);white-space:nowrap}
+.visual-card-anime{top:13%;right:4%;width:170px;transform:rotate(3deg)}
+.visual-card-manga{left:3%;bottom:15%;width:176px;border-color:color-mix(in srgb,var(--line) 56%,var(--mint) 44%);animation-delay:-3.2s;transform:rotate(-3deg)}
+.visual-card-manga small{color:var(--violet)}
+.home-visual-star{position:absolute;color:var(--violet);text-shadow:0 0 18px color-mix(in srgb,var(--violet) 62%,transparent);animation:hkVisualTwinkle 3.8s ease-in-out infinite}
+.star-one{left:18%;top:21%;font-size:20px}
+.star-two{right:19%;bottom:26%;font-size:15px;color:var(--mint);animation-delay:-1.7s}
+.home-visual-caption{position:absolute;left:15px;right:15px;bottom:10px;text-align:center;font-size:7px;letter-spacing:.2em;color:var(--muted);opacity:.8}
+@keyframes hkVisualOrbit{to{transform:translate(-50%,-50%) rotate(360deg)}}
+@keyframes hkVisualOrbitReverse{to{transform:translate(-50%,-50%) rotate(-398deg)}}
+@keyframes hkVisualBreathe{0%,100%{opacity:.62;transform:translate(-50%,-50%) scale(.92)}50%{opacity:1;transform:translate(-50%,-50%) scale(1.08)}}
+@keyframes hkVisualCore{0%,100%{transform:translate(-50%,-50%) rotate(-7deg)}50%{transform:translate(-50%,-53%) rotate(2deg)}}
+@keyframes hkVisualFloat{0%,100%{translate:0 0}50%{translate:0 -7px}}
+@keyframes hkVisualTwinkle{0%,100%{opacity:.42;transform:scale(.85) rotate(0)}50%{opacity:1;transform:scale(1.12) rotate(18deg)}}
 @media(max-width:760px){
   body[data-page="home"] .home-hero{grid-template-columns:minmax(0,1fr);gap:18px;margin:25px auto 26px;padding:20px;border-radius:20px}
   body[data-page="home"] .home-hero .hero-kicker{font-size:8px;line-height:1.55}
@@ -1393,77 +1420,26 @@ body[data-page="home"] .home-hero .hero-art,body[data-page="home"] .home-proof{d
   body[data-page="home"] .home-hero p{font-size:13px;line-height:1.65}
   body[data-page="home"] .home-hero-actions{gap:7px;margin-top:17px}
   body[data-page="home"] .home-hero-actions>*{flex:1;min-width:0;padding-inline:10px;font-size:11px}
-  .home-visual{min-height:270px;border-radius:17px}
-  .home-mascot-stage{height:258px}
-  .home-mascot{width:204px;height:255px;max-width:76%}
-  .home-mascot-halo{width:184px;height:184px;top:53%}
-  .home-mascot-bubble{top:13px;right:11px;padding:8px 10px}
-  .home-mascot-bubble span{font-size:6px}
-  .home-mascot-bubble strong{font-size:10px}
-  .home-mascot-tag{left:12px;bottom:12px}
-  .home-mascot-tag span{font-size:6px}
-  .home-mascot-tag strong{font-size:8px}
-  .home-mascot-star.star-a{left:8%;top:28%}
-  .home-mascot-star.star-b{right:8%;bottom:23%}
+  .home-visual{min-height:210px;border-radius:16px}
+  .home-visual-orbit.orbit-a{width:152px;height:152px}
+  .home-visual-orbit.orbit-b{width:205px;height:108px}
+  .home-visual-orbit.orbit-c{width:124px;height:124px}
+  .home-visual-glow{width:150px;height:150px}
+  .home-visual-core{width:70px;height:70px;border-radius:21px}
+  .home-visual-core span{font-size:32px}
+  .home-visual-core small{font-size:6px}
+  .home-visual-card{padding:8px 9px;border-radius:10px;width:145px}
+  .home-visual-card strong{font-size:10px}
+  .home-visual-card span{font-size:7px}
+  .visual-card-anime{top:8%;right:2%}
+  .visual-card-manga{left:2%;bottom:12%}
+  .home-visual-caption{font-size:6px;bottom:7px}
 }
-@media(prefers-reduced-motion:reduce){.home-mascot-bubble,.home-mascot-star{animation:none!important}}
-
-/* Hekomi-chan leaves her portrait and wanders the live viewport. */
-body[data-page="home"] .home-hero{grid-template-columns:minmax(0,1fr)}
-body[data-page="home"] .home-hero .hero-copy{max-width:780px}
-#hekomiCompanion{
-  position:fixed;left:0;top:0;width:160px;height:180px;z-index:66;
-  pointer-events:none;will-change:transform;contain:layout style;isolation:isolate;
-  transition:filter .25s ease;filter:drop-shadow(0 9px 13px color-mix(in srgb,var(--bg) 40%,transparent));
-}
-#hekomiCompanion canvas.home-mascot{
-  position:absolute;left:16px;top:10px;display:block;width:128px;height:160px;max-width:none;
-  image-rendering:pixelated;image-rendering:crisp-edges;object-fit:fill;cursor:pointer;
-  pointer-events:auto;transform-origin:50% 50%;outline-offset:5px;
-}
-#hekomiCompanion .home-mascot-bubble{
-  position:absolute;z-index:2;top:-38px;right:-24px;left:auto;display:grid;gap:3px;
-  width:max-content;max-width:194px;padding:9px 12px;
-  border:1px solid color-mix(in srgb,var(--violet) 33%,var(--line));
-  border-radius:13px 13px 4px 13px;
-  background:color-mix(in srgb,var(--panel) 76%,transparent);color:var(--text);
-  -webkit-backdrop-filter:blur(14px) saturate(140%);backdrop-filter:blur(14px) saturate(140%);
-  box-shadow:0 9px 24px color-mix(in srgb,var(--bg) 30%,transparent);
-  opacity:0;translate:0 5px;transition:opacity .2s ease,translate .2s ease;
-  pointer-events:none;animation:none;
-}
-#hekomiCompanion .home-mascot-bubble.is-visible{opacity:1;translate:0 0}
-#hekomiCompanion .home-mascot-bubble span{font-size:7px;letter-spacing:.15em;color:var(--mint);font-weight:800}
-#hekomiCompanion .home-mascot-bubble strong{font-size:11px;line-height:1.45;white-space:normal;color:var(--text)}
-#hekomiCompanion.face-left .home-mascot-bubble{left:-24px;right:auto;border-radius:13px 13px 13px 4px}
-#hekomiCompanion .hekomi-zzz{
-  position:absolute;right:3px;top:-10px;z-index:3;font-family:Georgia,serif;
-  font-size:16px;font-weight:700;letter-spacing:2px;color:var(--violet);
-  opacity:0;transform:translateY(6px) rotate(-8deg);transition:opacity .25s ease,transform .25s ease;
-  pointer-events:none;text-shadow:0 2px 12px color-mix(in srgb,var(--violet) 50%,transparent);
-}
-#hekomiCompanion.is-sleeping .hekomi-zzz{opacity:1;transform:translateY(0) rotate(-8deg);animation:hekomiZzz 2.2s ease-in-out infinite}
-#hekomiCompanion.is-sleeping canvas.home-mascot{transform:rotate(90deg)!important}
-#hekomiCompanion .home-mascot:focus-visible{outline:2px solid var(--mint);border-radius:4px}
-@keyframes hekomiZzz{0%,100%{translate:0 3px;opacity:.55}50%{translate:0 -7px;opacity:1}}
-@media(max-width:760px){
-  #hekomiCompanion{width:144px;height:164px}
-  #hekomiCompanion canvas.home-mascot{left:16px;top:8px;width:112px;height:140px}
-  #hekomiCompanion .home-mascot-bubble{max-width:164px;top:-34px;padding:8px 10px;right:-16px}
-  #hekomiCompanion.face-left .home-mascot-bubble{left:-16px;right:auto}
-  #hekomiCompanion .home-mascot-bubble span{font-size:6px}
-  #hekomiCompanion .home-mascot-bubble strong{font-size:10px}
-}
-@media(prefers-reduced-motion:reduce){
-  #hekomiCompanion,#hekomiCompanion *{transition:none!important;animation:none!important}
-  #hekomiCompanion canvas.home-mascot{transform:none!important}
-}
-
+@media(prefers-reduced-motion:reduce){.home-visual-glow,.home-visual-orbit,.home-visual-core,.home-visual-card,.home-visual-star{animation:none!important}}
 /* The Hekomi account dialog is a modal, never a page section at the bottom. */
 #hkAuthBackdrop{display:none}
 #hkAuthBackdrop.open{display:grid}
 </style>
-<script defer src="/assets/hekomi-chan.js"></script>
 </head>
 <body data-page="__HEKOMI_PAGE__">
 <div class="app-scroll-progress" aria-hidden="true"><span id="appScrollProgressBar"></span></div>
@@ -1492,16 +1468,18 @@ body[data-page="home"] .home-hero .hero-copy{max-width:780px}
             <button class="btn-secondary" type="button" id="homeChooseMode">Choose your space <span aria-hidden="true">↓</span></button>
           </div>
         </div>
-        <div class="home-visual" aria-label="Meet Hekomi-chan, the pixel-art mascot who lives in your Hekomi space.">
-          <div class="home-visual-grid" aria-hidden="true"></div>
-          <div class="home-mascot-halo" aria-hidden="true"></div>
-          <div class="home-mascot-bubble"><span>HEKOMI-CHAN / ONLINE</span><strong id="hekomiChanMessage" aria-live="polite">Oh, you're here!</strong></div>
-          <div class="home-mascot-stage">
-            <canvas class="home-mascot" id="hekomiChanCanvas" width="64" height="80" role="img" aria-label="Hekomi-chan, the pixel-art Hekomi mascot.">Hekomi-chan</canvas>
-          </div>
-          <div class="home-mascot-tag" aria-hidden="true"><span>YOUR PIXEL GUIDE</span><strong>HEKOMI-CHAN</strong></div>
-          <span class="home-mascot-star star-a" aria-hidden="true">✦</span>
-          <span class="home-mascot-star star-b" aria-hidden="true">✧</span>
+        <div class="home-visual" aria-hidden="true">
+          <div class="home-visual-grid"></div>
+          <div class="home-visual-glow"></div>
+          <div class="home-visual-orbit orbit-a"><i></i></div>
+          <div class="home-visual-orbit orbit-b"><i></i></div>
+          <div class="home-visual-orbit orbit-c"><i></i></div>
+          <div class="home-visual-core"><span>H</span><small>HEKOMI SIGNAL</small></div>
+          <div class="home-visual-card visual-card-anime"><small>01 / ANIME</small><strong>Keep the stories</strong><span>watch · score · remember</span></div>
+          <div class="home-visual-card visual-card-manga"><small>02 / MANGA</small><strong>Find the next page</strong><span>discover · read · collect</span></div>
+          <div class="home-visual-star star-one">✦</div>
+          <div class="home-visual-star star-two">✧</div>
+          <div class="home-visual-caption">YOUR LITTLE WORLDS / OPEN ALL HOURS</div>
         </div>
       </section>
       <section class="anime-showcase" id="animeShowcase" data-slide="0" aria-label="Featured anime-inspired carousel">
@@ -2738,7 +2716,94 @@ function showProfileTab(tab){activeProfileTab=tab;$$('#profileTabs button').forE
     const rows=localAnimeExportRows(),escapeHtml=value=>esc(value);
     const table=rows.map((x,i)=>'<tr><td>'+(i+1)+'</td><td>'+escapeHtml(x.title)+'</td><td>'+escapeHtml(x.status)+'</td><td>'+x.episodes+(x.total?' / '+x.total:'')+'</td><td>'+(x.score||'—')+'</td><td>'+(x.malId||'—')+'</td></tr>').join('');
     const win=window.open('','_blank');if(!win){notify('Allow pop-ups to create your PDF.');return;}
-    win.document.write('<!doctype html><html><head><meta charset="utf-8"><title>Hekomi Anime List</title><style>body{font:12px Arial,sans-serif;color:#20232a;padding:28px}h1{font-size:22px}p{color:#626875}table{width:100%;border-collapse:collapse;margin-top:20px}th,td{border:1px solid #d9dce2;padding:8px;text-align:left}th{background:#f0f1f4}tr{break-inside:avoid}@media print{body{padding:0}}</style></head><body><h1>Hekomi — My Local Anime List</h1><p>Exported '+escapeHtml(new Date().toLocaleString())+' · '+rows.length+' anime</p><table><thead><tr><th>#</th><th>Anime</th><th>Status</th><th>Episodes</th><th>Score</th><th>MAL ID</th></tr></thead><tbody>'+table+'</tbody></table><script>window.onload=()=>window.print()<\/script></body></html>');
+    win.document.write('<!doctype html><html><head><meta charset="utf-8"><title>Hekomi Anime List</title><style>body{font:12px Arial,sans-serif;color:#20232a;padding:28px}h1{font-size:22px}p{color:#626875}table{width:100%;border-collapse:collapse;margin-top:20px}th,td{border:1px solid #d9dce2;padding:8px;text-align:left}th{background:#f0f1f4}tr{break-inside:avoid}@media print{body{padding:0}}
+/* Hekomi mobile refinement — bottom dock, quieter spacing, no desktop squeeze. */
+@media(max-width:760px){
+  :root{--mobile-gutter:16px}
+  html{scroll-padding-top:12px}
+  body{overflow-x:hidden}
+  .app{padding:0 var(--mobile-gutter) calc(96px + env(safe-area-inset-bottom))}
+  .topbar{min-height:64px;height:auto;flex-wrap:nowrap;gap:10px;padding:8px 0 10px}
+  .brand{gap:8px;min-width:0}
+  .brand>div:last-child{font-size:14px}
+  .brand small{font-size:9px;letter-spacing:.01em}
+  .brandmark{width:36px!important;height:36px!important;flex-basis:36px!important}
+  .top-actions{gap:6px;flex:0 0 auto}
+  .top-actions .chip{display:none}
+  .top-actions .iconbtn{width:40px;height:40px;min-width:40px;border-radius:13px}
+  .top-actions #headerHome{display:none}
+  .primary-nav{
+    position:fixed;z-index:1000;left:12px;right:12px;bottom:calc(10px + env(safe-area-inset-bottom));
+    order:initial;flex:initial;width:auto;margin:0;padding:7px;
+    display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;
+    border:1px solid rgba(190,180,230,.17);border-radius:20px;
+    background:rgba(15,16,23,.92);-webkit-backdrop-filter:blur(22px) saturate(145%);backdrop-filter:blur(22px) saturate(145%);
+    box-shadow:0 12px 36px rgba(0,0,0,.42);overflow:visible
+  }
+  .primary-nav a{min-width:0;min-height:46px;padding:8px 4px;border-radius:13px;font-size:11px;letter-spacing:-.01em}
+  .primary-nav a[aria-current="page"]{background:linear-gradient(145deg,rgba(185,166,255,.18),rgba(139,225,207,.08));border-color:rgba(185,166,255,.22);color:#f2edff}
+  body[data-page="manga"] .primary-nav a[aria-current="page"]{background:rgba(139,225,207,.12);border-color:rgba(139,225,207,.22);color:#c2ffef}
+  .home-hero{grid-template-columns:minmax(0,1fr);gap:22px;margin:30px auto 30px}
+  .home-hero .hero-kicker{font-size:9px;line-height:1.55}
+  .home-hero .eyebrow{margin-top:22px}
+  .home-hero h1{font-size:clamp(42px,12vw,60px);line-height:.99;margin:12px 0 15px;letter-spacing:-.07em}
+  .home-hero p{font-size:15px;line-height:1.65;max-width:38ch}
+  .home-hero-actions{display:grid;grid-template-columns:1fr;gap:9px;margin-top:20px}
+  .home-hero-actions a,.home-hero-actions button{width:100%;min-height:48px}
+  .home-visual{min-height:245px;border-radius:20px}
+  .anime-showcase{min-height:450px;margin:0 auto 24px;border-radius:21px}
+  .showcase-copy{max-width:none;padding:24px 20px 0}
+  .showcase-copy h2{font-size:clamp(25px,7vw,36px);line-height:1.08}
+  .showcase-copy p{max-width:31ch;font-size:13px;line-height:1.55}
+  .showcase-art{position:absolute;inset:150px 0 25px;transform:scale(.78);transform-origin:center top;pointer-events:none}
+  .showcase-controls{bottom:12px}
+  .showcase-index{display:none}
+  .home-section-heading{align-items:flex-start;gap:8px;flex-direction:column;margin:26px 0 15px}
+  .home-section-heading h2{font-size:24px;line-height:1.15}
+  .home-section-heading p{font-size:13px}
+  .choice-grid{grid-template-columns:1fr;gap:11px;margin:18px auto}
+  .choice{min-height:0;padding:19px;border-radius:19px}
+  .choice h2{font-size:21px;margin:15px 0 6px}
+  .choice p{font-size:13px;line-height:1.6}
+  .choice-foot{margin-top:14px}
+  .workspace-head{gap:12px;margin:8px 0 16px}
+  .workspace-head h1{font-size:clamp(25px,7vw,30px);line-height:1.12}
+  .workspace-head p{font-size:13px;line-height:1.55}
+  .subnav{gap:3px;margin:0 -2px 16px;padding-bottom:1px}
+  .subnav button{min-height:44px;padding:10px 12px;font-size:12px}
+  .toolbar{gap:10px;margin:12px 0 15px}
+  .searchbox{min-height:46px;border-radius:14px}
+  .filterrow{gap:7px}
+  .filter{min-height:36px;padding:8px 12px}
+  .grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+  .card{border-radius:14px}
+  .cover{height:auto;aspect-ratio:2/3;max-height:270px}
+  .card-body{padding:10px}
+  .card-title{font-size:13px;line-height:1.35}
+  .card-sub{font-size:11px;margin-bottom:8px}
+  .panel{padding:15px;border-radius:16px}
+  .panel-head{gap:9px;flex-wrap:wrap}
+  .btn,.btn-secondary,.btn-primary,.btn-mint{min-height:42px}
+  .iconbtn{min-width:40px;min-height:40px}
+  .modal,.dialog{max-width:calc(100vw - 24px);max-height:calc(100dvh - 24px);overflow:auto}
+  img,video,canvas,svg{max-width:100%}
+}
+@media(max-width:390px){
+  .app{--mobile-gutter:13px}
+  .brand small{font-size:8px}
+  .top-actions{gap:4px}
+  .primary-nav{left:8px;right:8px;padding:6px}
+  .primary-nav a{font-size:10px}
+  .home-visual{min-height:220px}
+  .anime-showcase{min-height:420px}
+  .showcase-art{transform:scale(.68);transform-origin:center top}
+  .grid{gap:9px}
+}
+@media(prefers-reduced-motion:reduce){
+  .primary-nav a,.home-hero-actions a,.home-hero-actions button{transition:none!important}
+}
+
+</style></head><body><h1>Hekomi — My Local Anime List</h1><p>Exported '+escapeHtml(new Date().toLocaleString())+' · '+rows.length+' anime</p><table><thead><tr><th>#</th><th>Anime</th><th>Status</th><th>Episodes</th><th>Score</th><th>MAL ID</th></tr></thead><tbody>'+table+'</tbody></table><script>window.onload=()=>window.print()<\/script></body></html>');
     win.document.close();
   }
   async function importMalListToLocal(){
