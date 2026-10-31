@@ -4,24 +4,30 @@ on:
   push:
     branches: [main]
     paths:
-      - 'folio-app/**'
+      - 'server.mjs'
       - 'index.html'
+      - 'package.json'
+      - 'package-lock.json'
       - 'icon.svg'
       - 'manifest.webmanifest'
       - 'sw.js'
       - 'assets/**'
       - 'render.yaml'
+      - 'vercel.json'
       - '.github/workflows/validate-app.yml'
   pull_request:
     branches: [main]
     paths:
-      - 'folio-app/**'
+      - 'server.mjs'
       - 'index.html'
+      - 'package.json'
+      - 'package-lock.json'
       - 'icon.svg'
       - 'manifest.webmanifest'
       - 'sw.js'
       - 'assets/**'
       - 'render.yaml'
+      - 'vercel.json'
       - '.github/workflows/validate-app.yml'
   workflow_dispatch:
 
@@ -38,38 +44,42 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Install server dependencies
+        run: npm install --no-audit --no-fund
       - name: Check backend syntax
-        run: node --check folio-app/server.mjs
+        run: node --check server.mjs
       - name: Check browser JavaScript syntax and required UI hooks
         shell: bash
         run: |
           node --input-type=module <<'NODE'
           import fs from 'node:fs/promises';
-          const html = await fs.readFile('folio-app/index.html', 'utf8');
-          const start = html.indexOf('<script>');
-          const end = html.lastIndexOf('</script>');
-          if (start < 0 || end <= start) throw new Error('No inline script found in Hekomi HTML.');
-          await fs.writeFile('/tmp/hekomi-inline-check.js', html.slice(start + 8, end));
-          for (const required of ['MAL Client', 'Manga Crawler', 'animeCatalogGrid', 'mangaCatalogGrid', 'airingCatalogGrid', 'showcaseAddButton', 'og:image', 'application/ld+json']) {
+          const html = await fs.readFile('index.html', 'utf8');
+          const scripts = [...html.matchAll(/<script\\b([^>]*)>([\\s\\S]*?)<\\/script>/gi)];
+          const appScripts = scripts.filter(match => !/application\\/(?:ld\\+json|json)/i.test(match[1]));
+          if (!appScripts.length) throw new Error('No inline application script found in Hekomi HTML.');
+          for (const script of appScripts) new Function(script[2]);
+          for (const required of ['MAL Client', 'Manga Library', 'animeCatalogGrid', 'mangaCatalogGrid', 'airingCatalogGrid', 'showcaseAddButton', 'og:image', 'application/ld+json', 'catalogDiscoverButton', 'filterGenre']) {
             if (!html.includes(required)) throw new Error('Required Hekomi UI/SEO hook is missing: ' + required);
           }
-          const lines = html.split('\n').map(line => line.trimStart());
+          const lines = html.split('\\n').map(line => line.trimStart());
           const goodThemeListener = lines.some(line => line.startsWith("$$('#modalRoot [data-theme-choice]').forEach"));
           const brokenThemeListener = lines.some(line => line.startsWith("$('#modalRoot [data-theme-choice]').forEach"));
           if (!goodThemeListener || brokenThemeListener) throw new Error('Appearance choices must bind each theme option using the all-match selector.');
           NODE
-          node --check /tmp/hekomi-inline-check.js
       - name: Smoke test server
         shell: bash
         run: |
-          PORT=4173 node folio-app/server.mjs > /tmp/hekomi-server.log 2>&1 &
+          PORT=4173 npm start > /tmp/hekomi-server.log 2>&1 &
           PID=$!
           trap 'kill "$PID" 2>/dev/null || true' EXIT
           for i in $(seq 1 30); do
             if curl -fsS http://127.0.0.1:4173/api/health >/tmp/hekomi-health.json; then break; fi
             sleep 1
           done
-          grep -q '"ok":true' /tmp/hekomi-health.json
+          if ! grep -q '"ok":true' /tmp/hekomi-health.json; then
+            cat /tmp/hekomi-server.log
+            exit 1
+          fi
           curl -fsS http://127.0.0.1:4173/api/mal/auth/status | grep -q '"configured":false'
           curl -fsS http://127.0.0.1:4173/ >/tmp/hekomi-home.html
           grep -q 'Hekomi' /tmp/hekomi-home.html
