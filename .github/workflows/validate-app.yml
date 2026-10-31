@@ -59,7 +59,7 @@ jobs:
           const appScripts = scripts.filter(match => !/application\/(?:ld\+json|json)/i.test(match[1]));
           if (!appScripts.length) throw new Error('No inline application script found in Hekomi HTML.');
           for (const script of appScripts) new Function(script[2]);
-          for (const required of ['MAL Client', 'Manga Library', 'animeCatalogGrid', 'mangaCatalogGrid', 'airingCatalogGrid', 'showcaseAddButton', 'og:image', 'application/ld+json', 'catalogDiscoverButton', 'filterGenre', 'function editLocalAnime', 'animeListCardMarkup', 'anime-list-grid', 'genreTransitionTheme', 'data-genre-transition', 'data-transition-image', 'hk-transition-poster', 'HEKOMI / YOUR PERSONAL ANIME &amp; MANGA SPACE', 'Choose what you\'re here for.', '--hk-accent-ink', 'genreSoundToggle']) {
+          for (const required of ['MAL Client', 'Manga Library', 'animeCatalogGrid', 'mangaCatalogGrid', 'airingCatalogGrid', 'showcaseAddButton', 'og:image', 'application/ld+json', 'catalogDiscoverButton', 'filterGenre', 'function editLocalAnime', 'animeListCardMarkup', 'anime-list-grid', 'genreTransitionTheme', 'data-genre-transition', 'data-transition-image', 'hk-transition-poster', 'HEKOMI / YOUR PERSONAL ANIME &amp; MANGA SPACE', 'Choose what you\'re here for.', '--hk-accent-ink', '.home-visual', 'hkVisualOrbit', 'backdrop-filter:blur(22px) saturate(150%)', '#hkAuthBackdrop{display:none}', 'genreSoundToggle']) {
             if (!html.includes(required)) throw new Error('Required Hekomi UI/SEO hook is missing: ' + required);
           }
           for (const required of ['detail-art-backdrop', 'data-detail-genre', 'detailVisualStyles']) {
