@@ -58,7 +58,7 @@ jobs:
           const appScripts = scripts.filter(match => !/application\/(?:ld\+json|json)/i.test(match[1]));
           if (!appScripts.length) throw new Error('No inline application script found in Hekomi HTML.');
           for (const script of appScripts) new Function(script[2]);
-          for (const required of ['MAL Client', 'Manga Library', 'animeCatalogGrid', 'mangaCatalogGrid', 'airingCatalogGrid', 'showcaseAddButton', 'og:image', 'application/ld+json', 'catalogDiscoverButton', 'filterGenre', 'function editLocalAnime', 'animeListCardMarkup', 'anime-list-grid']) {
+          for (const required of ['MAL Client', 'Manga Library', 'animeCatalogGrid', 'mangaCatalogGrid', 'airingCatalogGrid', 'showcaseAddButton', 'og:image', 'application/ld+json', 'catalogDiscoverButton', 'filterGenre', 'function editLocalAnime', 'animeListCardMarkup', 'anime-list-grid', 'genreTransitionTheme', 'data-genre-transition', 'genreSoundToggle']) {
             if (!html.includes(required)) throw new Error('Required Hekomi UI/SEO hook is missing: ' + required);
           }
           const lines = html.split('\n').map(line => line.trimStart());
