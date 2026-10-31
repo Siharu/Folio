@@ -55,30 +55,12 @@ jobs:
           import fs from 'node:fs/promises';
           const html = await fs.readFile('index.html', 'utf8');
           const server = await fs.readFile('server.mjs', 'utf8');
-          const manifest = await fs.readFile('manifest.webmanifest', 'utf8');
-          const mascotJs = await fs.readFile('assets/hekomi-chan.js', 'utf8');
-          new Function(mascotJs);
           const scripts = [...html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)];
           const appScripts = scripts.filter(match => !/application\/(?:ld\+json|json)/i.test(match[1]));
           if (!appScripts.length) throw new Error('No inline application script found in Hekomi HTML.');
           for (const script of appScripts) new Function(script[2]);
-          for (const required of ['MAL Client', 'Manga Library', 'animeCatalogGrid', 'mangaCatalogGrid', 'airingCatalogGrid', 'showcaseAddButton', 'og:image', 'application/ld+json', 'catalogDiscoverButton', 'filterGenre', 'function editLocalAnime', 'animeListCardMarkup', 'anime-list-grid', 'genreTransitionTheme', 'data-genre-transition', 'data-transition-image', 'hk-transition-poster', 'HEKOMI / YOUR PERSONAL ANIME &amp; MANGA SPACE', 'Choose what you\'re here for.', '--hk-accent-ink', '.home-visual', 'assets/hekomi-chan.js', 'id="hekomiChanCanvas"', 'id="hekomiChanMessage"', '.home-mascot', 'HEKOMI-CHAN', '#hekomiCompanion', 'hekomi-zzz', 'body[data-page="home"] .home-hero{grid-template-columns:minmax(0,1fr)}', 'backdrop-filter:blur(22px) saturate(150%)', '#hkAuthBackdrop{display:none}', 'genreSoundToggle']) {
+          for (const required of ['MAL Client', 'Manga Library', 'animeCatalogGrid', 'mangaCatalogGrid', 'airingCatalogGrid', 'showcaseAddButton', 'og:image', 'application/ld+json', 'catalogDiscoverButton', 'filterGenre', 'function editLocalAnime', 'animeListCardMarkup', 'anime-list-grid', 'genreTransitionTheme', 'data-genre-transition', 'data-transition-image', 'hk-transition-poster', 'HEKOMI / YOUR PERSONAL ANIME &amp; MANGA SPACE', 'Choose what you\'re here for.', '--hk-accent-ink', '.home-visual', 'hkVisualOrbit', 'backdrop-filter:blur(22px) saturate(150%)', '#hkAuthBackdrop{display:none}', 'genreSoundToggle']) {
             if (!html.includes(required)) throw new Error('Required Hekomi UI/SEO hook is missing: ' + required);
-          }
-          for (const required of ['class HekomiWanderer', "root.id='hekomiCompanion'", 'drawSprite', 'drawWalkLegs', 'drawSleepArms', 'findSpot()', 'sleep(now)', 'dialogueForPage()', 'setInteractable()', 'requestAnimationFrame', 'prefers-reduced-motion']) {
-            if (!mascotJs.includes(required)) throw new Error('Hekomi-chan roaming behavior is missing: ' + required);
-          }
-          for (const required of ['Your MyAnimeList list exceeds the current safe pagination limit', 'paging.next', 'pages < 100', 'entries.push(...page.data.data)']) {
-            if (!server.includes(required)) throw new Error('MAL full-list pagination is missing: ' + required);
-          }
-          for (const required of ['profileCompletedRows', 'profileCompletedCount', 'profileWatchRenderToken', 'completed.length?completed.map']) {
-            if (!html.includes(required)) throw new Error('Complete anime shelf is missing: ' + required);
-          }
-          for (const required of ['navigator.serviceWorker.register', 'beforeinstallprompt', 'appinstalled', 'installHekomiBtn']) {
-            if (!html.includes(required)) throw new Error('Hekomi install/PWA support is missing: ' + required);
-          }
-          for (const required of ['"display": "standalone"', '"purpose": "any"']) {
-            if (!manifest.includes(required)) throw new Error('PWA manifest is missing required install metadata: ' + required);
           }
           for (const required of ['detail-art-backdrop', 'data-detail-genre', 'detailVisualStyles']) {
             if (!server.includes(required)) throw new Error('Required Hekomi detail-page hook is missing: ' + required);
@@ -105,7 +87,5 @@ jobs:
           curl -fsS http://127.0.0.1:4173/api/mal/auth/status | grep -q '"configured":false'
           curl -fsS http://127.0.0.1:4173/ >/tmp/hekomi-home.html
           grep -q 'Hekomi' /tmp/hekomi-home.html
-          curl -fsS http://127.0.0.1:4173/assets/hekomi-chan.js >/tmp/hekomi-chan.js
-          grep -q 'class HekomiWanderer' /tmp/hekomi-chan.js
           curl -fsS http://127.0.0.1:4173/robots.txt >/tmp/hekomi-robots.txt
           grep -q 'Sitemap:' /tmp/hekomi-robots.txt

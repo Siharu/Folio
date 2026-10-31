@@ -489,16 +489,6 @@ h1,h2,h3,.workspace-head h1,.catalog-heading h2,.showcase-copy h2{font-family:va
 .profile-airing-countdown{color:var(--mint);font-weight:750;white-space:nowrap}
 .profile-table-empty{text-align:center!important;color:var(--muted)!important;padding:22px!important}
 .profile-airing-footnote{font-size:10px;color:#818999;margin:12px 0 0;line-height:1.5}
-@media(max-width:650px){
-.profile-table-wrap{overflow:visible}.profile-airing-table{min-width:0;display:block;font-size:12px}
-.profile-airing-table thead{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
-.profile-airing-table tbody{display:grid;gap:9px}
-.profile-airing-table tbody tr{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0 8px;padding:9px;border:1px solid var(--line);border-radius:13px;background:color-mix(in srgb,var(--panel2) 72%,transparent)}
-.profile-airing-table tbody td{min-width:0;padding:7px 5px;border:0;font-size:11px;overflow-wrap:anywhere}
-.profile-airing-table tbody td:first-child{grid-column:1/-1}.profile-airing-title{min-width:0}
-.profile-airing-title strong{max-width:none;font-size:12px}.profile-airing-cover{width:44px;height:58px}
-.profile-progress{min-width:0}.profile-table-empty{grid-column:1/-1!important}
-}
 @media(max-width:760px){.profile-watch-panel{padding:14px}.profile-watch-panel .panel-head{align-items:flex-start}.profile-airing-table{min-width:560px}}
 /* Taste-based anime recommendations */
 .profile-recommend-panel{margin:0 0 15px;min-width:0}
@@ -1365,35 +1355,62 @@ body[data-page="home"] .home-hero p{max-width:510px;margin:0;color:var(--muted);
 body[data-page="home"] .home-hero-actions{display:flex;flex-wrap:wrap;gap:9px;margin-top:21px}
 body[data-page="home"] .home-hero-actions a,body[data-page="home"] .home-hero-actions button{min-height:42px;text-decoration:none}
 body[data-page="home"] .home-hero .hero-art,body[data-page="home"] .home-proof{display:none}
-/* Hekomi-chan: the little pixel guide in the glass. */
+/* Animated signal sculpture: subtle enough to sit beside the headline, alive enough to fill the space. */
 .home-visual{
-  --visual-line:color-mix(in srgb,var(--violet) 26%,var(--line));
-  position:relative;z-index:1;isolation:isolate;min-width:0;min-height:340px;overflow:hidden;
-  display:grid;place-items:center;border:1px solid color-mix(in srgb,var(--line) 58%,var(--violet) 42%);
-  border-radius:24px;
+  --visual-line:color-mix(in srgb,var(--violet) 28%,var(--line));
+  position:relative;z-index:1;isolation:isolate;min-width:0;min-height:300px;overflow:hidden;
+  border:1px solid color-mix(in srgb,var(--line) 60%,var(--violet) 40%);
+  border-radius:22px;
   background:
-    radial-gradient(ellipse at 50% 69%,color-mix(in srgb,var(--mint) 15%,transparent),transparent 46%),
-    radial-gradient(ellipse at 48% 31%,color-mix(in srgb,var(--violet) 18%,transparent),transparent 48%),
-    color-mix(in srgb,var(--panel) 34%,transparent);
-  -webkit-backdrop-filter:blur(20px) saturate(145%);backdrop-filter:blur(20px) saturate(145%);
-  box-shadow:inset 0 1px color-mix(in srgb,var(--text) 8%,transparent),0 18px 42px color-mix(in srgb,var(--bg) 24%,transparent)
+    radial-gradient(ellipse at 50% 46%,color-mix(in srgb,var(--violet) 15%,transparent),transparent 42%),
+    radial-gradient(ellipse at 85% 88%,color-mix(in srgb,var(--mint) 12%,transparent),transparent 45%),
+    color-mix(in srgb,var(--panel) 36%,transparent);
+  -webkit-backdrop-filter:blur(18px) saturate(135%);
+  backdrop-filter:blur(18px) saturate(135%);
+  box-shadow:inset 0 1px color-mix(in srgb,var(--text) 7%,transparent),0 18px 42px color-mix(in srgb,var(--bg) 22%,transparent)
 }
-.home-visual-grid{position:absolute;inset:0;z-index:-1;opacity:.3;background-image:linear-gradient(color-mix(in srgb,var(--violet) 8%,transparent) 1px,transparent 1px),linear-gradient(90deg,color-mix(in srgb,var(--violet) 8%,transparent) 1px,transparent 1px);background-size:22px 22px;mask-image:radial-gradient(ellipse at 50% 55%,#000,transparent 78%)}
-.home-visual:after{content:"";position:absolute;left:50%;top:55%;z-index:-1;width:220px;height:220px;border-radius:50%;background:radial-gradient(circle,color-mix(in srgb,var(--violet) 15%,transparent),color-mix(in srgb,var(--mint) 8%,transparent) 48%,transparent 72%);filter:blur(10px);transform:translate(-50%,-50%)}
-.home-mascot-halo{position:absolute;left:50%;top:52%;width:228px;height:228px;border:1px solid color-mix(in srgb,var(--violet) 22%,transparent);border-radius:50%;transform:translate(-50%,-50%);box-shadow:0 0 0 18px color-mix(in srgb,var(--violet) 3%,transparent),0 0 0 38px color-mix(in srgb,var(--mint) 2.5%,transparent)}
-.home-mascot-stage{position:relative;z-index:2;width:min(100%,310px);height:322px;display:flex;align-items:center;justify-content:center}
-.home-mascot{display:block;position:relative;z-index:2;width:256px;height:320px;max-width:86%;object-fit:contain;image-rendering:pixelated;image-rendering:crisp-edges;filter:drop-shadow(0 13px 22px color-mix(in srgb,var(--bg) 40%,transparent));cursor:pointer;outline-offset:6px}.home-mascot:focus-visible{outline:2px solid var(--mint);border-radius:4px}
-.home-mascot-bubble{position:absolute;z-index:4;top:24px;right:22px;display:grid;gap:3px;padding:10px 13px;border:1px solid color-mix(in srgb,var(--violet) 32%,var(--line));border-radius:13px 13px 4px 13px;background:color-mix(in srgb,var(--panel) 64%,transparent);-webkit-backdrop-filter:blur(15px) saturate(140%);backdrop-filter:blur(15px) saturate(140%);box-shadow:0 10px 28px color-mix(in srgb,var(--bg) 18%,transparent);animation:hkMascotBubble 5s ease-in-out infinite}
-.home-mascot-bubble span{font-size:7px;letter-spacing:.17em;color:var(--mint);font-weight:800}
-.home-mascot-bubble strong{font-size:12px;letter-spacing:-.02em;color:var(--text);white-space:nowrap}
-.home-mascot-tag{position:absolute;z-index:4;left:19px;bottom:17px;display:grid;gap:3px}
-.home-mascot-tag span{font-size:7px;letter-spacing:.2em;color:var(--muted)}
-.home-mascot-tag strong{font-size:10px;letter-spacing:.16em;color:var(--violet)}
-.home-mascot-star{position:absolute;z-index:3;color:var(--violet);text-shadow:0 0 16px color-mix(in srgb,var(--violet) 55%,transparent);animation:hkMascotTwinkle 3.8s ease-in-out infinite;pointer-events:none}
-.home-mascot-star.star-a{left:16%;top:26%;font-size:19px}
-.home-mascot-star.star-b{right:17%;bottom:25%;font-size:14px;color:var(--mint);animation-delay:-1.9s}
-@keyframes hkMascotBubble{0%,100%{translate:0 0}50%{translate:0 -5px}}
-@keyframes hkMascotTwinkle{0%,100%{opacity:.35;transform:scale(.86) rotate(-5deg)}50%{opacity:1;transform:scale(1.12) rotate(9deg)}}
+.home-visual-grid{position:absolute;inset:0;opacity:.45;background-image:linear-gradient(color-mix(in srgb,var(--violet) 8%,transparent) 1px,transparent 1px),linear-gradient(90deg,color-mix(in srgb,var(--violet) 8%,transparent) 1px,transparent 1px);background-size:22px 22px;mask-image:radial-gradient(ellipse at 50% 50%,#000,transparent 78%)}
+.home-visual-glow{position:absolute;left:50%;top:48%;width:205px;height:205px;border-radius:50%;background:radial-gradient(circle,color-mix(in srgb,var(--violet) 22%,transparent),color-mix(in srgb,var(--mint) 9%,transparent) 44%,transparent 72%);filter:blur(9px);transform:translate(-50%,-50%);animation:hkVisualBreathe 7s ease-in-out infinite}
+.home-visual-orbit{position:absolute;left:50%;top:47%;border:1px solid var(--visual-line);border-radius:50%;transform:translate(-50%,-50%);pointer-events:none}
+.home-visual-orbit.orbit-a{width:210px;height:210px;animation:hkVisualOrbit 22s linear infinite}
+.home-visual-orbit.orbit-b{width:268px;height:142px;transform:translate(-50%,-50%) rotate(-38deg);border-color:color-mix(in srgb,var(--mint) 28%,var(--line));animation:hkVisualOrbitReverse 27s linear infinite}
+.home-visual-orbit.orbit-c{width:164px;height:164px;border-style:dashed;border-color:color-mix(in srgb,var(--violet) 23%,transparent);animation:hkVisualOrbit 34s linear infinite}
+.home-visual-orbit i{position:absolute;left:50%;top:-4px;width:8px;height:8px;border-radius:50%;background:var(--mint);box-shadow:0 0 14px color-mix(in srgb,var(--mint) 70%,transparent)}
+.home-visual-orbit.orbit-b i{left:14%;top:50%;background:var(--violet);box-shadow:0 0 14px color-mix(in srgb,var(--violet) 70%,transparent)}
+.home-visual-core{
+  position:absolute;left:50%;top:47%;width:94px;height:94px;border:1px solid color-mix(in srgb,var(--violet) 48%,var(--line));
+  border-radius:28px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+  color:var(--text);background:linear-gradient(145deg,color-mix(in srgb,var(--panel) 74%,transparent),color-mix(in srgb,var(--panel2) 52%,transparent));
+  -webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);
+  box-shadow:0 0 42px color-mix(in srgb,var(--violet) 18%,transparent),inset 0 1px color-mix(in srgb,var(--text) 12%,transparent);
+  transform:translate(-50%,-50%) rotate(-7deg);animation:hkVisualCore 6s ease-in-out infinite
+}
+.home-visual-core span{font-family:Georgia,serif;font-size:42px;font-style:italic;line-height:.9;color:var(--violet);text-shadow:0 0 22px color-mix(in srgb,var(--violet) 35%,transparent)}
+.home-visual-core small{font-size:7px;letter-spacing:.16em;color:var(--muted)}
+.home-visual-card{
+  position:absolute;z-index:2;display:grid;gap:4px;min-width:0;padding:11px 13px;
+  border:1px solid color-mix(in srgb,var(--line) 56%,var(--violet) 44%);border-radius:13px;
+  background:color-mix(in srgb,var(--panel) 54%,transparent);color:var(--text);
+  -webkit-backdrop-filter:blur(16px) saturate(145%);backdrop-filter:blur(16px) saturate(145%);
+  box-shadow:0 12px 30px color-mix(in srgb,var(--bg) 25%,transparent);
+  animation:hkVisualFloat 7s ease-in-out infinite
+}
+.home-visual-card small{font-size:8px;letter-spacing:.16em;color:var(--mint);font-weight:800}
+.home-visual-card strong{font-size:12px;line-height:1.2;letter-spacing:-.02em}
+.home-visual-card span{font-size:8px;color:var(--muted);white-space:nowrap}
+.visual-card-anime{top:13%;right:4%;width:170px;transform:rotate(3deg)}
+.visual-card-manga{left:3%;bottom:15%;width:176px;border-color:color-mix(in srgb,var(--line) 56%,var(--mint) 44%);animation-delay:-3.2s;transform:rotate(-3deg)}
+.visual-card-manga small{color:var(--violet)}
+.home-visual-star{position:absolute;color:var(--violet);text-shadow:0 0 18px color-mix(in srgb,var(--violet) 62%,transparent);animation:hkVisualTwinkle 3.8s ease-in-out infinite}
+.star-one{left:18%;top:21%;font-size:20px}
+.star-two{right:19%;bottom:26%;font-size:15px;color:var(--mint);animation-delay:-1.7s}
+.home-visual-caption{position:absolute;left:15px;right:15px;bottom:10px;text-align:center;font-size:7px;letter-spacing:.2em;color:var(--muted);opacity:.8}
+@keyframes hkVisualOrbit{to{transform:translate(-50%,-50%) rotate(360deg)}}
+@keyframes hkVisualOrbitReverse{to{transform:translate(-50%,-50%) rotate(-398deg)}}
+@keyframes hkVisualBreathe{0%,100%{opacity:.62;transform:translate(-50%,-50%) scale(.92)}50%{opacity:1;transform:translate(-50%,-50%) scale(1.08)}}
+@keyframes hkVisualCore{0%,100%{transform:translate(-50%,-50%) rotate(-7deg)}50%{transform:translate(-50%,-53%) rotate(2deg)}}
+@keyframes hkVisualFloat{0%,100%{translate:0 0}50%{translate:0 -7px}}
+@keyframes hkVisualTwinkle{0%,100%{opacity:.42;transform:scale(.85) rotate(0)}50%{opacity:1;transform:scale(1.12) rotate(18deg)}}
 @media(max-width:760px){
   body[data-page="home"] .home-hero{grid-template-columns:minmax(0,1fr);gap:18px;margin:25px auto 26px;padding:20px;border-radius:20px}
   body[data-page="home"] .home-hero .hero-kicker{font-size:8px;line-height:1.55}
@@ -1403,77 +1420,26 @@ body[data-page="home"] .home-hero .hero-art,body[data-page="home"] .home-proof{d
   body[data-page="home"] .home-hero p{font-size:13px;line-height:1.65}
   body[data-page="home"] .home-hero-actions{gap:7px;margin-top:17px}
   body[data-page="home"] .home-hero-actions>*{flex:1;min-width:0;padding-inline:10px;font-size:11px}
-  .home-visual{min-height:270px;border-radius:17px}
-  .home-mascot-stage{height:258px}
-  .home-mascot{width:204px;height:255px;max-width:76%}
-  .home-mascot-halo{width:184px;height:184px;top:53%}
-  .home-mascot-bubble{top:13px;right:11px;padding:8px 10px}
-  .home-mascot-bubble span{font-size:6px}
-  .home-mascot-bubble strong{font-size:10px}
-  .home-mascot-tag{left:12px;bottom:12px}
-  .home-mascot-tag span{font-size:6px}
-  .home-mascot-tag strong{font-size:8px}
-  .home-mascot-star.star-a{left:8%;top:28%}
-  .home-mascot-star.star-b{right:8%;bottom:23%}
+  .home-visual{min-height:210px;border-radius:16px}
+  .home-visual-orbit.orbit-a{width:152px;height:152px}
+  .home-visual-orbit.orbit-b{width:205px;height:108px}
+  .home-visual-orbit.orbit-c{width:124px;height:124px}
+  .home-visual-glow{width:150px;height:150px}
+  .home-visual-core{width:70px;height:70px;border-radius:21px}
+  .home-visual-core span{font-size:32px}
+  .home-visual-core small{font-size:6px}
+  .home-visual-card{padding:8px 9px;border-radius:10px;width:145px}
+  .home-visual-card strong{font-size:10px}
+  .home-visual-card span{font-size:7px}
+  .visual-card-anime{top:8%;right:2%}
+  .visual-card-manga{left:2%;bottom:12%}
+  .home-visual-caption{font-size:6px;bottom:7px}
 }
-@media(prefers-reduced-motion:reduce){.home-mascot-bubble,.home-mascot-star{animation:none!important}}
-
-/* Hekomi-chan leaves her portrait and wanders the live viewport. */
-body[data-page="home"] .home-hero{grid-template-columns:minmax(0,1fr)}
-body[data-page="home"] .home-hero .hero-copy{max-width:780px}
-#hekomiCompanion{
-  position:fixed;left:0;top:0;width:160px;height:180px;z-index:66;
-  pointer-events:none;will-change:transform;contain:layout style;isolation:isolate;
-  transition:filter .25s ease;filter:drop-shadow(0 9px 13px color-mix(in srgb,var(--bg) 40%,transparent));
-}
-#hekomiCompanion canvas.home-mascot{
-  position:absolute;left:16px;top:10px;display:block;width:128px;height:160px;max-width:none;
-  image-rendering:pixelated;image-rendering:crisp-edges;object-fit:fill;cursor:pointer;
-  pointer-events:auto;transform-origin:50% 50%;outline-offset:5px;
-}
-#hekomiCompanion .home-mascot-bubble{
-  position:absolute;z-index:2;top:-38px;right:-24px;left:auto;display:grid;gap:3px;
-  width:max-content;max-width:194px;padding:9px 12px;
-  border:1px solid color-mix(in srgb,var(--violet) 33%,var(--line));
-  border-radius:13px 13px 4px 13px;
-  background:color-mix(in srgb,var(--panel) 76%,transparent);color:var(--text);
-  -webkit-backdrop-filter:blur(14px) saturate(140%);backdrop-filter:blur(14px) saturate(140%);
-  box-shadow:0 9px 24px color-mix(in srgb,var(--bg) 30%,transparent);
-  opacity:0;translate:0 5px;transition:opacity .2s ease,translate .2s ease;
-  pointer-events:none;animation:none;
-}
-#hekomiCompanion .home-mascot-bubble.is-visible{opacity:1;translate:0 0}
-#hekomiCompanion .home-mascot-bubble span{font-size:7px;letter-spacing:.15em;color:var(--mint);font-weight:800}
-#hekomiCompanion .home-mascot-bubble strong{font-size:11px;line-height:1.45;white-space:normal;color:var(--text)}
-#hekomiCompanion.face-left .home-mascot-bubble{left:-24px;right:auto;border-radius:13px 13px 13px 4px}
-#hekomiCompanion .hekomi-zzz{
-  position:absolute;right:3px;top:-10px;z-index:3;font-family:Georgia,serif;
-  font-size:16px;font-weight:700;letter-spacing:2px;color:var(--violet);
-  opacity:0;transform:translateY(6px) rotate(-8deg);transition:opacity .25s ease,transform .25s ease;
-  pointer-events:none;text-shadow:0 2px 12px color-mix(in srgb,var(--violet) 50%,transparent);
-}
-#hekomiCompanion.is-sleeping .hekomi-zzz{opacity:1;transform:translateY(0) rotate(-8deg);animation:hekomiZzz 2.2s ease-in-out infinite}
-#hekomiCompanion.is-sleeping canvas.home-mascot{transform:rotate(90deg)!important}
-#hekomiCompanion .home-mascot:focus-visible{outline:2px solid var(--mint);border-radius:4px}
-@keyframes hekomiZzz{0%,100%{translate:0 3px;opacity:.55}50%{translate:0 -7px;opacity:1}}
-@media(max-width:760px){
-  #hekomiCompanion{width:144px;height:164px}
-  #hekomiCompanion canvas.home-mascot{left:16px;top:8px;width:112px;height:140px}
-  #hekomiCompanion .home-mascot-bubble{max-width:164px;top:-34px;padding:8px 10px;right:-16px}
-  #hekomiCompanion.face-left .home-mascot-bubble{left:-16px;right:auto}
-  #hekomiCompanion .home-mascot-bubble span{font-size:6px}
-  #hekomiCompanion .home-mascot-bubble strong{font-size:10px}
-}
-@media(prefers-reduced-motion:reduce){
-  #hekomiCompanion,#hekomiCompanion *{transition:none!important;animation:none!important}
-  #hekomiCompanion canvas.home-mascot{transform:none!important}
-}
-
+@media(prefers-reduced-motion:reduce){.home-visual-glow,.home-visual-orbit,.home-visual-core,.home-visual-card,.home-visual-star{animation:none!important}}
 /* The Hekomi account dialog is a modal, never a page section at the bottom. */
 #hkAuthBackdrop{display:none}
 #hkAuthBackdrop.open{display:grid}
 </style>
-<script defer src="/assets/hekomi-chan.js"></script>
 </head>
 <body data-page="__HEKOMI_PAGE__">
 <div class="app-scroll-progress" aria-hidden="true"><span id="appScrollProgressBar"></span></div>
@@ -1487,7 +1453,7 @@ body[data-page="home"] .home-hero .hero-copy{max-width:780px}
       <img class="brandmark-layer mark-manga" src="/assets/hekomi-manga-mark.svg" alt="" width="42" height="42" decoding="async">
     </div><div>Hekomi<small>ANIME · MANGA · AFTER HOURS</small></div></div>
     <nav class="primary-nav" aria-label="Main navigation"><a href="/" data-route-link="home">Home</a><a href="/discover" data-route-link="discover">Discover</a><a href="/anime" data-route-link="mal">Anime</a><a href="/manga" data-route-link="manga">Manga</a></nav>
-    <div class="top-actions"><button class="iconbtn hidden" id="installHekomiBtn" type="button" aria-label="Install Hekomi" title="Install Hekomi"><span aria-hidden="true">⇩</span></button><span class="chip">LOCAL-FIRST · PERSONAL</span><button class="iconbtn" id="profileBtn" aria-label="Your profile" title="Your profile">◎</button><button class="iconbtn" id="themeSettingsBtn" aria-label="Appearance settings" title="Appearance settings">◐</button><button class="iconbtn" id="headerHome" aria-label="Home" title="Switch mode / Home">⌂</button></div>
+    <div class="top-actions"><span class="chip">LOCAL-FIRST · PERSONAL</span><button class="iconbtn" id="profileBtn" aria-label="Your profile" title="Your profile">◎</button><button class="iconbtn" id="themeSettingsBtn" aria-label="Appearance settings" title="Appearance settings">◐</button><button class="iconbtn" id="headerHome" aria-label="Home" title="Switch mode / Home">⌂</button></div>
   </header>
   <main>
     <section id="landing">
@@ -1502,16 +1468,18 @@ body[data-page="home"] .home-hero .hero-copy{max-width:780px}
             <button class="btn-secondary" type="button" id="homeChooseMode">Choose your space <span aria-hidden="true">↓</span></button>
           </div>
         </div>
-        <div class="home-visual" aria-label="Meet Hekomi-chan, the pixel-art mascot who lives in your Hekomi space.">
-          <div class="home-visual-grid" aria-hidden="true"></div>
-          <div class="home-mascot-halo" aria-hidden="true"></div>
-          <div class="home-mascot-bubble"><span>HEKOMI-CHAN / ONLINE</span><strong id="hekomiChanMessage" aria-live="polite">Oh, you're here!</strong></div>
-          <div class="home-mascot-stage">
-            <canvas class="home-mascot" id="hekomiChanCanvas" width="64" height="80" role="img" aria-label="Hekomi-chan, the pixel-art Hekomi mascot.">Hekomi-chan</canvas>
-          </div>
-          <div class="home-mascot-tag" aria-hidden="true"><span>YOUR PIXEL GUIDE</span><strong>HEKOMI-CHAN</strong></div>
-          <span class="home-mascot-star star-a" aria-hidden="true">✦</span>
-          <span class="home-mascot-star star-b" aria-hidden="true">✧</span>
+        <div class="home-visual" aria-hidden="true">
+          <div class="home-visual-grid"></div>
+          <div class="home-visual-glow"></div>
+          <div class="home-visual-orbit orbit-a"><i></i></div>
+          <div class="home-visual-orbit orbit-b"><i></i></div>
+          <div class="home-visual-orbit orbit-c"><i></i></div>
+          <div class="home-visual-core"><span>H</span><small>HEKOMI SIGNAL</small></div>
+          <div class="home-visual-card visual-card-anime"><small>01 / ANIME</small><strong>Keep the stories</strong><span>watch · score · remember</span></div>
+          <div class="home-visual-card visual-card-manga"><small>02 / MANGA</small><strong>Find the next page</strong><span>discover · read · collect</span></div>
+          <div class="home-visual-star star-one">✦</div>
+          <div class="home-visual-star star-two">✧</div>
+          <div class="home-visual-caption">YOUR LITTLE WORLDS / OPEN ALL HOURS</div>
         </div>
       </section>
       <section class="anime-showcase" id="animeShowcase" data-slide="0" aria-label="Featured anime-inspired carousel">
@@ -1676,10 +1644,6 @@ body[data-page="home"] .home-hero .hero-copy{max-width:780px}
         <section class="panel profile-watch-panel" aria-labelledby="profileWatchingHeading">
           <div class="panel-head"><div><h2 id="profileWatchingHeading">Currently watching</h2><p class="muted small">Your active shows and episode progress from MyAnimeList.</p></div><span class="pill-label" id="profileWatchingCount">Not synced</span></div>
           <div class="profile-table-wrap"><table class="profile-airing-table"><thead><tr><th>Anime</th><th>Progress</th><th>Next episode</th></tr></thead><tbody id="profileWatchingRows"><tr><td colspan="3" class="profile-table-empty">Connect and sync MyAnimeList to see your active shows here.</td></tr></tbody></table></div>
-        </section>
-        <section class="panel profile-watch-panel" aria-labelledby="profileCompletedHeading">
-          <div class="panel-head"><div><h2 id="profileCompletedHeading">Completed anime</h2><p class="muted small">Every series you have marked completed on MyAnimeList.</p></div><span class="pill-label" id="profileCompletedCount">Not synced</span></div>
-          <div class="profile-table-wrap"><table class="profile-airing-table profile-completed-table"><thead><tr><th>Anime</th><th>Episodes</th><th>Score</th><th>Completed</th></tr></thead><tbody id="profileCompletedRows"><tr><td colspan="4" class="profile-table-empty">Connect and sync MyAnimeList to see your completed anime.</td></tr></tbody></table></div>
         </section>
         <section class="panel profile-watch-panel" aria-labelledby="profileAiringHeading">
           <div class="panel-head"><div><h2 id="profileAiringHeading">Upcoming episodes</h2><p class="muted small">Confirmed next-episode dates for shows you're following.</p></div><span class="pill-label" id="profileAiringCount">—</span></div>
@@ -3127,41 +3091,34 @@ function mangaFeedCardMarkup(item,index){
     const days=Math.floor(diff/86400000),hours=Math.floor(diff%86400000/3600000),minutes=Math.floor(diff%3600000/60000);
     return days?days+'d '+hours+'h':hours?hours+'h '+minutes+'m':minutes+'m';
   }
-  let profileWatchRenderToken=0;
   function renderProfileWatchTables(){
     const watching=remoteReady?malRemote.filter(x=>(x.list_status&&x.list_status.status)==='watching'):[];
-    const completed=remoteReady?malRemote.filter(x=>(x.list_status&&x.list_status.status)==='completed'):[];
-    const watchingRoot=$('#profileWatchingRows'),completedRoot=$('#profileCompletedRows'),airingRoot=$('#profileAiringRows');
-    if(!watchingRoot||!completedRoot||!airingRoot)return;
+    const watchingRoot=$('#profileWatchingRows'),airingRoot=$('#profileAiringRows');
+    if(!watchingRoot||!airingRoot)return;
     $('#profileWatchingCount').textContent=remoteReady?watching.length+' shows':'Not synced';
-    $('#profileCompletedCount').textContent=remoteReady?completed.length+' titles':'Not synced';
-    if(!remoteReady){
-      watchingRoot.innerHTML='<tr><td colspan="3" class="profile-table-empty">Connect and sync MyAnimeList to see your active shows here.</td></tr>';
-      completedRoot.innerHTML='<tr><td colspan="4" class="profile-table-empty">Connect and sync MyAnimeList to see your completed anime.</td></tr>';
-      airingRoot.innerHTML='<tr><td colspan="4" class="profile-table-empty">Sync your list to check upcoming episode dates.</td></tr>';
-      $('#profileAiringCount').textContent='—';return;
-    }
-    const titleCell=n=>{const cover=animeCover(n);return '<div class="profile-airing-title">'+(cover?'<img class="profile-airing-cover" src="'+esc(cover)+'" alt="" loading="lazy" onerror="this.remove()">':'<div class="profile-airing-cover"></div>')+'<div><strong>'+esc(n.title||'Untitled anime')+'</strong><small>'+esc(humanizeAnimeValue(n.status||''))+'</small></div></div>';};
-    watchingRoot.innerHTML=watching.length?watching.map(item=>{
+    if(!remoteReady){watchingRoot.innerHTML='<tr><td colspan="3" class="profile-table-empty">Connect and sync MyAnimeList to see your active shows here.</td></tr>';airingRoot.innerHTML='<tr><td colspan="4" class="profile-table-empty">Sync your list to check upcoming episode dates.</td></tr>';$('#profileAiringCount').textContent='—';return;}
+    if(!watching.length){watchingRoot.innerHTML='<tr><td colspan="3" class="profile-table-empty">Nothing is marked as currently watching on your MAL list.</td></tr>';airingRoot.innerHTML='<tr><td colspan="4" class="profile-table-empty">No followed shows to check for upcoming episodes.</td></tr>';$('#profileAiringCount').textContent='0 scheduled';return;}
+    watchingRoot.innerHTML=watching.map(item=>{
       const n=item.node||{},st=item.list_status||{},total=Number(n.num_episodes)||0,done=Number(st.num_episodes_watched)||0,percent=total?Math.min(100,done/total*100):0;
-      return '<tr><td>'+titleCell(n)+'</td><td><div class="profile-progress"><div class="profile-progress-label"><span>'+done+' / '+(total||'?')+'</span><span>'+(total?Math.round(percent)+'%':'—')+'</span></div><div class="profile-progress-track"><div class="profile-progress-fill" style="width:'+percent+'%"></div></div></div></td><td id="profile-next-'+Number(n.id)+'"><span class="muted small">Checking…</span></td></tr>';
-    }).join(''):'<tr><td colspan="3" class="profile-table-empty">Nothing is marked as currently watching on your MAL list.</td></tr>';
-    completedRoot.innerHTML=completed.length?completed.map(item=>{
-      const n=item.node||{},st=item.list_status||{},total=Number(n.num_episodes)||0,done=Number(st.num_episodes_watched)||0,score=Number(st.score)||0;
-      const date=st.updated_at?new Date(st.updated_at).toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'}):'—';
-      return '<tr><td>'+titleCell(n)+'</td><td>'+done+(total?' / '+total:' episodes')+'</td><td>'+(score?score+'/10':'—')+'</td><td>'+esc(date)+'</td></tr>';
-    }).join(''):'<tr><td colspan="4" class="profile-table-empty">No anime marked completed yet.</td></tr>';
-    if(!watching.length){airingRoot.innerHTML='<tr><td colspan="4" class="profile-table-empty">No followed shows to check for upcoming episodes.</td></tr>';$('#profileAiringCount').textContent='0 scheduled';return;}
-    const token=++profileWatchRenderToken;
-    Promise.all(watching.filter(item=>Number(item.node&&item.node.id)>0).map(async item=>{
+      const cover=animeCover(n),title=n.title||'Untitled anime';
+      return '<tr><td><div class="profile-airing-title">'+(cover?'<img class="profile-airing-cover" src="'+esc(cover)+'" alt="" loading="lazy" onerror="this.remove()">':'<div class="profile-airing-cover"></div>')+'<div><strong>'+esc(title)+'</strong><small>'+esc(humanizeAnimeValue(n.status||''))+'</small></div></div></td><td><div class="profile-progress"><div class="profile-progress-label"><span>'+done+' / '+(total||'?')+'</span><span>'+ (total?Math.round(percent)+'%':'—')+'</span></div><div class="profile-progress-track"><div class="profile-progress-fill" style="width:'+percent+'%"></div></div></div></td><td id="profile-next-'+Number(n.id)+'"><span class="muted small">Checking…</span></td></tr>';
+    }).join('');
+    const candidates=watching.filter(item=>Number(item.node&&item.node.id)>0);
+    Promise.all(candidates.map(async item=>{
       const id=Number(item.node.id);if(!profileAiringCache.has(id)){try{const media=await api('/api/catalog/mal-detail?id='+id);profileAiringCache.set(id,media.nextAiringEpisode||null);}catch{profileAiringCache.set(id,null);}}
       return {item,next:profileAiringCache.get(id)};
     })).then(results=>{
-      if(!remoteReady||token!==profileWatchRenderToken)return;
-      results.forEach(({item,next})=>{const cell=$('#profile-next-'+Number(item.node.id));if(cell)cell.innerHTML=next&&next.episode&&next.airingAt?'<strong>Episode '+Number(next.episode)+'</strong><small class="muted" style="display:block;margin-top:3px">'+esc(profileDateTime(next.airingAt))+'</small>':'<span class="muted small">No confirmed date</span>';});
+      if(!remoteReady)return;
+      results.forEach(({item,next})=>{
+        const cell=$('#profile-next-'+Number(item.node.id));if(!cell)return;
+        cell.innerHTML=next&&next.episode&&next.airingAt?'<strong>Episode '+Number(next.episode)+'</strong><small class="muted" style="display:block;margin-top:3px">'+esc(profileDateTime(next.airingAt))+'</small>':'<span class="muted small">No confirmed date</span>';
+      });
       const scheduled=results.filter(x=>x.next&&x.next.airingAt&&x.next.episode).sort((a,b)=>a.next.airingAt-b.next.airingAt);
       $('#profileAiringCount').textContent=scheduled.length+' scheduled';
-      airingRoot.innerHTML=scheduled.length?scheduled.map(({item,next})=>'<tr><td>'+titleCell(item.node||{})+'</td><td>Episode '+Number(next.episode)+'</td><td class="profile-airing-date">'+esc(profileDateTime(next.airingAt))+'</td><td class="profile-airing-countdown">'+esc(profileCountdown(next.airingAt))+'</td></tr>').join(''):'<tr><td colspan="4" class="profile-table-empty">No confirmed upcoming episode dates found for your currently watching shows.</td></tr>';
+      airingRoot.innerHTML=scheduled.length?scheduled.map(({item,next})=>{
+        const n=item.node||{},cover=animeCover(n);
+        return '<tr><td><div class="profile-airing-title">'+(cover?'<img class="profile-airing-cover" src="'+esc(cover)+'" alt="" loading="lazy" onerror="this.remove()">':'<div class="profile-airing-cover"></div>')+'<div><strong>'+esc(n.title||'Untitled anime')+'</strong></div></div></td><td>Episode '+Number(next.episode)+'</td><td class="profile-airing-date">'+esc(profileDateTime(next.airingAt))+'</td><td class="profile-airing-countdown">'+esc(profileCountdown(next.airingAt))+'</td></tr>';
+      }).join(''):'<tr><td colspan="4" class="profile-table-empty">No confirmed upcoming episode dates found for your currently watching shows.</td></tr>';
     });
   }
   function renderProfileOverview(){
@@ -3424,18 +3381,4 @@ document.querySelectorAll('input[type="range"]').forEach(el=>{rangeProgress(el);
  boot();
 })();
 </script>
-<script>
-(()=>{
- if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js',{scope:'/'}).catch(e=>console.warn('Hekomi offline setup unavailable:',e)));
- const button=document.getElementById('installHekomiBtn');if(!button)return;
- let promptEvent=null;
- const standalone=()=>matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
- if(standalone()){button.classList.add('hidden');return;}
- addEventListener('beforeinstallprompt',e=>{e.preventDefault();promptEvent=e;button.classList.remove('hidden');button.title='Add Hekomi to your home screen';});
- button.addEventListener('click',async()=>{
-  if(promptEvent){promptEvent.prompt();const choice=await promptEvent.userChoice;promptEvent=null;if(choice&&choice.outcome==='accepted')button.classList.add('hidden');return;}
-  alert(/iphone|ipad|ipod/i.test(navigator.userAgent)?'To install Hekomi: tap Share, then choose Add to Home Screen.':'Open your browser menu and choose Install app or Add to Home screen.');
- });
- addEventListener('appinstalled',()=>{button.classList.add('hidden');promptEvent=null;});
-})();
-</script></body></html>
+</body></html>
